@@ -1,0 +1,79 @@
+name: Deploy Frontend App Service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend-appservice.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend-appservice
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24"
+  FRONTEND_WORKDIR: frontend
+  FRONTEND_BUILD_PATH: frontend/dist
+  AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME_FRONTEND }}
+  VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL_PRODUCTION }}
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: ${{ env.FRONTEND_WORKDIR }}
+
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: ${{ env.FRONTEND_WORKDIR }}
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: ${{ env.FRONTEND_WORKDIR }}
+
+      - name: Upload built frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-appservice-package
+          path: ${{ env.FRONTEND_BUILD_PATH }}
+          if-no-files-found: error
+
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    environment:
+      name: production
+
+    steps:
+      - name: Download built frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-appservice-package
+          path: ${{ env.FRONTEND_BUILD_PATH }}
+
+      - name: Deploy frontend to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_FRONTEND }}
+          package: ${{ env.FRONTEND_BUILD_PATH }}
+

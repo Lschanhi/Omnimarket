@@ -1,0 +1,16 @@
+{
+  "name": "omnimarket-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "frontend:install": "npm --prefix frontend install",
+    "frontend:dev": "npm --prefix frontend run dev",
+    "frontend:build": "npm --prefix frontend run build",
+    "frontend:lint": "npm --prefix frontend run lint",
+    "backend:restore": "dotnet restore backend/Omnimarket.Api.sln",
+    "backend:build": "dotnet build backend/Omnimarket.Api.sln -v minimal",
+    "backend:test": "dotnet test backend/Omnimarket.Api.sln -v minimal",
+    "backend:run": "dotnet run --project backend/OmniMarket.API.csproj"
+  }
+}
+

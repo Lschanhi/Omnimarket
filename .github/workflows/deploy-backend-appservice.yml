@@ -1,0 +1,80 @@
+name: Deploy Backend App Service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend-appservice.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend-appservice
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_VERSION: "9.0.x"
+  BACKEND_PROJECT_PATH: backend/OmniMarket.API.csproj
+  BACKEND_PUBLISH_PATH: backend/publish
+  AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME_BACKEND }}
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore $env:BACKEND_PROJECT_PATH
+        shell: pwsh
+
+      - name: Build backend
+        run: dotnet build $env:BACKEND_PROJECT_PATH -c Release --no-restore
+        shell: pwsh
+
+      - name: Run backend tests
+        run: dotnet test .\backend\Omnimarket.Api.sln -c Release --no-build -v minimal
+        shell: pwsh
+
+      - name: Publish backend
+        run: dotnet publish $env:BACKEND_PROJECT_PATH -c Release --no-build -o $env:BACKEND_PUBLISH_PATH
+        shell: pwsh
+
+      - name: Upload published backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-appservice-package
+          path: ${{ env.BACKEND_PUBLISH_PATH }}
+          if-no-files-found: error
+
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    environment:
+      name: production
+
+    steps:
+      - name: Download published backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-appservice-package
+          path: ${{ env.BACKEND_PUBLISH_PATH }}
+
+      - name: Deploy backend to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
+          package: ${{ env.BACKEND_PUBLISH_PATH }}
+
