@@ -1,4 +1,5 @@
 import { apiRequest } from "../http/apiClient";
+import { formatarTelefone } from "../../utils/masks";
 
 export type TelefoneApiResponse = {
   id: number;
@@ -29,14 +30,7 @@ export function formatarTelefoneParaExibicao(telefone: string) {
     return telefone;
   }
 
-  const ddd = telefoneNacional.slice(0, 2);
-  const numero = telefoneNacional.slice(2);
-  const numeroFormatado =
-    numero.length === 9
-      ? `${numero.slice(0, 5)}-${numero.slice(5)}`
-      : `${numero.slice(0, 4)}-${numero.slice(4)}`;
-
-  return `(${ddd}) ${numeroFormatado}`;
+  return formatarTelefone(telefoneNacional);
 }
 
 export function normalizarTelefoneParaApi(

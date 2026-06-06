@@ -23,6 +23,15 @@ import type {
   PerfilTelefoneFormState,
   ProdutoFormState,
 } from "./tipos";
+import {
+  formatarCep as formatarCepComMascara,
+  formatarCpfOuCnpj,
+  formatarDocumentoFiscal,
+  formatarMoedaDeNumero,
+  formatarMoedaParaInput,
+  formatarTelefone,
+  normalizarCep as normalizarCepComMascara,
+} from "../../../utils/masks";
 
 export const PERFIL_FORM_INICIAL: PerfilFormState = {
   nome: "",
@@ -122,11 +131,7 @@ export function formatarMoeda(valor: number) {
 }
 
 export function normalizarPrecoParaInput(valor?: number) {
-  if (typeof valor !== "number" || Number.isNaN(valor)) {
-    return "";
-  }
-
-  return valor.toFixed(2).replace(".", ",");
+  return formatarMoedaDeNumero(valor);
 }
 
 export function normalizarPrecoParaApi(valor: string) {
@@ -192,11 +197,7 @@ export function criarProdutoGridItem({
 }
 
 export function normalizarFreteParaInput(valor?: number) {
-  if (typeof valor !== "number" || Number.isNaN(valor)) {
-    return "0,00";
-  }
-
-  return valor.toFixed(2).replace(".", ",");
+  return formatarMoedaDeNumero(valor, "0,00");
 }
 
 export function normalizarFreteParaApi(valor: string, tipoEntregaId: number) {
@@ -555,17 +556,11 @@ export function lerArquivoComoDataUrl(file: File) {
 }
 
 export function normalizarCep(cep: string) {
-  return cep.replace(/\D/g, "");
+  return normalizarCepComMascara(cep);
 }
 
 export function formatarCep(cep: string) {
-  const cepNormalizado = normalizarCep(cep).slice(0, 8);
-
-  if (cepNormalizado.length <= 5) {
-    return cepNormalizado;
-  }
-
-  return `${cepNormalizado.slice(0, 5)}-${cepNormalizado.slice(5)}`;
+  return formatarCepComMascara(cep);
 }
 
 export function telefoneTemConteudo(telefone: PerfilTelefoneFormState | null) {
@@ -574,6 +569,25 @@ export function telefoneTemConteudo(telefone: PerfilTelefoneFormState | null) {
 
 export function normalizarTelefoneParaComparacao(telefone: string) {
   return telefone.replace(/\D/g, "");
+}
+
+export function normalizarTelefoneParaInput(telefone: string) {
+  return formatarTelefone(telefone);
+}
+
+export function normalizarDocumentoFiscalParaInput(
+  documentoFiscal: string,
+  tipoDocumentoFiscal?: number | string,
+) {
+  if (tipoDocumentoFiscal == null) {
+    return formatarCpfOuCnpj(documentoFiscal);
+  }
+
+  return formatarDocumentoFiscal(documentoFiscal, tipoDocumentoFiscal);
+}
+
+export function normalizarMoedaParaInput(valor: string) {
+  return formatarMoedaParaInput(valor);
 }
 
 export function enderecoTemConteudo(endereco: PerfilEnderecoFormState | null) {

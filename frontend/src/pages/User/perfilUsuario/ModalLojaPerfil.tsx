@@ -69,6 +69,8 @@ export function ModalLojaPerfil({
             label="Documento fiscal"
             id="documentoFiscal"
             name="documentoFiscal"
+            inputMode="numeric"
+            maxLength={lojaForm.tipoDocumentoFiscal === "2" ? 18 : 14}
             placeholder={
               lojaForm.tipoDocumentoFiscal === "2"
                 ? "00.000.000/0000-00"

@@ -28,6 +28,12 @@ import {
   type LojaEntregaFiltro,
   type LojaEntregaOpcao,
 } from "../../Services/produtos/lojaEntregaService";
+import {
+  formatarCep,
+  formatarNumeroCartao,
+  formatarValidadeCartao,
+  normalizarCep,
+} from "../../utils/masks";
 
 type MetodoPagamento = {
   id: string;
@@ -76,6 +82,12 @@ type ResumoCheckoutLoja = {
   erroEntrega: string;
 };
 
+type PagamentoCartaoFormState = {
+  numeroCartao: string;
+  validadeCartao: string;
+  nomeCartao: string;
+};
+
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
@@ -115,26 +127,18 @@ const ENDERECO_FORM_PADRAO: EnderecoFormState = {
   isPrincipal: false,
 };
 
+const PAGAMENTO_CARTAO_FORM_PADRAO: PagamentoCartaoFormState = {
+  numeroCartao: "",
+  validadeCartao: "",
+  nomeCartao: "",
+};
+
 function criarEnderecoFormInicial(tipoLogradouroPadrao = "Rua", isPrincipal = false) {
   return {
     ...ENDERECO_FORM_PADRAO,
     tipoLogradouro: tipoLogradouroPadrao,
     isPrincipal,
   };
-}
-
-function normalizarCep(cep: string) {
-  return cep.replace(/\D/g, "");
-}
-
-function formatarCep(cep: string) {
-  const cepNormalizado = normalizarCep(cep);
-
-  if (cepNormalizado.length !== 8) {
-    return cep;
-  }
-
-  return `${cepNormalizado.slice(0, 5)}-${cepNormalizado.slice(5)}`;
 }
 
 function enderecoTemConteudo(endereco: EnderecoFormState) {
@@ -393,6 +397,9 @@ export function PagamentPage() {
   const [isRemovingAddress, setIsRemovingAddress] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [erro, setErro] = useState("");
+  const [pagamentoCartaoForm, setPagamentoCartaoForm] = useState<PagamentoCartaoFormState>(
+    PAGAMENTO_CARTAO_FORM_PADRAO,
+  );
   const { carrinhoItens, valorTotal, clearCart, carregarCarrinho, estaAutenticado } = useCart();
   const navigate = useNavigate();
 
@@ -684,7 +691,27 @@ export function PagamentPage() {
 
     setEnderecoForm((currentForm) => ({
       ...currentForm,
-      [name]: name === "uf" ? value.toUpperCase() : value,
+      [name]:
+        name === "cep"
+          ? formatarCep(value)
+          : name === "uf"
+            ? value.replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase()
+            : value,
+    }));
+    setErro("");
+  }
+
+  function handlePagamentoCartaoChange(event: ChangeEvent<HTMLInputElement>) {
+    const { name, value } = event.target;
+
+    setPagamentoCartaoForm((currentForm) => ({
+      ...currentForm,
+      [name]:
+        name === "numeroCartao"
+          ? formatarNumeroCartao(value)
+          : name === "validadeCartao"
+            ? formatarValidadeCartao(value)
+            : value,
     }));
     setErro("");
   }
@@ -1270,6 +1297,7 @@ export function PagamentPage() {
                           name="cep"
                           label="CEP"
                           inputMode="numeric"
+                          maxLength={9}
                           autoComplete="postal-code"
                           value={enderecoForm.cep}
                           onChange={handleEnderecoChange}
@@ -1509,31 +1537,39 @@ export function PagamentPage() {
                     <Input
                       required
                       id="numero-cartao"
-                      name="numero-cartao"
+                      name="numeroCartao"
                       label="Número do cartão"
                       placeholder="0000 0000 0000 0000"
                       inputMode="numeric"
+                      maxLength={23}
                       autoComplete="cc-number"
+                      value={pagamentoCartaoForm.numeroCartao}
+                      onChange={handlePagamentoCartaoChange}
                       className="h-12 rounded-2xl border-white/10 bg-black/40 px-4 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
                     />
                   </div>
                   <Input
                     required
                     id="validade-cartao"
-                    name="validade-cartao"
+                    name="validadeCartao"
                     label="Validade"
                     placeholder="MM/AA"
                     inputMode="numeric"
+                    maxLength={5}
                     autoComplete="cc-exp"
+                    value={pagamentoCartaoForm.validadeCartao}
+                    onChange={handlePagamentoCartaoChange}
                     className="h-12 rounded-2xl border-white/10 bg-black/40 px-4 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
                   />
                   <Input
                     required
                     id="nome-cartao"
-                    name="nome-cartao"
+                    name="nomeCartao"
                     label="Nome impresso no cartão"
                     placeholder="Como aparece no cartão"
                     autoComplete="cc-name"
+                    value={pagamentoCartaoForm.nomeCartao}
+                    onChange={handlePagamentoCartaoChange}
                     className="h-12 rounded-2xl border-white/10 bg-black/40 px-4 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
                   />
                 </div>
@@ -1553,31 +1589,39 @@ export function PagamentPage() {
                     <Input
                       required
                       id="numero-cartao"
-                      name="numero-cartao"
+                      name="numeroCartao"
                       label="Numero do cartão"
                       placeholder="0000 0000 0000 0000"
                       inputMode="numeric"
+                      maxLength={23}
                       autoComplete="cc-number"
+                      value={pagamentoCartaoForm.numeroCartao}
+                      onChange={handlePagamentoCartaoChange}
                       className="h-12 rounded-2xl border-white/10 bg-black/40 px-4 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
                     />
                   </div>
                   <Input
                     required
                     id="validade-cartao"
-                    name="validade-cartao"
+                    name="validadeCartao"
                     label="Validade"
                     placeholder="MM/AA"
                     inputMode="numeric"
+                    maxLength={5}
                     autoComplete="cc-exp"
+                    value={pagamentoCartaoForm.validadeCartao}
+                    onChange={handlePagamentoCartaoChange}
                     className="h-12 rounded-2xl border-white/10 bg-black/40 px-4 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
                   />
                   <Input
                     required
                     id="nome-cartao"
-                    name="nome-cartao"
+                    name="nomeCartao"
                     label="Nome impresso no cartão"
                     placeholder="Como aparece no cartão"
                     autoComplete="cc-name"
+                    value={pagamentoCartaoForm.nomeCartao}
+                    onChange={handlePagamentoCartaoChange}
                     className="h-12 rounded-2xl border-white/10 bg-black/40 px-4 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
                   />
                 </div>
