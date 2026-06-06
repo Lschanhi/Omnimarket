@@ -25,4 +25,20 @@ export type HomeProduct = {
   lojaAvatarUrl?: string;
   slugLoja?: string;
   totalAvaliacoes?: number;
+  totalVisualizacoes?: number;
+};
+
+export type HomeStore = {
+  id: number;
+  nome: string;
+  avatarUrl?: string;
+  descricao?: string;
+  cidade?: string;
+  uf?: string;
+  mediaAvaliacao: number;
+  totalAvaliacoes: number;
+  totalProdutos: number;
+  categorias: string[];
+  totalVisualizacoes: number;
+  pontuacao: number;
 };

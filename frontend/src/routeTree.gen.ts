@@ -18,6 +18,7 @@ import { Route as CarrinhoRouteImport } from './routes/carrinho'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProdutoIdRouteImport } from './routes/produto/$id'
+import { Route as LojaIdRouteImport } from './routes/loja/$id'
 
 const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
   id: '/recuperarSenha',
@@ -64,6 +65,11 @@ const ProdutoIdRoute = ProdutoIdRouteImport.update({
   path: '/produto/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LojaIdRoute = LojaIdRouteImport.update({
+  id: '/loja/$id',
+  path: '/loja/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/paginaSucesso': typeof PaginaSucessoRoute
   '/perfilUsuario': typeof PerfilUsuarioRoute
   '/recuperarSenha': typeof RecuperarSenhaRoute
+  '/loja/$id': typeof LojaIdRoute
   '/produto/$id': typeof ProdutoIdRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/paginaSucesso': typeof PaginaSucessoRoute
   '/perfilUsuario': typeof PerfilUsuarioRoute
   '/recuperarSenha': typeof RecuperarSenhaRoute
+  '/loja/$id': typeof LojaIdRoute
   '/produto/$id': typeof ProdutoIdRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/paginaSucesso': typeof PaginaSucessoRoute
   '/perfilUsuario': typeof PerfilUsuarioRoute
   '/recuperarSenha': typeof RecuperarSenhaRoute
+  '/loja/$id': typeof LojaIdRoute
   '/produto/$id': typeof ProdutoIdRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/paginaSucesso'
     | '/perfilUsuario'
     | '/recuperarSenha'
+    | '/loja/$id'
     | '/produto/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/paginaSucesso'
     | '/perfilUsuario'
     | '/recuperarSenha'
+    | '/loja/$id'
     | '/produto/$id'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/paginaSucesso'
     | '/perfilUsuario'
     | '/recuperarSenha'
+    | '/loja/$id'
     | '/produto/$id'
   fileRoutesById: FileRoutesById
 }
@@ -144,6 +156,7 @@ export interface RootRouteChildren {
   PaginaSucessoRoute: typeof PaginaSucessoRoute
   PerfilUsuarioRoute: typeof PerfilUsuarioRoute
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
+  LojaIdRoute: typeof LojaIdRoute
   ProdutoIdRoute: typeof ProdutoIdRoute
 }
 
@@ -212,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProdutoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/loja/$id': {
+      id: '/loja/$id'
+      path: '/loja/$id'
+      fullPath: '/loja/$id'
+      preLoaderRoute: typeof LojaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -224,6 +244,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaginaSucessoRoute: PaginaSucessoRoute,
   PerfilUsuarioRoute: PerfilUsuarioRoute,
   RecuperarSenhaRoute: RecuperarSenhaRoute,
+  LojaIdRoute: LojaIdRoute,
   ProdutoIdRoute: ProdutoIdRoute,
 }
 export const routeTree = rootRouteImport

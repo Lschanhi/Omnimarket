@@ -15,6 +15,7 @@ namespace Omnimarket.Api.Models.Dtos.Produtos
         public string? Descricao { get; set; }
         public double MediaAvaliacao { get; set; }
         public int TotalAvaliacoes { get; set; }
+        public int TotalVisualizacoes { get; set; }
         public DateTimeOffset DtCriacao { get; set; }
         public DateTimeOffset? DtAtualizacao { get; set; }
         public int LojaId { get; set; }

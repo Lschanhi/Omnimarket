@@ -6,6 +6,7 @@ import { PageLayout } from "../../Components/PageLayout";
 import { ProdutoImagem } from "../../Components/produto/ProdutoImagem";
 import { StoreIdentityBadge } from "../../Components/produto/StoreIdentityBadge";
 import { useCart } from "../../context/CartContext";
+import { registrarVisualizacaoProduto } from "../../Services/home/homeHistoryService";
 import { obterProdutoPorId } from "../../Services/produtos/produtoService";
 import type { HomeProduct } from "../../types/home";
 
@@ -32,7 +33,9 @@ export function ProdutoPage() {
       setErro("");
 
       try {
-        const response = await obterProdutoPorId(produtoId);
+        const response = await obterProdutoPorId(produtoId, {
+          registrarVisualizacao: true,
+        });
 
         if (isMounted) {
           if (response.disponivel === false) {
@@ -42,6 +45,7 @@ export function ProdutoPage() {
           }
 
           setProduto(response);
+          registrarVisualizacaoProduto(response);
           setErro("");
         }
       } catch (error) {

@@ -7,7 +7,8 @@ namespace Omnimarket.Api.Services.Interfaces
     public interface IProdutoService
     {
         Task<IEnumerable<ProdutoLeituraDto>> GetAllAsync();
-        Task<ProdutoLeituraDto?> GetByIdAsync(int id);
+        Task<IEnumerable<ProdutoLeituraDto>> GetHighlightsAsync(int take = 10);
+        Task<ProdutoLeituraDto?> GetByIdAsync(int id, bool registrarVisualizacao = false);
         Task<ProdutoLeituraDto> CreateAsync(ProdutoCriacaoDto dto, int usuarioId);
         Task<bool> UpdateAsync(int id, ProdutoAtualizarDto dto, int usuarioId);
         Task<bool> AtualizarEstoqueAsync(int id, ProdutoAtualizarEstoqueDto dto, int usuarioId);

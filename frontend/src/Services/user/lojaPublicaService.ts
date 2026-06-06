@@ -6,9 +6,21 @@ export type LojaPublicaResumo = {
   fotoPerfilUrl?: string | null;
   avatarUrl?: string | null;
   logoUrl?: string | null;
+  descricao?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+  mediaAvaliacao?: number | null;
+  totalAvaliacoes?: number | null;
+  totalVisualizacoes?: number | null;
+  totalProdutosAtivos?: number | null;
+  ativa?: boolean | null;
 };
 
 const lojaPublicaCache = new Map<number, Promise<LojaPublicaResumo | null>>();
+
+type ObterLojaPublicaOptions = {
+  registrarVisualizacao?: boolean;
+};
 
 function normalizarLojaPublica(response: unknown): LojaPublicaResumo | null {
   if (!response || typeof response !== "object") {
@@ -51,24 +63,90 @@ function normalizarLojaPublica(response: unknown): LojaPublicaResumo | null {
     fotoPerfilUrl,
     avatarUrl,
     logoUrl,
+    descricao:
+      typeof loja.descricao === "string"
+        ? loja.descricao
+        : typeof loja.Descricao === "string"
+          ? loja.Descricao
+          : null,
+    cidade:
+      typeof loja.cidade === "string"
+        ? loja.cidade
+        : typeof loja.Cidade === "string"
+          ? loja.Cidade
+          : null,
+    uf:
+      typeof loja.uf === "string"
+        ? loja.uf
+        : typeof loja.Uf === "string"
+          ? loja.Uf
+          : null,
+    mediaAvaliacao:
+      typeof loja.mediaAvaliacao === "number"
+        ? loja.mediaAvaliacao
+        : typeof loja.MediaAvaliacao === "number"
+          ? loja.MediaAvaliacao
+          : null,
+    totalAvaliacoes:
+      typeof loja.totalAvaliacoes === "number"
+        ? loja.totalAvaliacoes
+        : typeof loja.TotalAvaliacoes === "number"
+          ? loja.TotalAvaliacoes
+          : null,
+    totalVisualizacoes:
+      typeof loja.totalVisualizacoes === "number"
+        ? loja.totalVisualizacoes
+        : typeof loja.TotalVisualizacoes === "number"
+          ? loja.TotalVisualizacoes
+          : null,
+    totalProdutosAtivos:
+      typeof loja.totalProdutosAtivos === "number"
+        ? loja.totalProdutosAtivos
+        : typeof loja.TotalProdutosAtivos === "number"
+          ? loja.TotalProdutosAtivos
+          : null,
+    ativa:
+      typeof loja.ativa === "boolean"
+        ? loja.ativa
+        : typeof loja.Ativa === "boolean"
+          ? loja.Ativa
+          : null,
   };
 }
 
-export async function obterLojaPublica(lojaId?: number | null) {
+function normalizarListaLojasPublicas(response: unknown) {
+  if (!Array.isArray(response)) {
+    return [];
+  }
+
+  return response.map(normalizarLojaPublica).filter(Boolean) as LojaPublicaResumo[];
+}
+
+export async function obterLojaPublica(
+  lojaId?: number | null,
+  options: ObterLojaPublicaOptions = {},
+) {
   if (!lojaId || !Number.isFinite(lojaId) || lojaId <= 0) {
     return null;
   }
 
-  const cacheHit = lojaPublicaCache.get(lojaId);
+  const registrarVisualizacao = options.registrarVisualizacao === true;
+  const cacheHit = registrarVisualizacao ? null : lojaPublicaCache.get(lojaId);
 
   if (cacheHit) {
     return cacheHit;
   }
 
-  const request = apiRequest<LojaPublicaResumo>(`/api/lojas/${lojaId}`)
+  const query = registrarVisualizacao ? "?registrarVisualizacao=true" : "";
+  const request = apiRequest<LojaPublicaResumo>(`/api/lojas/${lojaId}${query}`)
     .then(normalizarLojaPublica)
     .catch(() => null);
 
   lojaPublicaCache.set(lojaId, request);
   return request;
+}
+
+export async function listarLojasEmDestaque(take = 10) {
+  const response = await apiRequest<LojaPublicaResumo[]>(`/api/lojas/destaques?take=${take}`);
+  return normalizarListaLojasPublicas(response);
 }

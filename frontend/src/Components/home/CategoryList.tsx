@@ -43,7 +43,7 @@ export function CategoryList({
       </div>
 
       {/* O container horizontal usa overflow para manter a UX fluida no mobile. */}
-      <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex-wrap lg:overflow-visible">
         {categorias.map((categoria) => {
           const Icone = iconMap[categoria.icone];
           const isAtiva = categoriaAtiva === categoria.id;

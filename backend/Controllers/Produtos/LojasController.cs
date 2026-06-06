@@ -291,11 +291,18 @@ namespace Omnimarket.Api.Controllers
             }
         }
 
+        [HttpGet("destaques")]
+        public async Task<IActionResult> ListarDestaques([FromQuery] int take = 10)
+        {
+            var lojas = await _lojaService.ListarDestaquesAsync(take);
+            return Ok(lojas);
+        }
+
         // Endpoint publico para consultar a loja pelo identificador.
         [HttpGet("{id:int}")]
-        public async Task<IActionResult> ObterPorId(int id)
+        public async Task<IActionResult> ObterPorId(int id, [FromQuery] bool registrarVisualizacao = false)
         {
-            var loja = await _lojaService.ObterPorIdAsync(id);
+            var loja = await _lojaService.ObterPorIdAsync(id, registrarVisualizacao);
 
             if (loja == null)
                 return NotFound(new { mensagem = "Loja nao encontrada." });

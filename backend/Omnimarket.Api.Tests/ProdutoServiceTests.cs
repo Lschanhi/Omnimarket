@@ -98,6 +98,67 @@ public class ProdutoServiceTests
     }
 
     [Fact]
+    public async Task GetByIdAsync_DeveRegistrarVisualizacaoSomenteQuandoSolicitado()
+    {
+        using var fixture = new ServiceTestFixture();
+        var vendedor = await fixture.CriarUsuarioAsync("seller-visualizacao");
+        var produto = await fixture.CriarProdutoAsync(vendedor.Id, preco: 89.90m, estoque: 6);
+
+        var leituraSemRegistro = await fixture.ProdutoService.GetByIdAsync(produto.Id);
+        var leituraComRegistro = await fixture.ProdutoService.GetByIdAsync(
+            produto.Id,
+            registrarVisualizacao: true);
+
+        fixture.Context.ChangeTracker.Clear();
+
+        var produtoSalvo = await fixture.Context.TBL_PRODUTO.SingleAsync(p => p.Id == produto.Id);
+
+        Assert.NotNull(leituraSemRegistro);
+        Assert.NotNull(leituraComRegistro);
+        Assert.Equal(0, leituraSemRegistro!.TotalVisualizacoes);
+        Assert.Equal(1, leituraComRegistro!.TotalVisualizacoes);
+        Assert.Equal(1, produtoSalvo.TotalVisualizacoes);
+        Assert.NotNull(produtoSalvo.UltimaVisualizacaoEm);
+    }
+
+    [Fact]
+    public async Task GetHighlightsAsync_DeveRetornarProdutosOrdenadosPorVisualizacoes()
+    {
+        using var fixture = new ServiceTestFixture();
+        var vendedorA = await fixture.CriarUsuarioAsync("seller-highlight-a");
+        var vendedorB = await fixture.CriarUsuarioAsync("seller-highlight-b");
+        var vendedorC = await fixture.CriarUsuarioAsync("seller-highlight-c");
+
+        var produtoA = await fixture.CriarProdutoAsync(vendedorA.Id, preco: 120m, estoque: 8);
+        var produtoB = await fixture.CriarProdutoAsync(vendedorB.Id, preco: 220m, estoque: 4);
+        var produtoC = await fixture.CriarProdutoAsync(vendedorC.Id, preco: 320m, estoque: 2);
+
+        produtoA.TotalVisualizacoes = 18;
+        produtoA.TotalAvaliacoes = 4;
+        produtoA.MediaAvaliacao = 4.5;
+
+        produtoB.TotalVisualizacoes = 31;
+        produtoB.TotalAvaliacoes = 2;
+        produtoB.MediaAvaliacao = 4.8;
+
+        produtoC.TotalVisualizacoes = 7;
+        produtoC.TotalAvaliacoes = 9;
+        produtoC.MediaAvaliacao = 5;
+        produtoC.StatusPublicacao = StatusProduto.Pausado;
+
+        await fixture.Context.SaveChangesAsync();
+        fixture.Context.ChangeTracker.Clear();
+
+        var destaques = (await fixture.ProdutoService.GetHighlightsAsync(5)).ToList();
+
+        Assert.Equal(2, destaques.Count);
+        Assert.Equal(produtoB.Id, destaques[0].Id);
+        Assert.Equal(31, destaques[0].TotalVisualizacoes);
+        Assert.Equal(produtoA.Id, destaques[1].Id);
+        Assert.Equal(18, destaques[1].TotalVisualizacoes);
+    }
+
+    [Fact]
     public async Task GetPagedAsync_DeveFiltrarPorNomeCategoriaEPreco()
     {
         using var fixture = new ServiceTestFixture();

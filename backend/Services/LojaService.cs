@@ -157,18 +157,57 @@ namespace Omnimarket.Api.Services
         }
 
         // Retorna uma loja publica ativa pelo identificador.
-        public async Task<LojaLeituraDto?> ObterPorIdAsync(int lojaId)
+        public async Task<LojaLeituraDto?> ObterPorIdAsync(int lojaId, bool registrarVisualizacao = false)
         {
             if (lojaId <= 0)
                 return null;
 
-            var loja = await _context.TBL_LOJA
+            var query = _context.TBL_LOJA
+                .Include(l => l.Endereco)
+                .Include(l => l.Telefone)
+                .Include(l => l.Produtos)
+                .AsQueryable();
+
+            if (!registrarVisualizacao)
+                query = query.AsNoTracking();
+
+            var loja = await query
+                .FirstOrDefaultAsync(l => l.Id == lojaId && l.Ativa);
+
+            if (loja == null)
+                return null;
+
+            if (registrarVisualizacao)
+            {
+                loja.TotalVisualizacoes += 1;
+                loja.UltimaVisualizacaoEm = DateTimeOffset.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+
+            return MapearPublico(loja);
+        }
+
+        public async Task<IEnumerable<LojaLeituraDto>> ListarDestaquesAsync(int take = 10)
+        {
+            var limite = NormalizarLimite(take);
+
+            var lojas = await _context.TBL_LOJA
                 .AsNoTracking()
                 .Include(l => l.Endereco)
                 .Include(l => l.Telefone)
-                .FirstOrDefaultAsync(l => l.Id == lojaId && l.Ativa);
+                .Include(l => l.Produtos)
+                .Where(l => l.Ativa)
+                .OrderByDescending(l => l.TotalVisualizacoes)
+                .ThenByDescending(l => l.TotalAvaliacoes)
+                .ThenByDescending(l => l.MediaAvaliacao)
+                .ThenByDescending(l => l.Produtos.Count(p =>
+                    p.StatusPublicacao == StatusProduto.Publicado &&
+                    p.Estoque > 0))
+                .ThenByDescending(l => l.DtCriacao)
+                .Take(limite)
+                .ToListAsync();
 
-            return loja == null ? null : MapearPublico(loja);
+            return lojas.Select(MapearPublico).ToList();
         }
 
         // Cria a loja do usuario. Cada usuario pode ter apenas uma loja.
@@ -573,6 +612,21 @@ namespace Omnimarket.Api.Services
             throw new InvalidOperationException("Tipo de documento fiscal invalido.");
         }
 
+        private static int NormalizarLimite(int take, int padrao = 10, int maximo = 20)
+        {
+            if (take <= 0)
+                return padrao;
+
+            return take > maximo ? maximo : take;
+        }
+
+        private static int CalcularTotalProdutosAtivos(Loja loja)
+        {
+            return loja.Produtos.Count(produto =>
+                produto.StatusPublicacao == StatusProduto.Publicado &&
+                produto.Estoque > 0);
+        }
+
         private static LojaLeituraDto MapearPublico(Loja loja)
         {
             return new LojaLeituraDto
@@ -600,6 +654,8 @@ namespace Omnimarket.Api.Services
                 Ativa = loja.Ativa,
                 MediaAvaliacao = loja.MediaAvaliacao,
                 TotalAvaliacoes = loja.TotalAvaliacoes,
+                TotalVisualizacoes = loja.TotalVisualizacoes,
+                TotalProdutosAtivos = CalcularTotalProdutosAtivos(loja),
                 DtCriacao = loja.DtCriacao,
                 DtAtualizacao = loja.DtAtualizacao
             };
