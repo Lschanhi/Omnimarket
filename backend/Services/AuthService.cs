@@ -24,7 +24,8 @@ namespace Omnimarket.Api.Services
                 throw new Exception("CPF invalido.");
 
             var cpfLimpo = userDto.Cpf.Replace(".", "").Replace("-", "").Trim();
-            var emailNormalizado = NormalizarEmail(userDto.Email);
+            var emailNormalizado = ValidadorEmail.Normalizar(userDto.Email);
+            ValidadorEmail.GarantirValidoParaCadastro(emailNormalizado);
 
             var existe = await _context.TBL_USUARIO
                 .AnyAsync(u => u.Cpf == cpfLimpo || u.Email == emailNormalizado);
@@ -103,7 +104,7 @@ namespace Omnimarket.Api.Services
 
         public async Task<LoginRespostaDto?> Login(LoginDto login)
         {
-            var email = NormalizarEmail(login.Email);
+            var email = ValidadorEmail.Normalizar(login.Email);
 
             var usuario = await _context.TBL_USUARIO
                 .FirstOrDefaultAsync(u => u.Email == email);
@@ -155,11 +156,6 @@ namespace Omnimarket.Api.Services
                 .FirstOrDefaultAsync(u => u.Id == usuarioId);
 
             return usuario != null && usuario.SessaoVersao == sessaoVersaoToken;
-        }
-
-        private static string NormalizarEmail(string email)
-        {
-            return (email ?? string.Empty).Trim().ToLowerInvariant();
         }
     }
 }

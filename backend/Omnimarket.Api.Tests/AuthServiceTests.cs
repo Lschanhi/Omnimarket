@@ -1,4 +1,5 @@
 using Omnimarket.Api.Tests.Support;
+using Omnimarket.Api.Utils;
 
 namespace Omnimarket.Api.Tests;
 
@@ -48,6 +49,18 @@ public class AuthServiceTests
             .SingleAsync(u => u.Id == usuario.Id);
 
         Assert.Empty(usuarioSalvo.Enderecos);
+    }
+
+    [Fact]
+    public async Task RegistrarUsuario_DeveRejeitarDominioDeTeste()
+    {
+        using var fixture = new ServiceTestFixture();
+        var dto = fixture.CriarRegistroUsuarioDto("email-bloqueado");
+        dto.Email = "lschanhi@test.com.br";
+
+        var excecao = await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.AuthService.RegistrarUsuario(dto));
+
+        Assert.Equal(ValidadorEmail.MensagemEmailNaoPermitido, excecao.Message);
     }
 
     [Fact]

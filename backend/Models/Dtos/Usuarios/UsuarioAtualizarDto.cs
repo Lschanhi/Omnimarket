@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Omnimarket.Api.Utils;
 
 namespace Omnimarket.Api.Models.Dtos.Usuarios
 {
@@ -14,7 +15,7 @@ namespace Omnimarket.Api.Models.Dtos.Usuarios
         public string Sobrenome { get; set; } = string.Empty;
 
         [Required]
-        [EmailAddress]
+        [EmailCadastro]
         public string Email { get; set; } = string.Empty;
 
         // Opcional: so troca a senha se o cliente enviar um novo valor.

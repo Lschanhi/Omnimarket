@@ -1,4 +1,5 @@
 using Omnimarket.Api.Tests.Support;
+using Omnimarket.Api.Utils;
 
 namespace Omnimarket.Api.Tests;
 
@@ -21,6 +22,24 @@ public class UsuarioPerfilServiceTests
             }));
 
         Assert.Equal("Email ja esta em uso.", excecao.Message);
+    }
+
+    [Fact]
+    public async Task AtualizarAsync_DeveImpedirDominioDeTeste()
+    {
+        using var fixture = new ServiceTestFixture();
+        var usuario = await fixture.CriarUsuarioAsync("usuario-perfil-bloqueado");
+
+        var excecao = await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.UsuarioPerfilService.AtualizarAsync(
+            usuario.Id,
+            new UsuarioAtualizarDto
+            {
+                Nome = usuario.Nome,
+                Sobrenome = usuario.Sobrenome,
+                Email = "lschanhi@test.com.br"
+            }));
+
+        Assert.Equal(ValidadorEmail.MensagemEmailNaoPermitido, excecao.Message);
     }
 
     [Fact]
