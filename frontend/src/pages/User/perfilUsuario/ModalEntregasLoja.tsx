@@ -224,6 +224,7 @@ export function ModalEntregasLoja({
                 label="Valor do frete"
                 id="entregaValorFrete"
                 name="valorFrete"
+                inputMode="decimal"
                 placeholder="12,90"
                 value={entregaLojaForm.valorFrete}
                 onChange={onChangeEntregaInput}

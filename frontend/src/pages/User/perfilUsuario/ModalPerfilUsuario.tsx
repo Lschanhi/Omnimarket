@@ -189,6 +189,8 @@ export function ModalPerfilUsuario({
                   id={`telefone-${index}`}
                   name={`telefone-${index}`}
                   placeholder="(11) 97777-7932"
+                  inputMode="numeric"
+                  maxLength={15}
                   value={telefone.numero}
                   onChange={(event) => onChangeTelefoneExistente(index, event.target.value)}
                   required
@@ -231,6 +233,8 @@ export function ModalPerfilUsuario({
                   id="novo-telefone"
                   name="novoTelefone"
                   placeholder="(11) 97777-7932"
+                  inputMode="numeric"
+                  maxLength={15}
                   value={novoTelefoneForm.numero}
                   onChange={(event) => onChangeNovoTelefone(event.target.value)}
                 />

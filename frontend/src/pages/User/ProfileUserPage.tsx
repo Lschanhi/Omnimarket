@@ -127,10 +127,13 @@ import {
   mapearTelefoneParaFormulario,
   normalizarCep,
   normalizarFreteParaApi,
+  normalizarDocumentoFiscalParaInput,
+  normalizarMoedaParaInput,
   normalizarPrazoEntregaParaApi,
   normalizarPrecoParaApi,
   normalizarPrincipalEnderecos,
   normalizarPrincipalTelefones,
+  normalizarTelefoneParaInput,
   normalizarValorEnderecoFormulario,
   obterErroEnderecoInvalido,
   obterMensagemErroLoja,
@@ -1355,10 +1358,11 @@ export function PerfilUsuarioPage() {
 
   function handlePerfilInputChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
+    const valorMascarado = name === "telefone" ? normalizarTelefoneParaInput(value) : value;
 
     setPerfilForm((currentData) => ({
       ...currentData,
-      [name]: value,
+      [name]: valorMascarado,
     }));
     setPerfilErroAcao("");
   }
@@ -1369,13 +1373,14 @@ export function PerfilUsuarioPage() {
     const { name, value } = event.target;
 
     setEntregaLojaForm((currentData) => {
+      const valorMascarado = name === "valorFrete" ? normalizarMoedaParaInput(value) : value;
       const proximoEstado = {
         ...currentData,
-        [name]: value,
+        [name]: valorMascarado,
       };
 
       if (name === "tipoEntregaId") {
-        const tipoEntregaId = Number(value);
+        const tipoEntregaId = Number(valorMascarado);
 
         if (!currentData.nome.trim()) {
           proximoEstado.nome = obterTipoEntregaLabel(tipoEntregaId);
@@ -1496,7 +1501,9 @@ export function PerfilUsuarioPage() {
   function handleTelefoneExistenteChange(index: number, value: string) {
     setTelefonesForm((currentData) =>
       currentData.map((telefone, currentIndex) =>
-        currentIndex === index ? { ...telefone, numero: value } : telefone,
+        currentIndex === index
+          ? { ...telefone, numero: normalizarTelefoneParaInput(value) }
+          : telefone,
       ),
     );
     setPerfilErroAcao("");
@@ -1519,7 +1526,7 @@ export function PerfilUsuarioPage() {
   function handleNovoTelefoneChange(value: string) {
     setNovoTelefoneForm((currentData) => ({
       ...(currentData ?? TELEFONE_FORM_INICIAL),
-      numero: value,
+      numero: normalizarTelefoneParaInput(value),
     }));
     setPerfilErroAcao("");
   }
@@ -1793,11 +1800,26 @@ export function PerfilUsuarioPage() {
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) {
     const { name, value } = event.target;
+    const valorMascarado =
+      name === "documentoFiscal"
+        ? normalizarDocumentoFiscalParaInput(value, lojaForm.tipoDocumentoFiscal)
+        : value;
 
-    setLojaForm((currentData) => ({
-      ...currentData,
-      [name]: value,
-    }));
+    setLojaForm((currentData) => {
+      const proximoEstado = {
+        ...currentData,
+        [name]: valorMascarado,
+      };
+
+      if (name === "tipoDocumentoFiscal") {
+        proximoEstado.documentoFiscal = normalizarDocumentoFiscalParaInput(
+          currentData.documentoFiscal,
+          valorMascarado,
+        );
+      }
+
+      return proximoEstado;
+    });
     setLojaErroAcao("");
   }
 
@@ -1813,10 +1835,11 @@ export function PerfilUsuarioPage() {
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) {
     const { name, value } = event.target;
+    const valorMascarado = name === "preco" ? normalizarMoedaParaInput(value) : value;
 
     setProdutoForm((currentData) => ({
       ...currentData,
-      [name]: value,
+      [name]: valorMascarado,
     }));
     setProdutoConfirmandoExclusao(false);
     setProdutoErroAcao("");

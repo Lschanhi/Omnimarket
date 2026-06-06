@@ -11,6 +11,7 @@ import { PageLayout } from "../../Components/PageLayout";
 import { registrarUsuario } from "../../Services/auth/authService";
 import { normalizarTelefoneParaApi } from "../../Services/user/telefoneService";
 import type { CadastroFormData, FormErrors } from "../../types/cadastroFormData";
+import { formatarCpf, formatarTelefone } from "../../utils/masks";
 import { validarFormulario } from "../../utils/validators";
 
 type CampoCadastroProps = {
@@ -79,10 +80,12 @@ export function CadastroPage() {
 
   function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
+    const valorMascarado =
+      name === "cpf" ? formatarCpf(value) : name === "telefone" ? formatarTelefone(value) : value;
 
     setFormData((currentData) => ({
       ...currentData,
-      [name]: value,
+      [name]: valorMascarado,
     }));
 
     setErrors((currentErrors) => ({
@@ -213,6 +216,8 @@ export function CadastroPage() {
                   id="telefone"
                   name="telefone"
                   type="tel"
+                  inputMode="numeric"
+                  maxLength={15}
                   value={formData.telefone}
                   onChange={handleInputChange}
                   placeholder="(11) 99999-9999"
@@ -224,6 +229,8 @@ export function CadastroPage() {
                   label="CPF"
                   id="cpf"
                   name="cpf"
+                  inputMode="numeric"
+                  maxLength={14}
                   value={formData.cpf}
                   onChange={handleInputChange}
                   placeholder="000.000.000-00"

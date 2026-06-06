@@ -74,6 +74,7 @@ export function ModalProdutoLoja({
             label="Preco"
             id="produtoPreco"
             name="preco"
+            inputMode="decimal"
             placeholder="100,99"
             value={produtoForm.preco}
             onChange={onChangeProdutoInput}
