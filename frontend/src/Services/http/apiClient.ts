@@ -23,6 +23,44 @@ type ApiRequestOptions = Omit<RequestInit, "body"> & {
   authenticated?: boolean;
 };
 
+const API_MESSAGE_KEYS = new Set(["mensagem", "message", "title"]);
+
+const API_FIELD_LABELS: Record<string, string> = {
+  cpf: "CPF",
+  nome: "nome",
+  sobrenome: "sobrenome",
+  email: "e-mail",
+  password: "senha",
+  confirmpassword: "confirmacao de senha",
+  aceitoutermos: "aceite dos termos",
+  telefones: "telefones",
+  ddd: "DDD",
+  numero: "numero",
+  numeroe164: "telefone",
+  datanascimento: "data de nascimento",
+  tipologradouro: "tipo de logradouro",
+  nomeendereco: "nome do endereco",
+  complemento: "complemento",
+  cep: "CEP",
+  cidade: "cidade",
+  uf: "UF",
+  enderecoid: "endereco",
+  tipoentregaid: "tipo de entrega",
+  produtoid: "produto",
+  quantidade: "quantidade",
+  tipodocumentofiscal: "tipo de documento fiscal",
+  documentofiscal: "documento fiscal",
+  nomefantasia: "nome fantasia",
+  emailcontato: "e-mail de contato",
+  descricao: "descricao",
+  preco: "preco",
+  estoque: "estoque",
+  valorfrete: "valor do frete",
+  prazoentregadias: "prazo de entrega",
+  observacao: "observacao",
+  itens: "itens",
+};
+
 function buildUrl(path: string) {
   if (/^https?:\/\//i.test(path)) {
     return path;
@@ -50,6 +88,169 @@ function buildHeaders(headers?: HeadersInit, authenticated?: boolean) {
   }
 
   return finalHeaders;
+}
+
+function formatApiFieldLabel(fieldPath?: string) {
+  if (!fieldPath) {
+    return "campo";
+  }
+
+  const lastPathSegment = fieldPath
+    .replace(/^\$\./, "")
+    .split(".")
+    .filter(Boolean)
+    .at(-1);
+
+  const fieldName = (lastPathSegment ?? fieldPath).replace(/\[\d+\]/g, "");
+  const normalizedFieldName = fieldName.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  const mappedFieldLabel = API_FIELD_LABELS[normalizedFieldName];
+
+  if (mappedFieldLabel) {
+    return mappedFieldLabel;
+  }
+
+  return fieldName
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function translateApiMessage(message: string, fieldPath?: string) {
+  const sanitizedMessage = message.trim();
+
+  if (!sanitizedMessage) {
+    return message;
+  }
+
+  if (/^One or more validation errors occurred\.?$/i.test(sanitizedMessage)) {
+    return "Um ou mais erros de validacao ocorreram.";
+  }
+
+  if (/^A non-empty request body is required\.?$/i.test(sanitizedMessage)) {
+    return "Envie os dados obrigatorios da requisicao.";
+  }
+
+  if (/^An error occurred while processing your request\.?$/i.test(sanitizedMessage)) {
+    return "Ocorreu um erro ao processar a sua solicitacao.";
+  }
+
+  if (/^Unauthorized\.?$/i.test(sanitizedMessage)) {
+    return "Voce nao tem autorizacao para executar esta acao.";
+  }
+
+  if (/^The JSON value could not be converted to /i.test(sanitizedMessage)) {
+    return "Nao foi possivel interpretar os dados enviados. Revise os campos informados.";
+  }
+
+  const requiredFieldMatch = sanitizedMessage.match(/^The (.+?) field is required\.?$/i);
+
+  if (requiredFieldMatch) {
+    return `O campo ${formatApiFieldLabel(fieldPath ?? requiredFieldMatch[1])} e obrigatorio.`;
+  }
+
+  const invalidEmailMatch = sanitizedMessage.match(
+    /^The (.+?) field is not a valid e-?mail address\.?$/i,
+  );
+
+  if (invalidEmailMatch) {
+    return `Informe um ${formatApiFieldLabel(fieldPath ?? invalidEmailMatch[1])} valido.`;
+  }
+
+  const invalidValueMatch = sanitizedMessage.match(/^The value '.*' is not valid for (.+?)\.?$/i);
+
+  if (invalidValueMatch) {
+    return `O valor informado para ${formatApiFieldLabel(fieldPath ?? invalidValueMatch[1])} nao e valido.`;
+  }
+
+  if (/^The value '.*' is not valid\.?$/i.test(sanitizedMessage)) {
+    return `O valor informado para ${formatApiFieldLabel(fieldPath)} nao e valido.`;
+  }
+
+  const minArrayLengthMatch = sanitizedMessage.match(
+    /^The field (.+?) must be a string or array type with a minimum length of '(\d+)'\.?$/i,
+  );
+
+  if (minArrayLengthMatch) {
+    return `O campo ${formatApiFieldLabel(fieldPath ?? minArrayLengthMatch[1])} deve ter no minimo ${minArrayLengthMatch[2]} item(ns) ou caractere(s).`;
+  }
+
+  const stringLengthRangeMatch = sanitizedMessage.match(
+    /^The field (.+?) must be a string with a minimum length of '?(\d+)'? and a maximum length of '?(\d+)'?\.?$/i,
+  );
+
+  if (stringLengthRangeMatch) {
+    return `O campo ${formatApiFieldLabel(fieldPath ?? stringLengthRangeMatch[1])} deve ter entre ${stringLengthRangeMatch[2]} e ${stringLengthRangeMatch[3]} caracteres.`;
+  }
+
+  const maxLengthMatch = sanitizedMessage.match(
+    /^The field (.+?) must be a string with a maximum length of '?(\d+)'?\.?$/i,
+  );
+
+  if (maxLengthMatch) {
+    return `O campo ${formatApiFieldLabel(fieldPath ?? maxLengthMatch[1])} deve ter no maximo ${maxLengthMatch[2]} caracteres.`;
+  }
+
+  const minLengthMatch = sanitizedMessage.match(
+    /^The field (.+?) must be a string with a minimum length of '?(\d+)'?\.?$/i,
+  );
+
+  if (minLengthMatch) {
+    return `O campo ${formatApiFieldLabel(fieldPath ?? minLengthMatch[1])} deve ter no minimo ${minLengthMatch[2]} caracteres.`;
+  }
+
+  return sanitizedMessage;
+}
+
+function normalizeApiErrors(
+  errors: Record<string, string[] | string | undefined>,
+): Record<string, string[]> {
+  return Object.fromEntries(
+    Object.entries(errors).map(([fieldPath, messages]) => {
+      const normalizedMessages = Array.isArray(messages) ? messages : [messages];
+
+      return [
+        fieldPath,
+        normalizedMessages
+          .filter((message): message is string => typeof message === "string" && Boolean(message))
+          .map((message) => translateApiMessage(message, fieldPath)),
+      ];
+    }),
+  );
+}
+
+function normalizeApiPayloadMessages(payload: unknown): unknown {
+  if (typeof payload === "string") {
+    return translateApiMessage(payload);
+  }
+
+  if (Array.isArray(payload)) {
+    return payload.map((item) => normalizeApiPayloadMessages(item));
+  }
+
+  if (!payload || typeof payload !== "object") {
+    return payload;
+  }
+
+  const data = payload as Record<string, unknown>;
+
+  return Object.fromEntries(
+    Object.entries(data).map(([key, value]) => {
+      if (key === "errors" && value && typeof value === "object" && !Array.isArray(value)) {
+        return [key, normalizeApiErrors(value as Record<string, string[] | string | undefined>)];
+      }
+
+      if (API_MESSAGE_KEYS.has(key) && typeof value === "string") {
+        return [key, translateApiMessage(value)];
+      }
+
+      if (value && typeof value === "object") {
+        return [key, normalizeApiPayloadMessages(value)];
+      }
+
+      return [key, value];
+    }),
+  );
 }
 
 async function parseResponse(response: Response) {
@@ -84,7 +285,7 @@ function extractErrorMessage(payload: unknown, fallback: string) {
       .split(/\s+HEADERS\s*=+/i)[0]
       .trim();
 
-    return sanitizedPayload || fallback;
+    return translateApiMessage(sanitizedPayload) || translateApiMessage(fallback);
   }
 
   if (payload && typeof payload === "object") {
@@ -95,29 +296,29 @@ function extractErrorMessage(payload: unknown, fallback: string) {
       errors?: Record<string, string[]>;
     };
 
-    if (data.mensagem) {
-      return data.mensagem;
-    }
-
-    if (data.message) {
-      return data.message;
-    }
-
-    if (data.title) {
-      return data.title;
-    }
-
     if (data.errors) {
-      const firstErrorGroup = Object.values(data.errors)[0];
+      const [fieldPath, firstErrorGroup] = Object.entries(data.errors)[0] ?? [];
       const firstError = firstErrorGroup?.[0];
 
       if (firstError) {
-        return firstError;
+        return translateApiMessage(firstError, fieldPath);
       }
+    }
+
+    if (data.mensagem) {
+      return translateApiMessage(data.mensagem);
+    }
+
+    if (data.message) {
+      return translateApiMessage(data.message);
+    }
+
+    if (data.title) {
+      return translateApiMessage(data.title);
     }
   }
 
-  return fallback;
+  return translateApiMessage(fallback);
 }
 
 export async function apiRequest<T>(
@@ -158,7 +359,7 @@ export async function apiRequest<T>(
     );
   }
 
-  const payload = await parseResponse(response);
+  const payload = normalizeApiPayloadMessages(await parseResponse(response));
 
   if (!response.ok) {
     if (response.status === 401) {

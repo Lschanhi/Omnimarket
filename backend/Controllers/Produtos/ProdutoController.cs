@@ -22,11 +22,15 @@ namespace Omnimarket.Api.Controllers
         public async Task<IActionResult> Get()
             => Ok(await _service.GetAllAsync());
 
+        [HttpGet("destaques")]
+        public async Task<IActionResult> GetHighlights([FromQuery] int take = 10)
+            => Ok(await _service.GetHighlightsAsync(take));
+
         // Busca um produto especifico pelo identificador.
         [HttpGet("{id:int}")]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> Get(int id, [FromQuery] bool registrarVisualizacao = false)
         {
-            var produto = await _service.GetByIdAsync(id);
+            var produto = await _service.GetByIdAsync(id, registrarVisualizacao);
 
             if (produto == null)
                 return NotFound();

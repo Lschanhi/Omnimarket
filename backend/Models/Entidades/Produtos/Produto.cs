@@ -34,6 +34,8 @@ namespace Omnimarket.Api.Models.Entidades
 
         public double MediaAvaliacao { get; set; }
         public int TotalAvaliacoes { get; set; }
+        public int TotalVisualizacoes { get; set; }
+        public DateTimeOffset? UltimaVisualizacaoEm { get; set; }
 
         public DateTimeOffset DtCriacao { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset? DtAtualizacao { get; set; }

@@ -25,6 +25,8 @@ namespace Omnimarket.Api.Models.Dtos.Produtos.Lojas
         public bool Ativa { get; set; }
         public double MediaAvaliacao { get; set; }
         public int TotalAvaliacoes { get; set; }
+        public int TotalVisualizacoes { get; set; }
+        public int TotalProdutosAtivos { get; set; }
         public DateTimeOffset DtCriacao { get; set; }
         public DateTimeOffset? DtAtualizacao { get; set; }
     }

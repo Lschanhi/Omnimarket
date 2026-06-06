@@ -38,6 +38,7 @@ namespace Omnimarket.Api.Services
         public async Task<IEnumerable<ProdutoLeituraDto>> GetAllAsync()
         {
             var produtos = await BaseQuery()
+                .AsNoTracking()
                 .Where(p =>
                     p.Loja.Ativa &&
                     p.StatusPublicacao == StatusProduto.Publicado &&
@@ -49,15 +50,51 @@ namespace Omnimarket.Api.Services
             return produtos.Select(MapToDto).ToList();
         }
 
-        public async Task<ProdutoLeituraDto?> GetByIdAsync(int id)
+        public async Task<IEnumerable<ProdutoLeituraDto>> GetHighlightsAsync(int take = 10)
         {
-            var produto = await BaseQuery()
+            var limite = NormalizarLimite(take);
+
+            var produtos = await BaseQuery()
+                .AsNoTracking()
+                .Where(p =>
+                    p.Loja.Ativa &&
+                    p.StatusPublicacao == StatusProduto.Publicado &&
+                    p.Estoque > 0)
+                .OrderByDescending(p => p.TotalVisualizacoes)
+                .ThenByDescending(p => p.TotalAvaliacoes)
+                .ThenByDescending(p => p.MediaAvaliacao)
+                .ThenByDescending(p => p.Estoque)
+                .ThenByDescending(p => p.DtCriacao)
+                .Take(limite)
+                .ToListAsync();
+
+            return produtos.Select(MapToDto).ToList();
+        }
+
+        public async Task<ProdutoLeituraDto?> GetByIdAsync(int id, bool registrarVisualizacao = false)
+        {
+            var query = BaseQuery();
+
+            if (!registrarVisualizacao)
+                query = query.AsNoTracking();
+
+            var produto = await query
                 .FirstOrDefaultAsync(p =>
                     p.Id == id &&
                     p.Loja.Ativa &&
                     p.StatusPublicacao == StatusProduto.Publicado);
 
-            return produto == null ? null : MapToDto(produto);
+            if (produto == null)
+                return null;
+
+            if (registrarVisualizacao)
+            {
+                produto.TotalVisualizacoes += 1;
+                produto.UltimaVisualizacaoEm = DateTimeOffset.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+
+            return MapToDto(produto);
         }
 
         public async Task<ProdutoLeituraDto> CreateAsync(ProdutoCriacaoDto dto, int usuarioId)
@@ -401,6 +438,14 @@ namespace Omnimarket.Api.Services
                 .AsQueryable();
         }
 
+        private static int NormalizarLimite(int take, int padrao = 10, int maximo = 20)
+        {
+            if (take <= 0)
+                return padrao;
+
+            return take > maximo ? maximo : take;
+        }
+
         private async Task<List<string>> SincronizarImagensAsync(Produto produto, IEnumerable<string> imagens)
         {
             var entradasMidia = NormalizarImagens(imagens).ToList();
@@ -666,6 +711,7 @@ namespace Omnimarket.Api.Services
                 Descricao = produto.Descricao,
                 MediaAvaliacao = produto.MediaAvaliacao,
                 TotalAvaliacoes = produto.TotalAvaliacoes,
+                TotalVisualizacoes = produto.TotalVisualizacoes,
                 DtCriacao = produto.DtCriacao,
                 DtAtualizacao = produto.DtAtualizacao,
                 LojaId = produto.LojaId,

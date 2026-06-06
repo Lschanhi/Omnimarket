@@ -16,6 +16,7 @@ type ProdutoApiResponse = {
   descricao?: string | null;
   mediaAvaliacao: number;
   totalAvaliacoes: number;
+  totalVisualizacoes?: number;
   lojaId: number;
   nomeLoja: string;
   slugLoja: string;
@@ -105,6 +106,10 @@ type ProdutoMidiaApiResponse =
     }
   | null
   | undefined;
+
+type ObterProdutoOptions = {
+  registrarVisualizacao?: boolean;
+};
 
 function normalizarTexto(valor: string) {
   return valor
@@ -467,11 +472,11 @@ function mapearProduto(produto: ProdutoApiResponse): HomeProduct {
     lojaAvatarUrl: lojaAvatarUrl || undefined,
     slugLoja: produto.slugLoja,
     totalAvaliacoes: produto.totalAvaliacoes,
+    totalVisualizacoes: produto.totalVisualizacoes ?? 0,
   };
 }
 
-export async function listarProdutos() {
-  const produtos = await apiRequest<ProdutoApiResponse[]>("/api/produto");
+async function normalizarProdutosDaApi(produtos: ProdutoApiResponse[]) {
   const produtosComMidia = await Promise.all(
     produtos.map(async (produto) => {
       const imagens = extrairImagensProduto(produto);
@@ -500,8 +505,19 @@ export async function listarProdutos() {
   return produtosEnriquecidos.map(mapearProduto);
 }
 
-export async function obterProdutoPorId(id: number) {
-  const produto = await apiRequest<ProdutoApiResponse>(`/api/produto/${id}`);
+export async function listarProdutos() {
+  const produtos = await apiRequest<ProdutoApiResponse[]>("/api/produto");
+  return normalizarProdutosDaApi(produtos);
+}
+
+export async function listarProdutosEmDestaque(take = 10) {
+  const produtos = await apiRequest<ProdutoApiResponse[]>(`/api/produto/destaques?take=${take}`);
+  return normalizarProdutosDaApi(produtos);
+}
+
+export async function obterProdutoPorId(id: number, options: ObterProdutoOptions = {}) {
+  const query = options.registrarVisualizacao ? "?registrarVisualizacao=true" : "";
+  const produto = await apiRequest<ProdutoApiResponse>(`/api/produto/${id}${query}`);
   const imagens = extrairImagensProduto(produto);
   const produtoComMidia =
     imagens.length > 0

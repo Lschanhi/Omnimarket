@@ -206,6 +206,76 @@ public class LojaServiceTests
     }
 
     [Fact]
+    public async Task ObterPorIdAsync_DeveRegistrarVisualizacaoSomenteQuandoSolicitado()
+    {
+        using var fixture = new ServiceTestFixture();
+        var usuario = await fixture.CriarUsuarioAsync("loja-visualizacao");
+        var lojaCriada = await fixture.CriarLojaAsync(usuario.Id, nomeFantasia: "Loja monitorada");
+
+        var leituraSemRegistro = await fixture.LojaService.ObterPorIdAsync(lojaCriada.Id);
+        var leituraComRegistro = await fixture.LojaService.ObterPorIdAsync(
+            lojaCriada.Id,
+            registrarVisualizacao: true);
+
+        fixture.Context.ChangeTracker.Clear();
+
+        var lojaSalva = await fixture.Context.TBL_LOJA.SingleAsync(l => l.Id == lojaCriada.Id);
+
+        Assert.NotNull(leituraSemRegistro);
+        Assert.NotNull(leituraComRegistro);
+        Assert.Equal(0, leituraSemRegistro!.TotalVisualizacoes);
+        Assert.Equal(1, leituraComRegistro!.TotalVisualizacoes);
+        Assert.Equal(1, lojaSalva.TotalVisualizacoes);
+        Assert.NotNull(lojaSalva.UltimaVisualizacaoEm);
+    }
+
+    [Fact]
+    public async Task ListarDestaquesAsync_DeveOrdenarLojasPorVisualizacoesEProdutosAtivos()
+    {
+        using var fixture = new ServiceTestFixture();
+        var usuarioA = await fixture.CriarUsuarioAsync("loja-destaque-a");
+        var usuarioB = await fixture.CriarUsuarioAsync("loja-destaque-b");
+        var usuarioC = await fixture.CriarUsuarioAsync("loja-destaque-c");
+
+        var lojaA = await fixture.CriarLojaAsync(usuarioA.Id, nomeFantasia: "Loja A");
+        var lojaB = await fixture.CriarLojaAsync(usuarioB.Id, nomeFantasia: "Loja B");
+        var lojaC = await fixture.CriarLojaAsync(usuarioC.Id, nomeFantasia: "Loja C");
+
+        await fixture.CriarProdutoAsync(usuarioA.Id, preco: 50m, estoque: 5);
+        await fixture.CriarProdutoAsync(usuarioA.Id, preco: 70m, estoque: 3);
+        await fixture.CriarProdutoAsync(usuarioB.Id, preco: 90m, estoque: 6);
+        var produtoPausado = await fixture.CriarProdutoAsync(usuarioC.Id, preco: 110m, estoque: 4);
+
+        produtoPausado.StatusPublicacao = StatusProduto.Pausado;
+
+        lojaA.TotalVisualizacoes = 12;
+        lojaA.TotalAvaliacoes = 4;
+        lojaA.MediaAvaliacao = 4.3;
+
+        lojaB.TotalVisualizacoes = 27;
+        lojaB.TotalAvaliacoes = 2;
+        lojaB.MediaAvaliacao = 4.9;
+
+        lojaC.TotalVisualizacoes = 3;
+        lojaC.TotalAvaliacoes = 8;
+        lojaC.MediaAvaliacao = 4.7;
+
+        await fixture.Context.SaveChangesAsync();
+        fixture.Context.ChangeTracker.Clear();
+
+        var destaques = (await fixture.LojaService.ListarDestaquesAsync(5)).ToList();
+
+        Assert.Equal(3, destaques.Count);
+        Assert.Equal(lojaB.Id, destaques[0].Id);
+        Assert.Equal(27, destaques[0].TotalVisualizacoes);
+        Assert.Equal(1, destaques[0].TotalProdutosAtivos);
+        Assert.Equal(lojaA.Id, destaques[1].Id);
+        Assert.Equal(2, destaques[1].TotalProdutosAtivos);
+        Assert.Equal(lojaC.Id, destaques[2].Id);
+        Assert.Equal(0, destaques[2].TotalProdutosAtivos);
+    }
+
+    [Fact]
     public async Task CriarMinhaLojaAsync_DeveRejeitarDocumentoFiscalInvalido()
     {
         using var fixture = new ServiceTestFixture();
