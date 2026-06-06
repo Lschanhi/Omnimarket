@@ -206,7 +206,8 @@ namespace Omnimarket.Api.Services
             if (usuario == null)
                 return null;
 
-            var emailNormalizado = dto.Email.ToLower().Trim();
+            var emailNormalizado = ValidadorEmail.Normalizar(dto.Email);
+            ValidadorEmail.GarantirValidoParaCadastro(emailNormalizado);
 
             if (usuario.Email != emailNormalizado)
             {

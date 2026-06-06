@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Omnimarket.Api.Models.Dtos.Usuarios.Enderecos;
 using Omnimarket.Api.Models.Dtos.Usuarios.Telefones;
+using Omnimarket.Api.Utils;
 
 namespace Omnimarket.Api.Models.Dtos.Usuarios
 {
@@ -19,7 +20,7 @@ namespace Omnimarket.Api.Models.Dtos.Usuarios
         public string Sobrenome { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Email e obrigatorio")]
-        [EmailAddress(ErrorMessage = "Email invalido")]
+        [EmailCadastro]
         [StringLength(200)]
         public string Email { get; set; } = string.Empty;
 
