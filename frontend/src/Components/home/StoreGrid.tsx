@@ -17,7 +17,7 @@ export function StoreGrid({
   mensagemVazia,
 }: StoreGridProps) {
   const itemClassName =
-    "w-[min(44vw,168px)] sm:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)] xl:w-[calc((100%-4rem)/5)] 2xl:w-[calc((100%-5rem)/6)]";
+    "w-[min(41vw,158px)] sm:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)] xl:w-[calc((100%-4rem)/5)] 2xl:w-[calc((100%-5rem)/6)]";
 
   if (isLoading) {
     return (
@@ -27,7 +27,7 @@ export function StoreGrid({
           <span>Carregando lojas...</span>
         </div>
 
-        <div className="flex gap-4 overflow-hidden pb-2">
+        <div className="flex gap-5 overflow-hidden pb-2">
           {Array.from({ length: Math.min(limite, 4) }).map((_, indice) => (
             <div
               key={`skeleton-loja-${indice}`}
@@ -54,7 +54,7 @@ export function StoreGrid({
   }
 
   return (
-    <CarouselRail ariaLabel="Carrossel de lojas">
+    <CarouselRail ariaLabel="Carrossel de lojas" contentClassName="gap-5">
       {lojas.slice(0, limite).map((loja) => (
         <div key={loja.id} className={`shrink-0 snap-start ${itemClassName}`.trim()}>
           <StoreCard loja={loja} />
