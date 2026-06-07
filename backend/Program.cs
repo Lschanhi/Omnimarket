@@ -183,7 +183,9 @@ if (allowedOrigins is null || allowedOrigins.Length == 0)
         "https://localhost:5173",
         "http://127.0.0.1:5173",
         "https://127.0.0.1:5173",
-        "https://omnimarket-web.azurewebsites.net"
+        "https://omnimarket-web.azurewebsites.net",
+        "https://omnimarket-web-prod.azurewebsites.net",
+        "https://omnimarket-zeta.vercel.app"
     };
 }
 
