@@ -10,6 +10,8 @@ type ProductShelfProps = {
   mensagemVazia: string;
   mostrarResumo?: boolean;
   modo?: "grid" | "carousel";
+  autoplay?: boolean;
+  itemClassName?: string;
 };
 
 export function ProductShelf({
@@ -19,6 +21,8 @@ export function ProductShelf({
   mensagemVazia,
   mostrarResumo = false,
   modo = "carousel",
+  autoplay = false,
+  itemClassName = "w-[min(82vw,320px)] sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] xl:w-[calc((100%-3rem)/4)]",
 }: ProductShelfProps) {
   if (isLoading) {
     if (modo === "carousel") {
@@ -33,7 +37,7 @@ export function ProductShelf({
             {Array.from({ length: Math.min(limite, 4) }).map((_, indice) => (
               <div
                 key={`skeleton-prateleira-${indice}`}
-                className="w-[min(82vw,320px)] shrink-0 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] sm:w-[320px] xl:w-[340px]"
+                className={`shrink-0 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] ${itemClassName}`.trim()}
               >
                 <div className="aspect-[4/3] animate-pulse bg-white/10" />
                 <div className="space-y-3 p-5">
@@ -106,11 +110,15 @@ export function ProductShelf({
           ))}
         </div>
       ) : (
-        <CarouselRail ariaLabel="Carrossel de produtos">
+        <CarouselRail
+          ariaLabel="Carrossel de produtos"
+          autoplay={autoplay}
+          scrollMode="item"
+        >
           {produtosVisiveis.map((produto) => (
             <div
               key={produto.id}
-              className="w-[min(82vw,320px)] shrink-0 snap-start sm:w-[320px] xl:w-[340px]"
+              className={`shrink-0 snap-start ${itemClassName}`.trim()}
             >
               <ProductCard produto={produto} />
             </div>

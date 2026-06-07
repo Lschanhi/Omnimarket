@@ -16,6 +16,9 @@ export function StoreGrid({
   limite = 10,
   mensagemVazia,
 }: StoreGridProps) {
+  const itemClassName =
+    "w-[min(44vw,168px)] sm:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)] xl:w-[calc((100%-4rem)/5)] 2xl:w-[calc((100%-5rem)/6)]";
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -28,7 +31,7 @@ export function StoreGrid({
           {Array.from({ length: Math.min(limite, 4) }).map((_, indice) => (
             <div
               key={`skeleton-loja-${indice}`}
-              className="h-[220px] w-[152px] shrink-0 rounded-[30px] border border-white/10 bg-white/[0.03] sm:w-[172px]"
+              className={`h-[220px] shrink-0 rounded-[30px] border border-white/10 bg-white/[0.03] ${itemClassName}`.trim()}
             />
           ))}
         </div>
@@ -53,7 +56,7 @@ export function StoreGrid({
   return (
     <CarouselRail ariaLabel="Carrossel de lojas">
       {lojas.slice(0, limite).map((loja) => (
-        <div key={loja.id} className="w-[152px] shrink-0 snap-start sm:w-[172px]">
+        <div key={loja.id} className={`shrink-0 snap-start ${itemClassName}`.trim()}>
           <StoreCard loja={loja} />
         </div>
       ))}

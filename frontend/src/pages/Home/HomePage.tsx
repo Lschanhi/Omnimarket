@@ -408,6 +408,7 @@ export function HomePage() {
               produtos={produtosEmDestaque}
               isLoading={isLoading}
               limite={10}
+              autoplay
               mostrarResumo
               mensagemVazia="Ainda nao ha produtos suficientes para montar a vitrine de destaque."
             />
