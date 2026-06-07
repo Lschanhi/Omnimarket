@@ -183,7 +183,9 @@ if (allowedOrigins is null || allowedOrigins.Length == 0)
         "https://localhost:5173",
         "http://127.0.0.1:5173",
         "https://127.0.0.1:5173",
-        "https://omnimarket-web.azurewebsites.net"
+        "https://omnimarket-web.azurewebsites.net",
+        "https://omnimarket-web-prod.azurewebsites.net",
+        "https://omnimarket-zeta.vercel.app"
     };
 }
 
@@ -307,7 +309,15 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 
-app.MapGet("/health", async (DataContext dataContext, CancellationToken cancellationToken) =>
+// Health leve para o Render e para monitores externos.
+// Nao depende do banco para evitar timeout no startup.
+app.MapGet("/health", () =>
+{
+    return Results.Ok(new { status = "ok" });
+});
+
+// Health de diagnostico para validar conectividade com o banco quando necessario.
+app.MapGet("/health/database", async (DataContext dataContext, CancellationToken cancellationToken) =>
 {
     var bancoDisponivel = await dataContext.Database.CanConnectAsync(cancellationToken);
 
