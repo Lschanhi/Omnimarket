@@ -100,8 +100,6 @@ function StoreRatingArc({
 
   return (
     <div className="relative mx-auto h-28 w-full max-w-[132px]">
-      <div className="absolute inset-x-0 top-3 mx-auto h-16 w-[6.8rem] rounded-[999px] border-t border-yellow-400/18" />
-
       {STAR_POSITIONS.map((position, indice) => (
         <span
           key={`${nome}-star-${indice}`}

@@ -11,6 +11,7 @@ type ProductShelfProps = {
   mostrarResumo?: boolean;
   modo?: "grid" | "carousel";
   autoplay?: boolean;
+  autoplayIntervalMs?: number;
   pauseAutoplayOnHover?: boolean;
   itemClassName?: string;
 };
@@ -23,6 +24,7 @@ export function ProductShelf({
   mostrarResumo = false,
   modo = "carousel",
   autoplay = false,
+  autoplayIntervalMs,
   pauseAutoplayOnHover = true,
   itemClassName = "w-[min(82vw,320px)] sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] xl:w-[calc((100%-3rem)/4)]",
 }: ProductShelfProps) {
@@ -115,6 +117,7 @@ export function ProductShelf({
         <CarouselRail
           ariaLabel="Carrossel de produtos"
           autoplay={autoplay}
+          autoplayIntervalMs={autoplayIntervalMs}
           pauseAutoplayOnHover={pauseAutoplayOnHover}
           scrollMode="item"
         >
