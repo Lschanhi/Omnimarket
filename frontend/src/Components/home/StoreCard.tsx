@@ -10,11 +10,11 @@ type StoreCardProps = {
 type StarFill = "empty" | "half" | "full";
 
 const STAR_POSITIONS = [
-  { left: "14%", top: "32%", rotate: -34 },
-  { left: "28%", top: "13%", rotate: -18 },
-  { left: "50%", top: "4%", rotate: 0 },
-  { left: "72%", top: "13%", rotate: 18 },
-  { left: "86%", top: "32%", rotate: 34 },
+  { left: "12%", top: "36%", rotate: -34 },
+  { left: "28%", top: "18%", rotate: -18 },
+  { left: "50%", top: "10%", rotate: 0 },
+  { left: "72%", top: "18%", rotate: 18 },
+  { left: "88%", top: "36%", rotate: 34 },
 ] as const;
 
 function obterIniciaisLoja(nome: string) {
@@ -47,14 +47,14 @@ function calcularPreenchimentoEstrela(nota: number, indice: number): StarFill {
 
 function StarGlyph({ fill }: { fill: StarFill }) {
   return (
-    <span className="relative block h-4 w-4">
-      <Star className="h-4 w-4 text-yellow-500/20" strokeWidth={1.8} />
+    <span className="relative block h-3.5 w-3.5">
+      <Star className="h-3.5 w-3.5 text-yellow-500/20" strokeWidth={1.8} />
 
       {fill !== "empty" ? (
         <span
           className={`absolute inset-0 overflow-hidden ${fill === "half" ? "w-1/2" : "w-full"}`}
         >
-          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" strokeWidth={1.8} />
+          <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" strokeWidth={1.8} />
         </span>
       ) : null}
     </span>
@@ -67,7 +67,7 @@ function StoreAvatar({ nome, avatarUrl }: { nome: string; avatarUrl?: string }) 
   const iniciais = obterIniciaisLoja(nome);
 
   return (
-    <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[30px] border border-yellow-400/25 bg-[radial-gradient(circle_at_top,_rgba(250,204,21,0.38),_rgba(23,23,23,0.94))] text-2xl font-bold tracking-[0.2em] text-yellow-50 shadow-[0_18px_42px_rgba(0,0,0,0.35)]">
+    <span className="flex h-[5.25rem] w-[5.25rem] items-center justify-center overflow-hidden rounded-[1.75rem] border border-yellow-400/20 bg-[radial-gradient(circle_at_top,_rgba(250,204,21,0.36),_rgba(23,23,23,0.96))] text-[1.35rem] font-bold tracking-[0.18em] text-yellow-50 shadow-[0_16px_32px_rgba(0,0,0,0.28)]">
       {avatarUrl && !avatarComErro ? (
         <img
           src={avatarUrl}
@@ -99,8 +99,8 @@ function StoreRatingArc({
   const notaNormalizada = Math.round(Math.max(0, Math.min(5, mediaAvaliacao)) * 2) / 2;
 
   return (
-    <div className="relative mx-auto h-32 w-full max-w-[136px]">
-      <div className="absolute inset-x-0 top-4 mx-auto h-16 w-28 rounded-[999px] border-t border-yellow-400/20" />
+    <div className="relative mx-auto h-28 w-full max-w-[132px]">
+      <div className="absolute inset-x-0 top-3 mx-auto h-16 w-[6.8rem] rounded-[999px] border-t border-yellow-400/18" />
 
       {STAR_POSITIONS.map((position, indice) => (
         <span
@@ -130,15 +130,15 @@ export function StoreCard({ loja }: StoreCardProps) {
       params={{ id: String(loja.id) }}
       aria-label={`${loja.nome} com avaliacao media ${loja.mediaAvaliacao.toFixed(1)} de 5`}
     >
-      <article className="group flex h-full min-h-[220px] flex-col items-center rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,_rgba(255,255,255,0.05),_rgba(255,255,255,0.02))] px-4 py-5 text-center shadow-[0_18px_50px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-yellow-400/30">
+      <article className="group flex h-full min-h-[12.75rem] flex-col items-center rounded-[2rem] border border-white/8 bg-[linear-gradient(180deg,_rgba(255,255,255,0.045),_rgba(255,255,255,0.018))] px-3.5 py-4 text-center shadow-[0_18px_46px_rgba(0,0,0,0.3)] transition hover:-translate-y-1 hover:border-yellow-400/24">
         <StoreRatingArc
           nome={loja.nome}
           avatarUrl={loja.avatarUrl}
           mediaAvaliacao={loja.mediaAvaliacao}
         />
 
-        <div className="mt-3">
-          <h3 className="line-clamp-2 min-h-[3rem] text-base font-semibold leading-6 text-white">
+        <div className="mt-4 flex min-h-[3rem] items-start">
+          <h3 className="line-clamp-2 text-[0.98rem] font-semibold leading-5 text-white">
             {loja.nome}
           </h3>
         </div>

@@ -9,6 +9,7 @@ type CarouselRailProps = {
   scrollMode?: "item" | "page";
   autoplay?: boolean;
   autoplayIntervalMs?: number;
+  pauseAutoplayOnHover?: boolean;
 };
 
 export function CarouselRail({
@@ -19,41 +20,14 @@ export function CarouselRail({
   scrollMode = "item",
   autoplay = false,
   autoplayIntervalMs = 4500,
+  pauseAutoplayOnHover = true,
 }: CarouselRailProps) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
+  const autoplayIndexRef = useRef(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);
   const [autoplayPaused, setAutoplayPaused] = useState(false);
-
-  useEffect(() => {
-    const viewport = viewportRef.current;
-
-    if (!viewport) {
-      return undefined;
-    }
-
-    function syncScrollState() {
-      if (!viewportRef.current) {
-        return;
-      }
-
-      const viewport = viewportRef.current;
-      const maxScrollLeft = viewport.scrollWidth - viewport.clientWidth;
-      setHasOverflow(maxScrollLeft > 8);
-      setCanScrollLeft(viewport.scrollLeft > 8);
-      setCanScrollRight(viewport.scrollLeft < maxScrollLeft - 8);
-    }
-
-    syncScrollState();
-    viewport.addEventListener("scroll", syncScrollState, { passive: true });
-    window.addEventListener("resize", syncScrollState);
-
-    return () => {
-      viewport.removeEventListener("scroll", syncScrollState);
-      window.removeEventListener("resize", syncScrollState);
-    };
-  }, [children]);
 
   const obterGap = useCallback((viewport: HTMLDivElement) => {
     const style = window.getComputedStyle(viewport);
@@ -74,6 +48,39 @@ export function CarouselRail({
 
     return primeiroItem.getBoundingClientRect().width + obterGap(viewport);
   }, [obterGap, scrollMode]);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+
+    if (!viewport) {
+      return undefined;
+    }
+
+    function syncScrollState() {
+      if (!viewportRef.current) {
+        return;
+      }
+
+      const viewport = viewportRef.current;
+      const maxScrollLeft = viewport.scrollWidth - viewport.clientWidth;
+      setHasOverflow(maxScrollLeft > 8);
+      setCanScrollLeft(viewport.scrollLeft > 8);
+      setCanScrollRight(viewport.scrollLeft < maxScrollLeft - 8);
+
+      const distanciaScroll = obterDistanciaScroll(viewport);
+      autoplayIndexRef.current =
+        distanciaScroll > 0 ? Math.round(viewport.scrollLeft / distanciaScroll) : 0;
+    }
+
+    syncScrollState();
+    viewport.addEventListener("scroll", syncScrollState, { passive: true });
+    window.addEventListener("resize", syncScrollState);
+
+    return () => {
+      viewport.removeEventListener("scroll", syncScrollState);
+      window.removeEventListener("resize", syncScrollState);
+    };
+  }, [children, obterDistanciaScroll]);
 
   function scrollByDirection(direction: "left" | "right") {
     const viewport = viewportRef.current;
@@ -105,21 +112,23 @@ export function CarouselRail({
         return;
       }
 
-      const maxScrollLeft = viewport.scrollWidth - viewport.clientWidth;
-      const chegouNoFim = viewport.scrollLeft >= maxScrollLeft - 8;
-
-      if (chegouNoFim) {
-        viewport.scrollTo({
-          left: 0,
-          behavior: "smooth",
-        });
+      const distanciaScroll = obterDistanciaScroll(viewport);
+      if (distanciaScroll <= 0) {
         return;
       }
 
-      viewport.scrollBy({
-        left: obterDistanciaScroll(viewport),
+      const maxScrollLeft = viewport.scrollWidth - viewport.clientWidth;
+      const maxIndex = Math.max(0, Math.round(maxScrollLeft / distanciaScroll));
+      const proximoIndice =
+        autoplayIndexRef.current >= maxIndex ? 0 : autoplayIndexRef.current + 1;
+      const destino = Math.min(proximoIndice * distanciaScroll, maxScrollLeft);
+
+      viewport.scrollTo({
+        left: destino,
         behavior: "smooth",
       });
+
+      autoplayIndexRef.current = proximoIndice;
     }, autoplayIntervalMs);
 
     return () => {
@@ -130,8 +139,16 @@ export function CarouselRail({
   return (
     <div
       className={`space-y-4 ${className}`.trim()}
-      onMouseEnter={() => setAutoplayPaused(true)}
-      onMouseLeave={() => setAutoplayPaused(false)}
+      onMouseEnter={() => {
+        if (pauseAutoplayOnHover) {
+          setAutoplayPaused(true);
+        }
+      }}
+      onMouseLeave={() => {
+        if (pauseAutoplayOnHover) {
+          setAutoplayPaused(false);
+        }
+      }}
       onFocusCapture={() => setAutoplayPaused(true)}
       onBlurCapture={() => setAutoplayPaused(false)}
     >
