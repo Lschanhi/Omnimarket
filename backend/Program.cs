@@ -272,8 +272,13 @@ if (runningOnRender)
 {
     app.UseForwardedHeaders();
 }
+else
+{
+    // O Render termina o HTTPS no proxy e encaminha o trafego ao container via HTTP.
+    // Pular o redirecionamento interno evita falha no health check durante o deploy.
+    app.UseHttpsRedirection();
+}
 
-app.UseHttpsRedirection();
 app.UseCors("FrontendLocal");
 app.UseAuthentication();
 app.UseAuthorization();
