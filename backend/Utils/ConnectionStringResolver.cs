@@ -14,40 +14,41 @@ namespace Omnimarket.Api.Utils
 
         private static readonly string[] ProductionCandidates =
         [
-            "ConexaoAzureBk",
             "ConexaoAzure",
-            "ConexaoLocal",
-            "ConexaoCasa"
+            "ConexaoAzureBk"
         ];
 
         public static (string Name, string Value) Resolve(IConfiguration configuration, bool isDevelopment)
         {
             var configuredName = configuration["Database:ConnectionStringName"]?.Trim();
-            if (!string.IsNullOrWhiteSpace(configuredName))
-            {
-                var configuredValue = configuration.GetConnectionString(configuredName);
-                if (IsConfigured(configuredValue))
-                    return (configuredName, configuredValue!);
-
-                throw new InvalidOperationException(
-                    $"A connection string '{configuredName}' configurada em Database:ConnectionStringName nao e valida.");
-            }
-
-            var defaultConnection = configuration.GetConnectionString("Default");
-            if (IsConfigured(defaultConnection))
-                return ("Default", defaultConnection!);
-
-            var candidates = isDevelopment ? DevelopmentCandidates : ProductionCandidates;
-            foreach (var candidate in candidates)
+            foreach (var candidate in EnumerateCandidates(configuredName, isDevelopment))
             {
                 var candidateValue = configuration.GetConnectionString(candidate);
                 if (IsConfigured(candidateValue))
                     return (candidate, candidateValue!);
             }
 
-            var suggestedName = isDevelopment ? "ConexaoLocal" : "ConexaoAzureBk";
+            var suggestedName = isDevelopment ? "ConexaoLocal" : "ConexaoAzure";
             throw new InvalidOperationException(
                 $"Configure uma connection string valida em ConnectionStrings:{suggestedName}, ConnectionStrings:Default ou defina Database:ConnectionStringName.");
+        }
+
+        private static IEnumerable<string> EnumerateCandidates(string? configuredName, bool isDevelopment)
+        {
+            var yielded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (!string.IsNullOrWhiteSpace(configuredName) && yielded.Add(configuredName))
+                yield return configuredName;
+
+            var candidates = isDevelopment ? DevelopmentCandidates : ProductionCandidates;
+            foreach (var candidate in candidates)
+            {
+                if (yielded.Add(candidate))
+                    yield return candidate;
+            }
+
+            if (yielded.Add("Default"))
+                yield return "Default";
         }
 
         private static bool IsConfigured(string? connectionString)
