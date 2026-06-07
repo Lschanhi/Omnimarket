@@ -1,0 +1,37 @@
+services:
+  - type: web
+    runtime: docker
+    name: omnimarket-api
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Database__ConnectionStringName
+        value: Default
+      - key: ConnectionStrings__Default
+        sync: false
+      - key: Jwt__Key
+        generateValue: true
+      - key: Jwt__Issuer
+        value: OmniMarket.API
+      - key: Jwt__Audience
+        value: OmniMarket.API
+      - key: BlobStorage__ConnectionString
+        sync: false
+      - key: BlobStorage__FotoPerfilContainerName
+        value: foto-perfil
+      - key: BlobStorage__FotoProdutoContainerName
+        value: foto-produtos
+      - key: BlobStorage__VideoProdutoContainerName
+        value: videos-produtos
+      - key: BlobStorage__FotoPerfilLojaContainerName
+        value: foto-perfil-loja
+      - key: BlobStorage__MigrateLegacyImagesOnStartup
+        value: false
+      - key: Cors__AllowedOrigins__0
+        sync: false
+      - key: AdminSeed__Enabled
+        value: false

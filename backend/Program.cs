@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -25,6 +26,11 @@ builder.Logging.AddDebug();
 // Permite sobreposicao local de segredos sem versionar no repositorio.
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 
+var runningOnRender = string.Equals(
+    builder.Configuration["RENDER"],
+    "true",
+    StringComparison.OrdinalIgnoreCase);
+
 var (connectionStringName, connectionString) = ConnectionStringResolver.Resolve(
     builder.Configuration,
     builder.Environment.IsDevelopment());
@@ -45,6 +51,18 @@ var dataProtectionPath = Path.Combine(builder.Environment.ContentRootPath, ".dat
 Directory.CreateDirectory(dataProtectionPath);
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionPath));
+
+if (runningOnRender)
+{
+    // No Render o HTTPS termina no proxy, entao a API precisa confiar
+    // nos headers encaminhados para evitar loops de redirecionamento.
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.KnownNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
+}
 
 // Registra o contexto do Entity Framework apontando para o banco SQL Server.
 builder.Services.AddDbContext<DataContext>(options =>
@@ -214,7 +232,11 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
-app.UseDeveloperExceptionPage();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
 
 app.Logger.LogInformation("Usando a connection string '{ConnectionStringName}' para o DataContext.", connectionStringName);
 
@@ -246,6 +268,11 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Pipeline HTTP da aplicacao.
+if (runningOnRender)
+{
+    app.UseForwardedHeaders();
+}
+
 app.UseHttpsRedirection();
 app.UseCors("FrontendLocal");
 app.UseAuthentication();
@@ -274,6 +301,15 @@ if (Directory.Exists(adminRootPath))
 app.UseSwagger();
 app.UseSwaggerUI();
 
+
+app.MapGet("/health", async (DataContext dataContext, CancellationToken cancellationToken) =>
+{
+    var bancoDisponivel = await dataContext.Database.CanConnectAsync(cancellationToken);
+
+    return bancoDisponivel
+        ? Results.Ok(new { status = "ok", database = "reachable" })
+        : Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+});
 
 // Mapeia as rotas declaradas nos controllers.
 app.MapControllers();

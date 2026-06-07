@@ -77,6 +77,7 @@ npm run backend:run
 - `docs/RBAC.md`
 - `docs/QA_CHECKLIST.md`
 - `docs/AZURE_APP_SERVICE_DEPLOY.md`
+- `docs/RENDER_DEPLOY.md`
 
 ## Decisoes desta migracao
 
@@ -115,3 +116,12 @@ Este monorepo ja inclui workflows separados para deploy automatico no Azure App 
 - frontend: `.github/workflows/deploy-frontend-appservice.yml`
 
 As instrucoes de configuracao no GitHub e no Azure estao em `docs/AZURE_APP_SERVICE_DEPLOY.md`.
+
+## Deploy no Render
+
+O repositorio agora tambem inclui configuracao para publicar a API no Render com Docker:
+
+- `render.yaml`
+- `backend/Dockerfile`
+
+O passo a passo completo esta em `docs/RENDER_DEPLOY.md`.
