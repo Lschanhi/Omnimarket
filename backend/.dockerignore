@@ -1,0 +1,6 @@
+bin/
+obj/
+.vs/
+.dataprotection-keys/
+appsettings.Local.json
+appsettings.*.Local.json
