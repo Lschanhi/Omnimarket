@@ -409,6 +409,7 @@ export function HomePage() {
               isLoading={isLoading}
               limite={10}
               autoplay
+              autoplayIntervalMs={2800}
               pauseAutoplayOnHover={false}
               mostrarResumo
               mensagemVazia="Ainda nao ha produtos suficientes para montar a vitrine de destaque."
