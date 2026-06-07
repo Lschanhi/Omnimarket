@@ -196,8 +196,8 @@ export function HomePage() {
         : criarProdutosEmDestaque(products, 10),
     [products, produtosEmDestaqueApi],
   );
-  const idsProdutosRecentes = useMemo(() => obterIdsProdutosRecentes(), [products.length]);
-  const idsLojasRecentes = useMemo(() => obterIdsLojasRecentes(), [products.length]);
+  const idsProdutosRecentes = obterIdsProdutosRecentes();
+  const idsLojasRecentes = obterIdsLojasRecentes();
   const idsProdutosComprados = useMemo(
     () => criarIdsProdutosCompradosRecentemente(pedidosUsuario, 20),
     [pedidosUsuario],
@@ -363,6 +363,7 @@ export function HomePage() {
                 produtos={filteredProducts}
                 isLoading={isLoading}
                 limite={10}
+                modo="grid"
                 mostrarResumo
                 mensagemVazia={`Nenhum produto foi encontrado para ${activeCategoryName}${
                   normalizedSearch ? ` com a busca "${searchTerm}"` : ""
