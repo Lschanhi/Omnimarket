@@ -1,5 +1,6 @@
 import { LoaderCircle, PackageSearch } from "lucide-react";
 import type { HomeProduct } from "../../types/home";
+import { CarouselRail } from "./CarouselRail";
 import { ProductCard } from "./ProductCard";
 
 type ProductShelfProps = {
@@ -8,6 +9,7 @@ type ProductShelfProps = {
   limite?: number;
   mensagemVazia: string;
   mostrarResumo?: boolean;
+  modo?: "grid" | "carousel";
 };
 
 export function ProductShelf({
@@ -16,8 +18,36 @@ export function ProductShelf({
   limite = 10,
   mensagemVazia,
   mostrarResumo = false,
+  modo = "carousel",
 }: ProductShelfProps) {
   if (isLoading) {
+    if (modo === "carousel") {
+      return (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 text-sm text-neutral-400">
+            <LoaderCircle className="h-4 w-4 animate-spin text-yellow-400" />
+            <span>Carregando produtos...</span>
+          </div>
+
+          <div className="flex gap-4 overflow-hidden pb-2">
+            {Array.from({ length: Math.min(limite, 4) }).map((_, indice) => (
+              <div
+                key={`skeleton-prateleira-${indice}`}
+                className="w-[min(82vw,320px)] shrink-0 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] sm:w-[320px] xl:w-[340px]"
+              >
+                <div className="aspect-[4/3] animate-pulse bg-white/10" />
+                <div className="space-y-3 p-5">
+                  <div className="h-4 w-3/4 animate-pulse rounded-full bg-white/10" />
+                  <div className="h-4 w-1/2 animate-pulse rounded-full bg-white/10" />
+                  <div className="h-6 w-1/3 animate-pulse rounded-full bg-yellow-400/20" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-3 text-sm text-neutral-400">
@@ -69,11 +99,24 @@ export function ProductShelf({
         </p>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {produtosVisiveis.map((produto) => (
-          <ProductCard key={produto.id} produto={produto} />
-        ))}
-      </div>
+      {modo === "grid" ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {produtosVisiveis.map((produto) => (
+            <ProductCard key={produto.id} produto={produto} />
+          ))}
+        </div>
+      ) : (
+        <CarouselRail ariaLabel="Carrossel de produtos">
+          {produtosVisiveis.map((produto) => (
+            <div
+              key={produto.id}
+              className="w-[min(82vw,320px)] shrink-0 snap-start sm:w-[320px] xl:w-[340px]"
+            >
+              <ProductCard produto={produto} />
+            </div>
+          ))}
+        </CarouselRail>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { LoaderCircle, Store } from "lucide-react";
 import type { HomeStore } from "../../types/home";
+import { CarouselRail } from "./CarouselRail";
 import { StoreCard } from "./StoreCard";
 
 type StoreGridProps = {
@@ -23,11 +24,11 @@ export function StoreGrid({
           <span>Carregando lojas...</span>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="flex gap-4 overflow-hidden pb-2">
           {Array.from({ length: Math.min(limite, 4) }).map((_, indice) => (
             <div
               key={`skeleton-loja-${indice}`}
-              className="min-h-[220px] rounded-[28px] border border-white/10 bg-white/[0.03]"
+              className="h-[220px] w-[152px] shrink-0 rounded-[30px] border border-white/10 bg-white/[0.03] sm:w-[172px]"
             />
           ))}
         </div>
@@ -50,10 +51,12 @@ export function StoreGrid({
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <CarouselRail ariaLabel="Carrossel de lojas">
       {lojas.slice(0, limite).map((loja) => (
-        <StoreCard key={loja.id} loja={loja} />
+        <div key={loja.id} className="w-[152px] shrink-0 snap-start sm:w-[172px]">
+          <StoreCard loja={loja} />
+        </div>
       ))}
-    </div>
+    </CarouselRail>
   );
 }
