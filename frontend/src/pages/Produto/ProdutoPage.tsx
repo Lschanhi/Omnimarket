@@ -149,10 +149,22 @@ export function ProdutoPage() {
               <div className="flex flex-col justify-between p-6 sm:p-8 lg:p-10">
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <StoreIdentityBadge
-                      nome={produto.lojaNome ?? "Detalhes do produto"}
-                      avatarUrl={produto.lojaAvatarUrl}
-                    />
+                    <div
+                      className="cursor-pointer"
+                      onClick={() => {
+                        navigate({
+                          to: "/loja/$id",
+                          params: {
+                            id: String(produto.lojaId)
+                          },
+                        });
+                      }}
+                    >
+                      <StoreIdentityBadge
+                        nome={produto.lojaNome ?? "Detalhes do produto"}
+                        avatarUrl={produto.lojaAvatarUrl}
+                      />
+                    </div>
 
                     <div className="space-y-3">
                       <h1 className="w-full break-words text-left text-[clamp(2rem,4vw,4rem)] font-bold leading-[1.05] tracking-tight text-white">
