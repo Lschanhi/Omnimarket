@@ -93,9 +93,8 @@ export function CategoryList({
         <button
           type="button"
           onClick={scrollParaEsquerda}
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 transition ${
-            mostrarEsquerda ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
+          disabled={!mostrarEsquerda}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 transition hover:bg-white/10 disabled:opacity-30"
         >
           <ChevronLeft className="h-5 w-5 text-white" />
         </button>
@@ -114,7 +113,7 @@ export function CategoryList({
                 key={categoria.id}
                 type="button"
                 onClick={() => onSelect(categoria.id)}
-                className={`flex min-w-[140px] items-center gap-3 rounded-[24px] border px-4 py-4 text-left transition ${
+                className={`flex shrink-0 items-center gap-3 rounded-[24px] border px-4 py-4 text-left transition ${
                   isAtiva
                     ? "border-yellow-400/50 bg-yellow-400/10 text-yellow-300"
                     : "border-white/10 bg-white/5 text-white hover:border-white/20 hover:bg-white/10"
@@ -137,9 +136,8 @@ export function CategoryList({
         <button
           type="button"
           onClick={scrollParaDireita}
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 transition ${
-            mostrarDireita ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
+          disabled={!mostrarDireita}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 transition hover:bg-white/10 disabled:opacity-30"
         >
           <ChevronRight className="h-5 w-5 text-white" />
         </button>
