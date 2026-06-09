@@ -17,6 +17,7 @@ import { UserStats } from "../../Components/perfil/UserStats";
 import { UserTabs } from "../../Components/perfil/UserTabs";
 import { usePerfilUsuarioData } from "../../hooks/usePerfilUsuarioData";
 import {
+  baixarReciboPedidoPdf,
   cancelarSolicitacaoCancelamento,
   confirmarEntregaPedido,
   criarSolicitacaoCancelamento,
@@ -95,7 +96,6 @@ import { ModalPedidoCompra } from "./perfilUsuario/ModalPedidoCompra";
 import { ModalPedidoVenda } from "./perfilUsuario/ModalPedidoVenda";
 import { ModalPerfilUsuario } from "./perfilUsuario/ModalPerfilUsuario";
 import { ModalProdutoLoja } from "./perfilUsuario/ModalProdutoLoja";
-import { baixarReciboPedido } from "./perfilUsuario/reciboPedido";
 import { SecaoProdutosLoja } from "./perfilUsuario/SecaoProdutosLoja";
 import { StatusComprasTabs } from "./perfilUsuario/StatusComprasTabs";
 import { StatusVendasTabs } from "./perfilUsuario/StatusVendasTabs";
@@ -423,6 +423,21 @@ function atualizarCardPedido(item: PerfilGridItem, itemAtualizado: PerfilGridIte
   }
 
   return itemAtualizado;
+}
+
+function baixarBlobComoArquivo(blob: Blob, nomeArquivo: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+
+  anchor.href = url;
+  anchor.download = nomeArquivo;
+  anchor.rel = "noopener";
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function avatarEhDataUrl(avatar: string) {
@@ -1156,21 +1171,22 @@ export function PerfilUsuarioPage() {
     );
   }
 
-  function handleBaixarReciboPedido(pedido: PerfilPedidoDetalhe) {
+  async function handleBaixarReciboPedido(pedido: PerfilPedidoDetalhe) {
     if (isBaixandoReciboPedidoCompra) {
       return;
     }
 
     try {
       setIsBaixandoReciboPedidoCompra(true);
-      baixarReciboPedido(pedido);
-      toast.success("Recibo baixado. Abra o arquivo para consultar ou imprimir.");
+      const pdf = await baixarReciboPedidoPdf(pedido.pedidoId);
+      baixarBlobComoArquivo(pdf, `recibo-pedido-${pedido.pedidoId}.pdf`);
+      toast.success("Recibo em PDF baixado. Abra o arquivo para consultar ou imprimir.");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Nao foi possivel baixar o recibo deste pedido.",
       );
     } finally {
-      window.setTimeout(() => setIsBaixandoReciboPedidoCompra(false), 150);
+      setIsBaixandoReciboPedidoCompra(false);
     }
   }
 

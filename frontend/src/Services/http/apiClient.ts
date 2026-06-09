@@ -277,6 +277,58 @@ async function parseResponse(response: Response) {
   }
 }
 
+async function executeRequest(path: string, options: ApiRequestOptions = {}) {
+  const { body, authenticated = false, headers, ...requestInit } = options;
+  const finalHeaders = buildHeaders(headers, authenticated);
+  const requestBody =
+    body instanceof FormData || typeof body === "string" || body == null
+      ? body
+      : JSON.stringify(body);
+
+  if (
+    requestBody != null &&
+    !(requestBody instanceof FormData) &&
+    !finalHeaders.has("Content-Type")
+  ) {
+    finalHeaders.set("Content-Type", "application/json");
+  }
+
+  try {
+    return await fetch(buildUrl(path), {
+      ...requestInit,
+      headers: finalHeaders,
+      body: requestBody ?? undefined,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Falha de rede ao acessar a API.";
+
+    throw new ApiError(
+      `Nao foi possivel conectar a API em ${API_BASE_URL}. Verifique se a URL esta correta, se a aplicacao do Azure esta publicada e se o CORS permite a origem atual. Detalhe: ${message}`,
+      0,
+      error,
+    );
+  }
+}
+
+async function ensureSuccess(response: Response) {
+  if (response.ok) {
+    return;
+  }
+
+  const payload = normalizeApiPayloadMessages(await parseResponse(response));
+
+  if (response.status === 401) {
+    clearSession();
+  }
+
+  throw new ApiError(
+    extractErrorMessage(payload, `A requisicao falhou com status ${response.status}.`),
+    response.status,
+    payload,
+  );
+}
+
 function extractErrorMessage(payload: unknown, fallback: string) {
   if (typeof payload === "string" && payload.trim()) {
     const sanitizedPayload = payload
@@ -325,53 +377,18 @@ export async function apiRequest<T>(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<T> {
-  const { body, authenticated = false, headers, ...requestInit } = options;
-  const finalHeaders = buildHeaders(headers, authenticated);
-  const requestBody =
-    body instanceof FormData || typeof body === "string" || body == null
-      ? body
-      : JSON.stringify(body);
-
-  if (
-    requestBody != null &&
-    !(requestBody instanceof FormData) &&
-    !finalHeaders.has("Content-Type")
-  ) {
-    finalHeaders.set("Content-Type", "application/json");
-  }
-
-  let response: Response;
-
-  try {
-    response = await fetch(buildUrl(path), {
-      ...requestInit,
-      headers: finalHeaders,
-      body: requestBody ?? undefined,
-    });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Falha de rede ao acessar a API.";
-
-    throw new ApiError(
-      `Nao foi possivel conectar a API em ${API_BASE_URL}. Verifique se a URL esta correta, se a aplicacao do Azure esta publicada e se o CORS permite a origem atual. Detalhe: ${message}`,
-      0,
-      error,
-    );
-  }
-
+  const response = await executeRequest(path, options);
+  await ensureSuccess(response);
   const payload = normalizeApiPayloadMessages(await parseResponse(response));
 
-  if (!response.ok) {
-    if (response.status === 401) {
-      clearSession();
-    }
-
-    throw new ApiError(
-      extractErrorMessage(payload, `A requisicao falhou com status ${response.status}.`),
-      response.status,
-      payload,
-    );
-  }
-
   return payload as T;
+}
+
+export async function apiRequestBlob(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<Blob> {
+  const response = await executeRequest(path, options);
+  await ensureSuccess(response);
+  return response.blob();
 }

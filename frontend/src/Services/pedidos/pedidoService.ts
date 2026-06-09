@@ -1,4 +1,4 @@
-import { apiRequest } from "../http/apiClient";
+import { apiRequest, apiRequestBlob } from "../http/apiClient";
 import type { PedidoLeituraApiResponse } from "../user/usuarioService";
 
 export type CriarPedidoPayload = {
@@ -105,6 +105,15 @@ export async function confirmarEntregaPedido(id: number) {
   return apiRequest<ConfirmarEntregaPedidoResponse>(`/api/pedidos/${id}/confirmar-entrega`, {
     method: "PUT",
     authenticated: true,
+  });
+}
+
+export async function baixarReciboPedidoPdf(id: number) {
+  return apiRequestBlob(`/api/pedidos/${id}/recibo`, {
+    authenticated: true,
+    headers: {
+      Accept: "application/pdf",
+    },
   });
 }
 
