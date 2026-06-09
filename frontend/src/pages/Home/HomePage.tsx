@@ -8,7 +8,10 @@ import { Spotlight } from "../../Components/home/SpotLight";
 import { StoreGrid } from "../../Components/home/StoreGrid";
 import { PageLayout } from "../../Components/PageLayout";
 import { createMockImage } from "../../data/produtos";
-import { AUTH_CHANGED_EVENT, isAuthenticated } from "../../Services/auth/session";
+import {
+  AUTH_CHANGED_EVENT,
+  isAuthenticated,
+} from "../../Services/auth/session";
 import {
   obterIdsLojasRecentes,
   obterIdsProdutosRecentes,
@@ -69,11 +72,19 @@ export function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState("todos");
   const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState<HomeProduct[]>([]);
-  const [produtosEmDestaqueApi, setProdutosEmDestaqueApi] = useState<HomeProduct[]>([]);
-  const [lojasEmDestaqueApi, setLojasEmDestaqueApi] = useState<LojaPublicaResumo[]>([]);
-  const [pedidosUsuario, setPedidosUsuario] = useState<PedidoLeituraApiResponse[]>([]);
+  const [produtosEmDestaqueApi, setProdutosEmDestaqueApi] = useState<
+    HomeProduct[]
+  >([]);
+  const [lojasEmDestaqueApi, setLojasEmDestaqueApi] = useState<
+    LojaPublicaResumo[]
+  >([]);
+  const [pedidosUsuario, setPedidosUsuario] = useState<
+    PedidoLeituraApiResponse[]
+  >([]);
   const [loadError, setLoadError] = useState("");
-  const [usuarioAutenticado, setUsuarioAutenticado] = useState(() => isAuthenticated());
+  const [usuarioAutenticado, setUsuarioAutenticado] = useState(() =>
+    isAuthenticated(),
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -98,12 +109,15 @@ export function HomePage() {
       setLoadError("");
 
       try {
-        const [produtosCatalogo, produtosDestaqueBackend, lojasDestaqueBackend] =
-          await Promise.all([
-            listarProdutos(),
-            listarProdutosEmDestaque(10).catch(() => []),
-            listarLojasEmDestaque(10).catch(() => []),
-          ]);
+        const [
+          produtosCatalogo,
+          produtosDestaqueBackend,
+          lojasDestaqueBackend,
+        ] = await Promise.all([
+          listarProdutos(),
+          listarProdutosEmDestaque(10).catch(() => []),
+          listarLojasEmDestaque(10).catch(() => []),
+        ]);
 
         if (!isMounted) {
           return;
@@ -130,7 +144,9 @@ export function HomePage() {
 
         setProducts(produtosDisponiveis);
         setProdutosEmDestaqueApi(
-          produtosDestaqueBackend.filter((produto) => produto.disponivel !== false),
+          produtosDestaqueBackend.filter(
+            (produto) => produto.disponivel !== false,
+          ),
         );
         setLojasEmDestaqueApi(lojasDestaqueBackend);
         setPedidosUsuario(pedidos);
@@ -140,7 +156,9 @@ export function HomePage() {
         }
 
         const message =
-          error instanceof Error ? error.message : "Nao foi possivel carregar o catalogo.";
+          error instanceof Error
+            ? error.message
+            : "Nao foi possivel carregar o catalogo.";
 
         setLoadError(message);
         setProducts([]);
@@ -163,13 +181,15 @@ export function HomePage() {
 
   const categories = useMemo(() => criarCategoriasHome(products), [products]);
   const normalizedSearch = searchTerm.trim().toLowerCase();
-  const filtroAtivo = selectedCategory !== "todos" || normalizedSearch.length > 0;
+  const filtroAtivo =
+    selectedCategory !== "todos" || normalizedSearch.length > 0;
 
   const filteredProducts = useMemo(
     () =>
       products.filter((product) => {
         const matchesCategory =
-          selectedCategory === "todos" || product.categoriaId === selectedCategory;
+          selectedCategory === "todos" ||
+          product.categoriaId === selectedCategory;
         const matchesSearch =
           normalizedSearch.length === 0 ||
           product.nome.toLowerCase().includes(normalizedSearch) ||
@@ -181,12 +201,25 @@ export function HomePage() {
     [normalizedSearch, products, selectedCategory],
   );
 
-  const activeCategoryName =
-    categories.find((categoria) => categoria.id === selectedCategory)?.nome ?? "Todos";
+  const filteredCategories = useMemo(
+    () => criarCategoriasHome(filteredProducts),
+    [filteredProducts],
+  );
 
-  const lojasCatalogo = useMemo(() => agruparLojasCatalogo(products), [products]);
+  const activeCategoryName =
+    categories.find((categoria) => categoria.id === selectedCategory)?.nome ??
+    "Todos";
+
+  const lojasCatalogo = useMemo(
+    () => agruparLojasCatalogo(products),
+    [products],
+  );
   const lojasHome = useMemo(
-    () => mesclarLojasHome(mapearLojasPublicasParaHome(lojasEmDestaqueApi), lojasCatalogo),
+    () =>
+      mesclarLojasHome(
+        mapearLojasPublicasParaHome(lojasEmDestaqueApi),
+        lojasCatalogo,
+      ),
     [lojasCatalogo, lojasEmDestaqueApi],
   );
   const produtosEmDestaque = useMemo(
@@ -250,12 +283,15 @@ export function HomePage() {
   }, [lojasCompradas, lojasHome, lojasRecentes, usuarioAutenticado]);
 
   const categoriasPreferidas = useMemo(
-    () => criarCategoriasPreferidas([...produtosRecentes, ...produtosComprados], 3),
+    () =>
+      criarCategoriasPreferidas([...produtosRecentes, ...produtosComprados], 3),
     [produtosComprados, produtosRecentes],
   );
 
   const idsLojasPrioritarias = useMemo(() => {
-    const idsHistorico = Array.from(new Set([...idsLojasRecentes, ...idsLojasCompradas]));
+    const idsHistorico = Array.from(
+      new Set([...idsLojasRecentes, ...idsLojasCompradas]),
+    );
 
     if (idsHistorico.length > 0) {
       return idsHistorico;
@@ -270,8 +306,13 @@ export function HomePage() {
         produtos: products,
         idsCategoriasPreferidas: categoriasPreferidas,
         idsLojasPrioritarias,
-        idsProdutosPrioritarios: [...idsProdutosRecentes, ...idsProdutosComprados],
-        idsProdutosIgnorados: produtosVistosOuComprados.map((produto) => produto.id).slice(0, 4),
+        idsProdutosPrioritarios: [
+          ...idsProdutosRecentes,
+          ...idsProdutosComprados,
+        ],
+        idsProdutosIgnorados: produtosVistosOuComprados
+          .map((produto) => produto.id)
+          .slice(0, 4),
         limite: 15,
       }),
     [
@@ -321,8 +362,8 @@ export function HomePage() {
                       Bem-vindo ao OmniMarket
                     </h1>
                     <p className="text-center text-lg font-bold text-white">
-                      Agora a vitrine inicial pode destacar produtos, lojas e recomendacoes com
-                      base no comportamento do usuario.
+                      Agora a vitrine inicial pode destacar produtos, lojas e
+                      recomendacoes com base no comportamento do usuario.
                     </p>
                   </div>
                 </div>
@@ -332,18 +373,24 @@ export function HomePage() {
             </section>
           </Spotlight>
 
-          <Spotlight>
-            <div className="relative overflow-hidden">
-              <Banner
-                titulo="Semana OmniMarket com espaco para campanhas, ofertas e destaques patrocinados"
-                descricao="Quando voce decidir ativar promocoes de verdade, este bloco pode virar o carrossel principal sem mexer no restante da home."
-                imagem={createMockImage("Semana OmniMarket", "#eab308", "#111827")}
-              />
-            </div>
-          </Spotlight>
+          {searchTerm.trim() === "" && (
+            <Spotlight>
+              <div className="relative overflow-hidden">
+                <Banner
+                  titulo="Semana OmniMarket com espaço para campanhas, ofertas e destaques patrocinados"
+                  descricao="Quando você decidir ativar promoções de verdade, este bloco pode virar o carrossel principal sem mexer no restante da home."
+                  imagem={createMockImage(
+                    "Semana OmniMarket",
+                    "#eab308",
+                    "#111827",
+                  )}
+                />
+              </div>
+            </Spotlight>
+          )}
 
           <CategoryList
-            categorias={categories}
+            categorias={filteredCategories}
             categoriaAtiva={selectedCategory}
             onSelect={setSelectedCategory}
           />
@@ -433,7 +480,11 @@ export function HomePage() {
 
           <section className="space-y-5">
             <VitrineSectionHeader
-              titulo={usuarioAutenticado ? "Recomendados para voce" : "Produtos para descobrir agora"}
+              titulo={
+                usuarioAutenticado
+                  ? "Recomendados para voce"
+                  : "Produtos para descobrir agora"
+              }
               descricao={
                 usuarioAutenticado
                   ? "Esta lista mistura produtos das lojas que voce mais toca e categorias ligadas ao que voce viu ou comprou."
