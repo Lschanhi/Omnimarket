@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Omnimarket.Api.Data;
 
@@ -11,9 +12,11 @@ using Omnimarket.Api.Data;
 namespace OmniMarket.API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20260610160147_Fase21SolicitacoesPedido")]
+    partial class Fase21SolicitacoesPedido
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -182,33 +185,6 @@ namespace OmniMarket.API.Migrations
                         .IsUnique();
 
                     b.ToTable("TBL_AVALIACAO_PRODUTO", (string)null);
-                });
-
-            modelBuilder.Entity("Omnimarket.Api.Models.Entidades.ConfiguracaoMarketplace", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Ativo")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("DataCriacao")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("PercentualComissao")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<decimal>("TaxaFixaComissao")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Ativo");
-
-                    b.ToTable("TBL_CONFIGURACAO_MARKETPLACE", (string)null);
                 });
 
             modelBuilder.Entity("Omnimarket.Api.Models.Entidades.FormaPagamento", b =>
@@ -557,14 +533,8 @@ namespace OmniMarket.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar");
 
-                    b.Property<decimal>("PercentualComissao")
-                        .HasColumnType("decimal(5,4)");
-
                     b.Property<int>("StatusPedidosId")
                         .HasColumnType("int");
-
-                    b.Property<decimal>("TaxaFixaComissao")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("TipoEntregaId")
                         .HasColumnType("int");
@@ -582,13 +552,7 @@ namespace OmniMarket.API.Migrations
                     b.Property<int>("UsuarioId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("ValorComissao")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<decimal>("ValorFrete")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("ValorLiquidoVendedor")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("ValorTotalPedido")

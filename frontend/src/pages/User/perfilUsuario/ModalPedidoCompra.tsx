@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CalendarDays,
   CircleAlert,
   Download,
   MapPin,
   PackageCheck,
-  RefreshCcw,
   ShoppingBag,
   Truck,
   XCircle,
@@ -18,6 +17,7 @@ import type {
   MotivoSolicitacaoCancelamentoApi,
   SolicitacaoCancelamentoLeituraApiResponse,
   StatusSolicitacaoCancelamentoApi,
+  TipoSolicitacaoPedidoApi,
 } from "../../../Services/pedidos/pedidoService";
 import type { PerfilPedidoDetalhe } from "../../../types/perfil";
 
@@ -29,19 +29,23 @@ type ModalPedidoCompraProps = {
   isConfirmandoRecebimento?: boolean;
   isBaixandoRecibo?: boolean;
   isProcessandoSolicitacao?: boolean;
+  isCancelandoPedido?: boolean;
   pedido: PerfilPedidoDetalhe | null;
   solicitacoesCancelamento: SolicitacaoCancelamentoLeituraApiResponse[];
   onClose: () => void;
   onBaixarRecibo: (pedido: PerfilPedidoDetalhe) => void;
+  onCancelarPedido: (pedido: PerfilPedidoDetalhe) => void;
   onConfirmarRecebimento: (pedido: PerfilPedidoDetalhe) => void;
   onCriarSolicitacaoCancelamento: (
     pedido: PerfilPedidoDetalhe,
-    dados: Pick<CriarSolicitacaoCancelamentoPayload, "motivo" | "observacao">,
+    dados: Pick<
+      CriarSolicitacaoCancelamentoPayload,
+      "tipoSolicitacao" | "motivo" | "observacao"
+    >,
   ) => void;
   onCancelarSolicitacaoCancelamento: (
     solicitacao: SolicitacaoCancelamentoLeituraApiResponse,
   ) => void;
-  onSolicitarTroca: (pedido: PerfilPedidoDetalhe) => void;
 };
 
 const MOTIVOS_SOLICITACAO_CANCELAMENTO: Array<{
@@ -55,6 +59,43 @@ const MOTIVOS_SOLICITACAO_CANCELAMENTO: Array<{
   { value: "EntregaNaoRecebida", label: "Entrega nao recebida" },
   { value: "Outro", label: "Outro motivo" },
 ];
+
+const TIPOS_SOLICITACAO_OPTIONS: Array<{
+  value: TipoSolicitacaoPedidoApi;
+  label: string;
+  descricao: string;
+}> = [
+  {
+    value: "Cancelamento",
+    label: "Cancelamento",
+    descricao: "Use depois do envio, quando a compra nao puder mais ser cancelada direto.",
+  },
+  {
+    value: "ProblemaEntrega",
+    label: "Problema de entrega",
+    descricao: "Ideal para atraso, extravio ou entrega ainda nao recebida.",
+  },
+  {
+    value: "Devolucao",
+    label: "Devolucao",
+    descricao: "Use depois da entrega para arrependimento ou retorno do produto.",
+  },
+  {
+    value: "Troca",
+    label: "Troca",
+    descricao: "Use depois da entrega quando o item precisar ser substituido.",
+  },
+];
+
+const MOTIVOS_POR_TIPO: Record<
+  TipoSolicitacaoPedidoApi,
+  MotivoSolicitacaoCancelamentoApi[]
+> = {
+  Cancelamento: ["Arrependimento", "Outro"],
+  ProblemaEntrega: ["AtrasoEntrega", "EntregaNaoRecebida", "Outro"],
+  Devolucao: ["Arrependimento", "ProdutoComDefeito", "ProdutoIncorreto", "Outro"],
+  Troca: ["ProdutoComDefeito", "ProdutoIncorreto", "Outro"],
+};
 
 const STATUS_SOLICITACAO_TONE: Record<StatusSolicitacaoCancelamentoApi, string> = {
   Aberta: "border-yellow-400/20 bg-yellow-400/10 text-yellow-100",
@@ -108,6 +149,42 @@ function formatarStatusSolicitacao(status: StatusSolicitacaoCancelamentoApi) {
   }
 }
 
+function formatarTipoSolicitacao(tipo: TipoSolicitacaoPedidoApi) {
+  switch (tipo) {
+    case "ProblemaEntrega":
+      return "Problema de entrega";
+    case "Devolucao":
+      return "Devolucao";
+    case "Troca":
+      return "Troca";
+    case "Cancelamento":
+    default:
+      return "Cancelamento";
+  }
+}
+
+function obterTipoSolicitacaoInicial(pedido: PerfilPedidoDetalhe | null): TipoSolicitacaoPedidoApi {
+  if (!pedido) {
+    return "Cancelamento";
+  }
+
+  if (pedido.statusFluxoKey === "finalizado") {
+    return "Devolucao";
+  }
+
+  if (pedido.statusFluxoKey === "enviado") {
+    return "ProblemaEntrega";
+  }
+
+  return "Cancelamento";
+}
+
+function obterMotivosDisponiveis(tipoSolicitacao: TipoSolicitacaoPedidoApi) {
+  const motivosPermitidos = new Set(MOTIVOS_POR_TIPO[tipoSolicitacao]);
+
+  return MOTIVOS_SOLICITACAO_CANCELAMENTO.filter((option) => motivosPermitidos.has(option.value));
+}
+
 function criarMensagemBloqueioRecebimento(pedido: PerfilPedidoDetalhe | null) {
   if (!pedido || pedido.podeConfirmarRecebimento) {
     return "";
@@ -128,9 +205,26 @@ function criarMensagemBloqueioRecebimento(pedido: PerfilPedidoDetalhe | null) {
   return "A confirmacao fica disponivel quando o pedido estiver enviado.";
 }
 
+function criarMensagemBloqueioCancelamentoDireto(pedido: PerfilPedidoDetalhe | null) {
+  if (!pedido || pedido.podeCancelar) {
+    return "";
+  }
+
+  if (pedido.statusFluxoKey === "cancelado") {
+    return "Este pedido ja foi cancelado.";
+  }
+
+  if (pedido.statusFluxoKey === "enviado" || pedido.statusFluxoKey === "finalizado") {
+    return "Depois do envio, o cancelamento direto sai de cena e a tratativa passa a ser feita por solicitacao.";
+  }
+
+  return "O cancelamento direto fica disponivel enquanto o pedido ainda nao tiver sido enviado.";
+}
+
 function criarMensagemBloqueioSolicitacao(
   pedido: PerfilPedidoDetalhe | null,
   solicitacaoAtiva: SolicitacaoCancelamentoLeituraApiResponse | null,
+  tipoSolicitacao: TipoSolicitacaoPedidoApi,
 ) {
   if (!pedido) {
     return "";
@@ -144,19 +238,36 @@ function criarMensagemBloqueioSolicitacao(
     return "Ja existe uma solicitacao ativa para este pedido. Aguarde a analise ou cancele a solicitacao atual antes de abrir outra.";
   }
 
-  if (
-    pedido.statusFluxoKey === "pendente" ||
-    pedido.statusFluxoKey === "em-separacao" ||
-    pedido.statusFluxoKey === "pronto"
-  ) {
-    return "A API libera essa solicitacao somente depois que o pedido ja foi enviado.";
-  }
-
   if (pedido.statusFluxoKey === "cancelado") {
-    return "Pedidos cancelados nao aceitam novas solicitacoes de problema.";
+    return "Pedidos cancelados nao aceitam novas tratativas.";
   }
 
-  return "";
+  switch (tipoSolicitacao) {
+    case "Cancelamento":
+      if (pedido.statusFluxoKey !== "enviado") {
+        return "O cancelamento por solicitacao fica disponivel apenas depois que o pedido ja foi enviado e antes da confirmacao da entrega.";
+      }
+
+      return "";
+
+    case "ProblemaEntrega":
+      if (pedido.statusFluxoKey !== "enviado") {
+        return "Problemas de entrega podem ser abertos quando o pedido estiver enviado e ainda nao tiver sido confirmado como entregue.";
+      }
+
+      return "";
+
+    case "Devolucao":
+    case "Troca":
+      if (pedido.statusFluxoKey !== "finalizado") {
+        return `${tipoSolicitacao === "Troca" ? "A troca" : "A devolucao"} fica disponivel somente depois que o pedido for entregue.`;
+      }
+
+      return "";
+
+    default:
+      return "";
+  }
 }
 
 export function ModalPedidoCompra({
@@ -167,42 +278,68 @@ export function ModalPedidoCompra({
   isConfirmandoRecebimento = false,
   isBaixandoRecibo = false,
   isProcessandoSolicitacao = false,
+  isCancelandoPedido = false,
   pedido,
   solicitacoesCancelamento,
   onClose,
   onBaixarRecibo,
+  onCancelarPedido,
   onConfirmarRecebimento,
   onCriarSolicitacaoCancelamento,
   onCancelarSolicitacaoCancelamento,
-  onSolicitarTroca,
 }: ModalPedidoCompraProps) {
   const [mostrarOpcoesProblema, setMostrarOpcoesProblema] = useState(false);
+  const [tipoSolicitacao, setTipoSolicitacao] = useState<TipoSolicitacaoPedidoApi>(
+    obterTipoSolicitacaoInicial(pedido),
+  );
   const [motivoSolicitacao, setMotivoSolicitacao] =
     useState<MotivoSolicitacaoCancelamentoApi>("Outro");
   const [observacaoSolicitacao, setObservacaoSolicitacao] = useState("");
+
+  useEffect(() => {
+    const tipoInicial = obterTipoSolicitacaoInicial(pedido);
+    const motivosDisponiveis = obterMotivosDisponiveis(tipoInicial);
+
+    setTipoSolicitacao(tipoInicial);
+    setMotivoSolicitacao(motivosDisponiveis[0]?.value ?? "Outro");
+    setObservacaoSolicitacao("");
+    setMostrarOpcoesProblema(false);
+  }, [isOpen, pedido?.pedidoId, pedido?.statusFluxoKey]);
+
   const solicitacaoAtiva =
     solicitacoesCancelamento.find((solicitacao) =>
       ["Aberta", "EmAnalise", "Aprovada"].includes(solicitacao.status),
     ) ?? null;
+  const motivosDisponiveis = obterMotivosDisponiveis(tipoSolicitacao);
   const mensagemBloqueioRecebimento = criarMensagemBloqueioRecebimento(pedido);
+  const mensagemBloqueioCancelamentoDireto = criarMensagemBloqueioCancelamentoDireto(pedido);
   const mensagemBloqueioSolicitacao = criarMensagemBloqueioSolicitacao(
     pedido,
     solicitacaoAtiva,
+    tipoSolicitacao,
   );
+  const isBloqueandoAcoes =
+    isConfirmandoRecebimento ||
+    isProcessandoSolicitacao ||
+    isCancelandoPedido ||
+    isBaixandoRecibo;
+  const cancelamentoDiretoDisponivel = Boolean(pedido?.podeCancelar);
   const podeConfirmarRecebimento =
-    Boolean(pedido?.podeConfirmarRecebimento) &&
-    !isConfirmandoRecebimento &&
-    !isProcessandoSolicitacao;
-  const podeBaixarRecibo =
-    Boolean(pedido) &&
-    !isBaixandoRecibo &&
-    !isConfirmandoRecebimento &&
-    !isProcessandoSolicitacao;
+    Boolean(pedido?.podeConfirmarRecebimento) && !isBloqueandoAcoes;
+  const podeBaixarRecibo = Boolean(pedido) && !isBloqueandoAcoes;
   const podeCriarSolicitacao =
     Boolean(pedido) &&
     !mensagemBloqueioSolicitacao &&
+    !isConfirmandoRecebimento &&
     !isProcessandoSolicitacao &&
-    !isConfirmandoRecebimento;
+    !isCancelandoPedido;
+
+  function handleTipoSolicitacaoChange(tipo: TipoSolicitacaoPedidoApi) {
+    const proximosMotivos = obterMotivosDisponiveis(tipo);
+
+    setTipoSolicitacao(tipo);
+    setMotivoSolicitacao(proximosMotivos[0]?.value ?? "Outro");
+  }
 
   function handleCriarSolicitacao() {
     if (!pedido || !podeCriarSolicitacao) {
@@ -210,6 +347,7 @@ export function ModalPedidoCompra({
     }
 
     onCriarSolicitacaoCancelamento(pedido, {
+      tipoSolicitacao,
       motivo: motivoSolicitacao,
       observacao: observacaoSolicitacao,
     });
@@ -217,7 +355,6 @@ export function ModalPedidoCompra({
 
   function handleFecharModal() {
     setMostrarOpcoesProblema(false);
-    setMotivoSolicitacao("Outro");
     setObservacaoSolicitacao("");
     onClose();
   }
@@ -350,8 +487,9 @@ export function ModalPedidoCompra({
                 <div>
                   <p className="text-sm font-semibold text-white">Acompanhamento do pedido</p>
                   <p className="mt-1 text-sm text-neutral-300">
-                    O painel usa as regras atuais do backend para confirmar o recebimento e abrir
-                    tratativas de cancelamento quando houver algum problema com a entrega.
+                    O painel usa as regras atuais do backend para cancelar pedidos antes do envio,
+                    confirmar o recebimento e abrir tratativas de cancelamento, devolucao, troca
+                    ou problema de entrega.
                   </p>
                 </div>
 
@@ -382,17 +520,34 @@ export function ModalPedidoCompra({
                       <Botao
                         type="button"
                         variant="secondary"
-                        onClick={() => setMostrarOpcoesProblema((currentState) => !currentState)}
+                        onClick={() => {
+                          if (cancelamentoDiretoDisponivel) {
+                            onCancelarPedido(pedido);
+                            return;
+                          }
+
+                          setMostrarOpcoesProblema((currentState) => !currentState);
+                        }}
                         icon={<CircleAlert className="h-4 w-4" />}
-                        disabled={isConfirmandoRecebimento}
+                        disabled={
+                          isConfirmandoRecebimento ||
+                          isProcessandoSolicitacao ||
+                          isCancelandoPedido
+                        }
                         className="sm:px-4"
                       >
-                        Problemas com o pedido
+                        {cancelamentoDiretoDisponivel
+                          ? isCancelandoPedido
+                            ? "Cancelando..."
+                            : "Cancelar pedido"
+                          : "Problemas, devolucao e troca"}
                       </Botao>
 
                       <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-neutral-300">
-                        Abra uma solicitacao de cancelamento para a loja analisar o problema da
-                        entrega ou do item recebido.
+                        {cancelamentoDiretoDisponivel
+                          ? "Enquanto o pedido ainda nao foi enviado, o cancelamento pode ser feito direto pelo painel."
+                          : mensagemBloqueioCancelamentoDireto ||
+                            "Abra uma tratativa para a loja analisar cancelamento, devolucao, troca ou problema de entrega."}
                       </div>
                     </div>
 
@@ -417,25 +572,56 @@ export function ModalPedidoCompra({
 
                 {mostrarOpcoesProblema ? (
                   <div className="space-y-4 border-t border-white/10 pt-3">
-                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-sm font-semibold text-white">
-                            Abrir solicitacao de cancelamento
-                          </p>
-                          <p className="mt-1 text-sm text-neutral-300">
-                            Escolha o motivo principal e registre um contexto curto para facilitar
-                            a analise da loja.
-                          </p>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          Abrir tratativa do pedido
+                        </p>
+                        <p className="mt-1 text-sm text-neutral-300">
+                          Escolha o tipo da solicitacao, registre o motivo e adicione um contexto
+                          curto para facilitar a analise da loja.
+                        </p>
+                      </div>
+
+                      {mensagemBloqueioSolicitacao ? (
+                        <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-neutral-300">
+                          {mensagemBloqueioSolicitacao}
                         </div>
+                      ) : null}
 
-                        {mensagemBloqueioSolicitacao ? (
-                          <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-neutral-300">
-                            {mensagemBloqueioSolicitacao}
-                          </div>
-                        ) : null}
-
+                      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
                         <div className="space-y-3 rounded-2xl border border-white/10 bg-black/30 p-4">
+                          <div className="flex flex-col gap-2">
+                            <label
+                              htmlFor="tipoSolicitacaoPedido"
+                              className="text-sm text-neutral-300"
+                            >
+                              Tipo da solicitacao
+                            </label>
+                            <select
+                              id="tipoSolicitacaoPedido"
+                              value={tipoSolicitacao}
+                              onChange={(event) =>
+                                handleTipoSolicitacaoChange(
+                                  event.target.value as TipoSolicitacaoPedidoApi,
+                                )
+                              }
+                              disabled={isProcessandoSolicitacao}
+                              className="w-full rounded-xl border border-[#6B6B6B] bg-black p-3 text-white outline-none transition focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {TIPOS_SOLICITACAO_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="text-xs text-neutral-500">
+                              {TIPOS_SOLICITACAO_OPTIONS.find(
+                                (option) => option.value === tipoSolicitacao,
+                              )?.descricao ?? ""}
+                            </p>
+                          </div>
+
                           <div className="flex flex-col gap-2">
                             <label htmlFor="motivoSolicitacao" className="text-sm text-neutral-300">
                               Motivo
@@ -451,7 +637,7 @@ export function ModalPedidoCompra({
                               disabled={!podeCriarSolicitacao}
                               className="w-full rounded-xl border border-[#6B6B6B] bg-black p-3 text-white outline-none transition focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                              {MOTIVOS_SOLICITACAO_CANCELAMENTO.map((option) => (
+                              {motivosDisponiveis.map((option) => (
                                 <option key={option.value} value={option.value}>
                                   {option.label}
                                 </option>
@@ -473,7 +659,7 @@ export function ModalPedidoCompra({
                               value={observacaoSolicitacao}
                               onChange={(event) => setObservacaoSolicitacao(event.target.value)}
                               disabled={!podeCriarSolicitacao}
-                              placeholder="Descreva o problema em ate 500 caracteres."
+                              placeholder="Descreva o contexto em ate 500 caracteres."
                               className="w-full rounded-xl border border-[#6B6B6B] bg-black p-3 text-white placeholder-[#6b6b6b] outline-none transition focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
                             />
                           </div>
@@ -488,31 +674,29 @@ export function ModalPedidoCompra({
                           >
                             {isProcessandoSolicitacao
                               ? "Abrindo solicitacao..."
-                              : "Solicitar cancelamento"}
+                              : `Solicitar ${formatarTipoSolicitacao(tipoSolicitacao).toLowerCase()}`}
                           </Botao>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-sm font-semibold text-white">Troca</p>
-                          <p className="mt-1 text-sm text-neutral-300">
-                            O backend ainda nao expoe um endpoint especifico de troca para o fluxo
-                            do comprador.
-                          </p>
                         </div>
 
                         <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                          <Botao
-                            type="button"
-                            variant="secondary"
-                            onClick={() => onSolicitarTroca(pedido)}
-                            icon={<RefreshCcw className="h-4 w-4" />}
-                            disabled={isProcessandoSolicitacao || isConfirmandoRecebimento}
-                            className="sm:px-4"
-                          >
-                            Solicitar troca
-                          </Botao>
+                          <p className="text-sm font-semibold text-white">Resumo do fluxo</p>
+                          <div className="mt-3 space-y-3 text-sm text-neutral-300">
+                            <p>
+                              <span className="text-neutral-500">Tipo:</span>{" "}
+                              {formatarTipoSolicitacao(tipoSolicitacao)}
+                            </p>
+                            <p>
+                              <span className="text-neutral-500">Motivos sugeridos:</span>{" "}
+                              {motivosDisponiveis
+                                .map((motivo) => formatarMotivoSolicitacao(motivo.value))
+                                .join(", ")}
+                            </p>
+                            <p>
+                              <span className="text-neutral-500">Proximo passo:</span> a loja
+                              recebe a tratativa, pode colocar em analise e decide se aprova,
+                              recusa ou conclui o caso.
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -558,6 +742,10 @@ export function ModalPedidoCompra({
                               </div>
 
                               <div className="mt-4 space-y-3 text-sm text-neutral-300">
+                                <p>
+                                  <span className="text-neutral-500">Tipo:</span>{" "}
+                                  {formatarTipoSolicitacao(solicitacao.tipoSolicitacao)}
+                                </p>
                                 <p>
                                   <span className="text-neutral-500">Motivo:</span>{" "}
                                   {formatarMotivoSolicitacao(solicitacao.motivo)}

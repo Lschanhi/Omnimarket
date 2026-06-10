@@ -625,7 +625,7 @@ public class LojaServiceTests
 
         Assert.NotNull(metricas);
         Assert.Equal(90m, metricas!.FaturamentoBruto);
-        Assert.Equal(90m, metricas.FaturamentoLiquido);
+        Assert.Equal(83.14m, metricas.FaturamentoLiquido);
         Assert.Equal(45m, metricas.TicketMedio);
         Assert.Equal(25d, metricas.TaxaCancelamento);
         Assert.Equal(5d, metricas.MediaAvaliacao);

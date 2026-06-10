@@ -7,9 +7,15 @@ namespace Omnimarket.Api.Models.Dtos.Pedidos
         public int Id { get; set; }
         public StatusPedido Status { get; set; }
         public string TipoEntrega { get; set; } = string.Empty;
+        public decimal ValorProdutos { get; set; }
         public decimal ValorTotalProdutos { get; set; }
         public decimal ValorFrete { get; set; }
+        public decimal ValorTotal { get; set; }
         public decimal ValorTotalPedido { get; set; }
+        public decimal TaxaFixaComissao { get; set; }
+        public decimal PercentualComissao { get; set; }
+        public decimal ValorComissao { get; set; }
+        public decimal ValorLiquidoVendedor { get; set; }
         public DateTime DataPedido { get; set; }
         public string Observacao { get; set; } = string.Empty;
         public string TipoLogradouroEntrega { get; set; } = string.Empty;
@@ -19,6 +25,7 @@ namespace Omnimarket.Api.Models.Dtos.Pedidos
         public string CepEntrega { get; set; } = string.Empty;
         public string CidadeEntrega { get; set; } = string.Empty;
         public string UfEntrega { get; set; } = string.Empty;
+        public bool PodeCancelar { get; set; }
         public bool PodeConfirmarRecebimento { get; set; }
         public bool PossuiSolicitacaoCancelamentoAtiva { get; set; }
         public List<ItemPedidoLeituraDto> Itens { get; set; } = new();

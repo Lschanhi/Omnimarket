@@ -59,6 +59,21 @@ namespace Omnimarket.Api.Models.Entidades
         [Range(0, double.MaxValue, ErrorMessage = "Valor total invalido.")]
         public decimal ValorTotalPedido { get; set; }
 
+        [Required]
+        [Range(0, double.MaxValue, ErrorMessage = "Taxa fixa de comissao invalida.")]
+        public decimal TaxaFixaComissao { get; set; }
+
+        [Required]
+        [Range(0, 1, ErrorMessage = "Percentual de comissao invalido.")]
+        public decimal PercentualComissao { get; set; }
+
+        [Required]
+        [Range(0, double.MaxValue, ErrorMessage = "Valor de comissao invalido.")]
+        public decimal ValorComissao { get; set; }
+
+        [Required]
+        public decimal ValorLiquidoVendedor { get; set; }
+
         public DateTime DataPedido { get; set; } = DateTime.UtcNow;
 
         [StringLength(500)]

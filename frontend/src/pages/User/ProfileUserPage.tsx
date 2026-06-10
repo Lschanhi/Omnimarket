@@ -18,13 +18,14 @@ import { UserTabs } from "../../Components/perfil/UserTabs";
 import { usePerfilUsuarioData } from "../../hooks/usePerfilUsuarioData";
 import {
   baixarReciboPedidoPdf,
+  cancelarPedido,
   cancelarSolicitacaoCancelamento,
   confirmarEntregaPedido,
   criarSolicitacaoCancelamento,
   listarSolicitacoesCancelamentoPedido,
   type CriarSolicitacaoCancelamentoPayload,
-  type MotivoSolicitacaoCancelamentoApi,
   type SolicitacaoCancelamentoLeituraApiResponse,
+  type StatusSolicitacaoCancelamentoApi,
 } from "../../Services/pedidos/pedidoService";
 import {
   atualizarMinhaEntregaLoja,
@@ -58,6 +59,7 @@ import {
   TIPOS_LOGRADOURO_FALLBACK,
 } from "../../Services/user/enderecoService";
 import {
+  atualizarStatusSolicitacaoCancelamentoDaMinhaLoja,
   criarMinhaLoja,
   atualizarMinhaLoja,
   listarTodasSolicitacoesCancelamentoDaMinhaLoja,
@@ -159,11 +161,6 @@ const ROTULO_STATUS_COMPRA: Record<PerfilFiltroStatusCompraId, string> = {
   finalizado: "Finalizado",
 };
 
-const MOTIVOS_DEVOLUCAO = new Set<MotivoSolicitacaoCancelamentoApi>([
-  "ProdutoComDefeito",
-  "ProdutoIncorreto",
-]);
-
 function formatarStatusSolicitacaoResumo(status: string) {
   switch (status) {
     case "EmAnalise":
@@ -209,7 +206,9 @@ function classificarTratativaCompra(
     return null;
   }
 
-  return MOTIVOS_DEVOLUCAO.has(solicitacao.motivo) ? "devolucao" : "cancelado";
+  return solicitacao.tipoSolicitacao === "Devolucao" || solicitacao.tipoSolicitacao === "Troca"
+    ? "devolucao"
+    : "cancelado";
 }
 
 function enriquecerPedidoCompraComTratativa(
@@ -361,13 +360,13 @@ function criarFiltrosStatusCompra(itens: PerfilGridItem[]): PerfilCompraStatusFi
       key: "devolucao",
       label: "Devolucao",
       total: totais.devolucao,
-      descricao: "Pedidos com tratativa de devolucao por defeito ou produto incorreto.",
+      descricao: "Pedidos com tratativa de devolucao ou troca vinculada.",
     },
     {
       key: "finalizado",
       label: "Finalizado",
       total: totais.finalizado,
-      descricao: "Pedidos concluidos sem cancelamento ou devolucao vinculados.",
+      descricao: "Pedidos concluidos sem cancelamento, devolucao ou troca vinculados.",
     },
   ];
 }
@@ -610,6 +609,7 @@ export function PerfilUsuarioPage() {
   const [isConfirmandoRecebimentoPedidoCompra, setIsConfirmandoRecebimentoPedidoCompra] =
     useState(false);
   const [isBaixandoReciboPedidoCompra, setIsBaixandoReciboPedidoCompra] = useState(false);
+  const [isCancelandoPedidoCompra, setIsCancelandoPedidoCompra] = useState(false);
   const [isProcessandoSolicitacaoPedidoCompra, setIsProcessandoSolicitacaoPedidoCompra] =
     useState(false);
   const [isCarregandoPedidoVenda, setIsCarregandoPedidoVenda] = useState(false);
@@ -1117,7 +1117,10 @@ export function PerfilUsuarioPage() {
 
   async function handleCriarSolicitacaoCancelamentoPedido(
     pedido: PerfilPedidoDetalhe,
-    dados: Pick<CriarSolicitacaoCancelamentoPayload, "motivo" | "observacao">,
+    dados: Pick<
+      CriarSolicitacaoCancelamentoPayload,
+      "tipoSolicitacao" | "motivo" | "observacao"
+    >,
   ) {
     if (isProcessandoSolicitacaoPedidoCompra || pedido.pedidoMultiloja) {
       return;
@@ -1126,6 +1129,7 @@ export function PerfilUsuarioPage() {
     try {
       setIsProcessandoSolicitacaoPedidoCompra(true);
       const resposta = await criarSolicitacaoCancelamento(pedido.pedidoId, {
+        tipoSolicitacao: dados.tipoSolicitacao,
         motivo: dados.motivo,
         observacao: dados.observacao?.trim() || undefined,
       });
@@ -1139,6 +1143,25 @@ export function PerfilUsuarioPage() {
       );
     } finally {
       setIsProcessandoSolicitacaoPedidoCompra(false);
+    }
+  }
+
+  async function handleCancelarPedidoCompra(pedido: PerfilPedidoDetalhe) {
+    if (isCancelandoPedidoCompra || !pedido.podeCancelar) {
+      return;
+    }
+
+    try {
+      setIsCancelandoPedidoCompra(true);
+      const resposta = await cancelarPedido(pedido.pedidoId);
+      await recarregarContextoPedidoCompra(pedido.pedidoId);
+      toast.success(resposta.mensagem);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Nao foi possivel cancelar este pedido.",
+      );
+    } finally {
+      setIsCancelandoPedidoCompra(false);
     }
   }
 
@@ -1163,12 +1186,6 @@ export function PerfilUsuarioPage() {
     } finally {
       setIsProcessandoSolicitacaoPedidoCompra(false);
     }
-  }
-
-  function handleSolicitarTrocaPedido(pedido: PerfilPedidoDetalhe) {
-    toast(
-      `Pedido #${pedido.pedidoId}: opcao de troca aberta. Ainda falta um endpoint para registrar essa solicitacao.`,
-    );
   }
 
   async function handleBaixarReciboPedido(pedido: PerfilPedidoDetalhe) {
@@ -1210,6 +1227,38 @@ export function PerfilUsuarioPage() {
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Nao foi possivel atualizar o status da venda.",
+      );
+    } finally {
+      setIsAtualizandoPedidoVenda(false);
+    }
+  }
+
+  async function handleAtualizarSolicitacaoPedidoVenda(
+    solicitacao: SolicitacaoCancelamentoLeituraApiResponse,
+    status: StatusSolicitacaoCancelamentoApi,
+    observacaoAnalise?: string,
+  ) {
+    if (isAtualizandoPedidoVenda) {
+      return;
+    }
+
+    try {
+      setIsAtualizandoPedidoVenda(true);
+      const resposta = await atualizarStatusSolicitacaoCancelamentoDaMinhaLoja(
+        solicitacao.id,
+        {
+          status,
+          observacaoAnalise: observacaoAnalise?.trim() || undefined,
+        },
+      );
+
+      await recarregarContextoPedidoVenda(solicitacao.pedidoId);
+      toast.success(resposta.mensagem);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel atualizar a tratativa deste pedido.",
       );
     } finally {
       setIsAtualizandoPedidoVenda(false);
@@ -2346,10 +2395,10 @@ export function PerfilUsuarioPage() {
             <div className="space-y-6">
               {/* Exibe o resumo numerico da conta mesmo quando o usuario ainda nao possui dados completos. */}
               <UserStats
-                title={visaoAtiva === "loja" ? "Desempenho da loja" : "Minha atividade"}
+                title={visaoAtiva === "loja" ? "Resumo financeiro" : "Minha atividade"}
                 description={
                   visaoAtiva === "loja"
-                    ? "Resumo rápido da operação da loja para orientar vitrine, vendas e receita."
+                    ? "Acompanhe o bruto vendido, a comissao do marketplace, o liquido da loja e a quantidade de pedidos."
                     : "Resumo rápido da conta de comprador com seus dados principais."
                 }
                 stats={statsAtivos}
@@ -2436,7 +2485,7 @@ export function PerfilUsuarioPage() {
                             ? filtroStatusCompraAtivo === "cancelado"
                               ? "Nenhum pedido cancelado"
                               : filtroStatusCompraAtivo === "devolucao"
-                                ? "Nenhuma devolucao encontrada"
+                                ? "Nenhuma devolucao ou troca encontrada"
                                 : filtroStatusCompraAtivo === "finalizado"
                                   ? "Nenhum pedido finalizado"
                                   : "Nenhuma compra em andamento"
@@ -2451,9 +2500,9 @@ export function PerfilUsuarioPage() {
                             ? filtroStatusCompraAtivo === "cancelado"
                               ? "Quando um pedido for cancelado ou entrar em tratativa de cancelamento, ele aparecera aqui."
                               : filtroStatusCompraAtivo === "devolucao"
-                                ? "Quando uma compra receber tratativa de devolucao por defeito ou produto incorreto, ela aparecera aqui."
+                                ? "Quando uma compra receber tratativa de devolucao ou troca, ela aparecera aqui."
                                 : filtroStatusCompraAtivo === "finalizado"
-                                  ? "Quando uma compra for concluida sem cancelamento ou devolucao, ela aparecera aqui."
+                                  ? "Quando uma compra for concluida sem cancelamento, devolucao ou troca, ela aparecera aqui."
                                   : "Quando houver compras ainda em andamento, elas aparecerao aqui."
                             : estaFiltrandoStatusVenda
                               ? "Quando houver pedidos nessa etapa do fluxo, eles vao aparecer aqui com os produtos do pedido e as acoes do vendedor."
@@ -2569,14 +2618,15 @@ export function PerfilUsuarioPage() {
         isConfirmandoRecebimento={isConfirmandoRecebimentoPedidoCompra}
         isBaixandoRecibo={isBaixandoReciboPedidoCompra}
         isProcessandoSolicitacao={isProcessandoSolicitacaoPedidoCompra}
+        isCancelandoPedido={isCancelandoPedidoCompra}
         pedido={pedidoSelecionado?.contexto === "compra" ? pedidoSelecionado : null}
         solicitacoesCancelamento={solicitacoesPedidoCompra}
         onBaixarRecibo={handleBaixarReciboPedido}
+        onCancelarPedido={handleCancelarPedidoCompra}
         onClose={fecharModal}
         onConfirmarRecebimento={handleConfirmarRecebimentoPedido}
         onCriarSolicitacaoCancelamento={handleCriarSolicitacaoCancelamentoPedido}
         onCancelarSolicitacaoCancelamento={handleCancelarSolicitacaoCancelamentoPedido}
-        onSolicitarTroca={handleSolicitarTrocaPedido}
       />
 
       <ModalPedidoVenda
@@ -2588,6 +2638,7 @@ export function PerfilUsuarioPage() {
         pedido={pedidoSelecionado?.contexto === "venda" ? pedidoSelecionado : null}
         solicitacoesCancelamento={solicitacoesPedidoVenda}
         onAtualizarStatus={handleAtualizarStatusOperacionalPedidoVenda}
+        onAtualizarSolicitacao={handleAtualizarSolicitacaoPedidoVenda}
         onCancelarPedido={handleAbrirCancelamentoPedidoVenda}
         onClose={fecharModal}
       />

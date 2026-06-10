@@ -7,6 +7,8 @@ namespace Omnimarket.Api.Models.Dtos.Pedidos
     {
         public int? VendaId { get; set; }
 
+        public TipoSolicitacaoPedido? TipoSolicitacao { get; set; }
+
         [Required]
         public MotivoSolicitacaoCancelamento Motivo { get; set; }
 
@@ -38,6 +40,7 @@ namespace Omnimarket.Api.Models.Dtos.Pedidos
         public StatusVenda StatusVendaAtual { get; set; }
         public StatusPedido StatusPedidoOrigem { get; set; }
         public StatusVenda StatusVendaOrigem { get; set; }
+        public TipoSolicitacaoPedido TipoSolicitacao { get; set; }
         public MotivoSolicitacaoCancelamento Motivo { get; set; }
         public StatusSolicitacaoCancelamento Status { get; set; }
         public string Observacao { get; set; } = string.Empty;

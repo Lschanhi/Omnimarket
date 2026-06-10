@@ -17,8 +17,18 @@ export type CriarPedidoResponse = {
   valorProdutos: number;
   valorFrete: number;
   valorTotal: number;
+  valorComissao: number;
+  valorLiquidoVendedor: number;
+  taxaFixaComissao: number;
+  percentualComissao: number;
   status: string;
 };
+
+export type TipoSolicitacaoPedidoApi =
+  | "Cancelamento"
+  | "Devolucao"
+  | "Troca"
+  | "ProblemaEntrega";
 
 export type MotivoSolicitacaoCancelamentoApi =
   | "Arrependimento"
@@ -50,6 +60,7 @@ export type SolicitacaoCancelamentoLeituraApiResponse = {
   statusVendaAtual: string;
   statusPedidoOrigem: string;
   statusVendaOrigem: string;
+  tipoSolicitacao: TipoSolicitacaoPedidoApi;
   motivo: MotivoSolicitacaoCancelamentoApi;
   status: StatusSolicitacaoCancelamentoApi;
   observacao: string;
@@ -67,6 +78,7 @@ export type SolicitacaoCancelamentoLeituraApiResponse = {
 
 export type CriarSolicitacaoCancelamentoPayload = {
   vendaId?: number;
+  tipoSolicitacao?: TipoSolicitacaoPedidoApi;
   motivo: MotivoSolicitacaoCancelamentoApi;
   observacao?: string;
 };
@@ -81,10 +93,24 @@ export type CancelarSolicitacaoCancelamentoResponse = {
   solicitacao: SolicitacaoCancelamentoLeituraApiResponse;
 };
 
+export type CancelarPedidoResponse = {
+  mensagem: string;
+};
+
 export type ConfirmarEntregaPedidoResponse = {
   mensagem: string;
   pedidoId: number;
   status: string;
+};
+
+export type AtualizarSolicitacaoCancelamentoPayload = {
+  status: StatusSolicitacaoCancelamentoApi;
+  observacaoAnalise?: string;
+};
+
+export type AtualizarSolicitacaoCancelamentoResponse = {
+  mensagem: string;
+  solicitacao: SolicitacaoCancelamentoLeituraApiResponse;
 };
 
 export async function criarPedido(payload: CriarPedidoPayload) {
@@ -97,6 +123,13 @@ export async function criarPedido(payload: CriarPedidoPayload) {
 
 export async function buscarPedido(id: number) {
   return apiRequest<PedidoLeituraApiResponse>(`/api/pedidos/${id}`, {
+    authenticated: true,
+  });
+}
+
+export async function cancelarPedido(id: number) {
+  return apiRequest<CancelarPedidoResponse>(`/api/pedidos/${id}/cancelar`, {
+    method: "PUT",
     authenticated: true,
   });
 }

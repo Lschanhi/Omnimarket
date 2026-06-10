@@ -503,33 +503,31 @@ export function criarStatsLoja(
     totalVendas: number;
     faturamentoBruto: number;
     ticketMedio: number;
+    totalComissaoMarketplace: number;
+    totalLiquidoVendedor: number;
+    quantidadePedidos: number;
   },
 ): PerfilStatCardItem[] {
   return [
     {
-      key: "avaliacao-media",
-      label: "Avaliacao media",
-      value: formatarAvaliacaoMedia(stats.avaliacaoMedia),
-    },
-    {
-      key: "total-produtos",
-      label: "Produtos",
-      value: `${stats.totalProdutos}`,
-    },
-    {
-      key: "total-vendas",
-      label: "Vendas",
-      value: `${stats.totalVendas}`,
-    },
-    {
-      key: "faturamento-bruto",
-      label: "Faturamento",
+      key: "vendas-brutas",
+      label: "Vendas brutas",
       value: formatarMoeda(stats.faturamentoBruto),
     },
     {
-      key: "ticket-medio",
-      label: "Ticket medio",
-      value: formatarMoeda(stats.ticketMedio),
+      key: "comissao-omnimarket",
+      label: "Comissao OmniMarket",
+      value: formatarMoeda(stats.totalComissaoMarketplace),
+    },
+    {
+      key: "valor-liquido",
+      label: "Liquido a receber",
+      value: formatarMoeda(stats.totalLiquidoVendedor),
+    },
+    {
+      key: "total-pedidos",
+      label: "Total de pedidos",
+      value: `${stats.quantidadePedidos}`,
     },
   ];
 }

@@ -45,6 +45,10 @@ namespace Omnimarket.Api.Controllers
                     valorProdutos = pedido.ValorTotalProdutos,
                     valorFrete = pedido.ValorFrete,
                     valorTotal = pedido.ValorTotalPedido,
+                    valorComissao = pedido.ValorComissao,
+                    valorLiquidoVendedor = pedido.ValorLiquidoVendedor,
+                    taxaFixaComissao = pedido.TaxaFixaComissao,
+                    percentualComissao = pedido.PercentualComissao,
                     status = pedido.StatusPedidosId
                 });
             }
@@ -102,6 +106,7 @@ namespace Omnimarket.Api.Controllers
         }
 
         [HttpGet("{id:int}/solicitacoes-cancelamento")]
+        [HttpGet("{id:int}/solicitacoes")]
         public async Task<IActionResult> ListarSolicitacoesCancelamento(int id)
         {
             var usuarioId = User.GetUserId();
@@ -118,6 +123,7 @@ namespace Omnimarket.Api.Controllers
         }
 
         [HttpPost("{id:int}/solicitacoes-cancelamento")]
+        [HttpPost("{id:int}/solicitacoes")]
         public async Task<IActionResult> CriarSolicitacaoCancelamento(
             int id,
             [FromBody] SolicitacaoCancelamentoCriacaoDto dto)
@@ -135,7 +141,7 @@ namespace Omnimarket.Api.Controllers
 
                 return Ok(new
                 {
-                    mensagem = "Solicitacao de cancelamento criada com sucesso!",
+                    mensagem = "Solicitacao do pedido criada com sucesso!",
                     solicitacao
                 });
             }
@@ -146,6 +152,7 @@ namespace Omnimarket.Api.Controllers
         }
 
         [HttpPut("solicitacoes-cancelamento/{solicitacaoId:int}/cancelar")]
+        [HttpPut("solicitacoes/{solicitacaoId:int}/cancelar")]
         public async Task<IActionResult> CancelarSolicitacaoCancelamento(int solicitacaoId)
         {
             try
@@ -156,11 +163,11 @@ namespace Omnimarket.Api.Controllers
                     usuarioId);
 
                 if (solicitacao == null)
-                    return NotFound(new { mensagem = "Solicitacao de cancelamento nao encontrada." });
+                    return NotFound(new { mensagem = "Solicitacao do pedido nao encontrada." });
 
                 return Ok(new
                 {
-                    mensagem = "Solicitacao de cancelamento cancelada com sucesso!",
+                    mensagem = "Solicitacao do pedido cancelada com sucesso!",
                     solicitacao
                 });
             }

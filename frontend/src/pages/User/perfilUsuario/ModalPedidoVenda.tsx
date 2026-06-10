@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   CalendarDays,
   CheckCheck,
@@ -19,6 +20,7 @@ import type {
   MotivoSolicitacaoCancelamentoApi,
   SolicitacaoCancelamentoLeituraApiResponse,
   StatusSolicitacaoCancelamentoApi,
+  TipoSolicitacaoPedidoApi,
 } from "../../../Services/pedidos/pedidoService";
 import type { PerfilPedidoDetalhe } from "../../../types/perfil";
 
@@ -35,6 +37,11 @@ type ModalPedidoVendaProps = {
   onAtualizarStatus: (
     pedido: PerfilPedidoDetalhe,
     statusVenda: StatusVendaOperacionalLoja,
+  ) => void;
+  onAtualizarSolicitacao: (
+    solicitacao: SolicitacaoCancelamentoLeituraApiResponse,
+    status: StatusSolicitacaoCancelamentoApi,
+    observacaoAnalise?: string,
   ) => void;
   onCancelarPedido: (pedido: PerfilPedidoDetalhe) => void;
   onClose: () => void;
@@ -101,6 +108,20 @@ function formatarStatusSolicitacao(status: StatusSolicitacaoCancelamentoApi) {
     case "Aberta":
     default:
       return "Aberta";
+  }
+}
+
+function formatarTipoSolicitacao(tipo: TipoSolicitacaoPedidoApi) {
+  switch (tipo) {
+    case "ProblemaEntrega":
+      return "Problema de entrega";
+    case "Devolucao":
+      return "Devolucao";
+    case "Troca":
+      return "Troca";
+    case "Cancelamento":
+    default:
+      return "Cancelamento";
   }
 }
 
@@ -213,9 +234,11 @@ export function ModalPedidoVenda({
   pedido,
   solicitacoesCancelamento,
   onAtualizarStatus,
+  onAtualizarSolicitacao,
   onCancelarPedido,
   onClose,
 }: ModalPedidoVendaProps) {
+  const [observacoesAnalise, setObservacoesAnalise] = useState<Record<number, string>>({});
   const acaoOperacional = obterAcaoOperacionalPrimaria(pedido);
   const podeCancelarPedido = Boolean(pedido?.podeCancelar) && !isAtualizandoPedido;
   const mensagemBloqueioFluxo = criarMensagemBloqueioFluxoOperacional(pedido);
@@ -224,6 +247,17 @@ export function ModalPedidoVenda({
     solicitacoesCancelamento.find((solicitacao) =>
       ["Aberta", "EmAnalise", "Aprovada"].includes(solicitacao.status),
     ) ?? null;
+
+  function atualizarObservacaoAnalise(solicitacaoId: number, valor: string) {
+    setObservacoesAnalise((estadoAtual) => ({
+      ...estadoAtual,
+      [solicitacaoId]: valor,
+    }));
+  }
+
+  function obterObservacaoAnalise(solicitacao: SolicitacaoCancelamentoLeituraApiResponse) {
+    return observacoesAnalise[solicitacao.id] ?? solicitacao.observacaoAnalise ?? "";
+  }
 
   return (
     <ProfileModal
@@ -374,24 +408,26 @@ export function ModalPedidoVenda({
 
               <div className="mt-4 space-y-3 text-sm text-neutral-300">
                 <div className="flex items-center justify-between gap-4">
-                  <span>Itens da loja</span>
-                  <span>{pedido.subtotal}</span>
+                  <span>Valor dos produtos</span>
+                  <span>{pedido.valorProdutos ?? pedido.subtotal}</span>
                 </div>
-                {pedido.valorTotalPedido ? (
-                  <div className="flex items-center justify-between gap-4">
-                    <span>Total do pedido</span>
-                    <span>{pedido.valorTotalPedido}</span>
-                  </div>
-                ) : null}
-                {!pedido.pedidoMultiloja && pedido.frete ? (
-                  <div className="flex items-center justify-between gap-4">
-                    <span>Frete do pedido</span>
-                    <span>{pedido.frete}</span>
-                  </div>
-                ) : null}
+                <div className="flex items-center justify-between gap-4">
+                  <span>Frete</span>
+                  <span>{pedido.valorFrete ?? pedido.frete}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span>Total pago pelo cliente</span>
+                  <span>{pedido.valorTotalPedido ?? pedido.valorTotal ?? pedido.total}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span>Comissao do marketplace</span>
+                  <span>{pedido.valorComissao ?? "R$ 0,00"}</span>
+                </div>
                 <div className="flex items-center justify-between gap-4 border-t border-white/10 pt-3">
-                  <span className="font-medium text-white">Total considerado pela loja</span>
-                  <span className="font-semibold text-yellow-300">{pedido.total}</span>
+                  <span className="font-medium text-white">Valor liquido do vendedor</span>
+                  <span className="font-semibold text-yellow-300">
+                    {pedido.valorLiquidoVendedor ?? pedido.total}
+                  </span>
                 </div>
               </div>
             </div>
@@ -402,10 +438,10 @@ export function ModalPedidoVenda({
               <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm font-semibold text-white">Tratativas de cancelamento</p>
+                  <p className="text-sm font-semibold text-white">Tratativas do pedido</p>
                   <p className="mt-1 text-sm text-neutral-300">
-                    Use este bloco para acompanhar quando o comprador abrir uma solicitacao ligada
-                    a este pedido.
+                    Use este bloco para acompanhar e responder quando o comprador abrir uma
+                    solicitacao ligada a este pedido.
                   </p>
                 </div>
 
@@ -422,7 +458,7 @@ export function ModalPedidoVenda({
                   </div>
                 ) : solicitacoesCancelamento.length === 0 ? (
                   <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-neutral-300">
-                    Nenhuma solicitacao de cancelamento foi aberta para este pedido ate o momento.
+                    Nenhuma solicitacao foi aberta para este pedido ate o momento.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -450,6 +486,10 @@ export function ModalPedidoVenda({
 
                         <div className="mt-4 space-y-3 text-sm text-neutral-300">
                           <p>
+                            <span className="text-neutral-500">Tipo:</span>{" "}
+                            {formatarTipoSolicitacao(solicitacao.tipoSolicitacao)}
+                          </p>
+                          <p>
                             <span className="text-neutral-500">Motivo:</span>{" "}
                             {formatarMotivoSolicitacao(solicitacao.motivo)}
                           </p>
@@ -476,6 +516,110 @@ export function ModalPedidoVenda({
                             </p>
                           ) : null}
                         </div>
+
+                        {solicitacao.podeColocarEmAnalise ||
+                        solicitacao.podeAprovar ||
+                        solicitacao.podeRecusar ||
+                        solicitacao.podeConcluir ? (
+                          <div className="mt-4 space-y-3 rounded-2xl border border-white/10 bg-black/40 p-4">
+                            <div className="flex flex-col gap-2">
+                              <label
+                                htmlFor={`observacao-analise-${solicitacao.id}`}
+                                className="text-sm text-neutral-300"
+                              >
+                                Observacao da loja
+                              </label>
+                              <textarea
+                                id={`observacao-analise-${solicitacao.id}`}
+                                rows={3}
+                                maxLength={500}
+                                value={obterObservacaoAnalise(solicitacao)}
+                                onChange={(event) =>
+                                  atualizarObservacaoAnalise(
+                                    solicitacao.id,
+                                    event.target.value,
+                                  )
+                                }
+                                disabled={isAtualizandoPedido}
+                                placeholder="Registre o retorno da loja para esta tratativa."
+                                className="w-full rounded-xl border border-[#6B6B6B] bg-black p-3 text-white placeholder-[#6b6b6b] outline-none transition focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
+                              />
+                            </div>
+
+                            <div className="flex flex-wrap gap-3">
+                              {solicitacao.podeColocarEmAnalise ? (
+                                <Botao
+                                  type="button"
+                                  variant="secondary"
+                                  onClick={() =>
+                                    onAtualizarSolicitacao(
+                                      solicitacao,
+                                      "EmAnalise",
+                                      obterObservacaoAnalise(solicitacao),
+                                    )
+                                  }
+                                  disabled={isAtualizandoPedido}
+                                  className="sm:w-auto sm:px-5"
+                                >
+                                  Em analise
+                                </Botao>
+                              ) : null}
+
+                              {solicitacao.podeAprovar ? (
+                                <Botao
+                                  type="button"
+                                  onClick={() =>
+                                    onAtualizarSolicitacao(
+                                      solicitacao,
+                                      "Aprovada",
+                                      obterObservacaoAnalise(solicitacao),
+                                    )
+                                  }
+                                  disabled={isAtualizandoPedido}
+                                  className="border-emerald-400/20 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/20 sm:w-auto sm:px-5"
+                                >
+                                  Aprovar
+                                </Botao>
+                              ) : null}
+
+                              {solicitacao.podeRecusar ? (
+                                <Botao
+                                  type="button"
+                                  variant="secondary"
+                                  onClick={() =>
+                                    onAtualizarSolicitacao(
+                                      solicitacao,
+                                      "Recusada",
+                                      obterObservacaoAnalise(solicitacao),
+                                    )
+                                  }
+                                  disabled={isAtualizandoPedido}
+                                  className="border-red-400/20 bg-red-400/10 text-red-100 hover:bg-red-400/20 sm:w-auto sm:px-5"
+                                >
+                                  Recusar
+                                </Botao>
+                              ) : null}
+
+                              {solicitacao.podeConcluir ? (
+                                <Botao
+                                  type="button"
+                                  variant="secondary"
+                                  onClick={() =>
+                                    onAtualizarSolicitacao(
+                                      solicitacao,
+                                      "Concluida",
+                                      obterObservacaoAnalise(solicitacao),
+                                    )
+                                  }
+                                  disabled={isAtualizandoPedido}
+                                  className="border-blue-400/20 bg-blue-400/10 text-blue-100 hover:bg-blue-400/20 sm:w-auto sm:px-5"
+                                >
+                                  Concluir
+                                </Botao>
+                              ) : null}
+                            </div>
+                          </div>
+                        ) : null}
                       </article>
                     ))}
                   </div>

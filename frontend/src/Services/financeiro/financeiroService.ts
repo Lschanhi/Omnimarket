@@ -32,6 +32,13 @@ export type ConfirmarPagamentoResponse = {
   quantidadeVendasAtualizadas: number;
 };
 
+export type ResumoFinanceiroVendedorResponse = {
+  totalVendidoBruto: number;
+  totalComissaoMarketplace: number;
+  totalLiquidoVendedor: number;
+  quantidadePedidos: number;
+};
+
 export async function iniciarPagamento(payload: IniciarPagamentoPayload) {
   return apiRequest<IniciarPagamentoResponse>("/api/financeiro/pagamentos/iniciar", {
     method: "POST",
@@ -48,4 +55,10 @@ export async function confirmarPagamentoFake(planoPagamentoId: number) {
       authenticated: true,
     },
   );
+}
+
+export async function getResumoFinanceiroVendedor() {
+  return apiRequest<ResumoFinanceiroVendedorResponse>("/api/vendedor/financeiro/resumo", {
+    authenticated: true,
+  });
 }

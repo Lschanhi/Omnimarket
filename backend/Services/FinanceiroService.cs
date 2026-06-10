@@ -10,13 +10,16 @@ namespace Omnimarket.Api.Services
     public class FinanceiroService
     {
         private readonly DataContext _context;
+        private readonly ComissaoMarketplaceService _comissaoMarketplaceService;
         private readonly IGatewayPagamentoService _gatewayPagamentoService;
 
         public FinanceiroService(
             DataContext context,
+            ComissaoMarketplaceService comissaoMarketplaceService,
             IGatewayPagamentoService gatewayPagamentoService)
         {
             _context = context;
+            _comissaoMarketplaceService = comissaoMarketplaceService;
             _gatewayPagamentoService = gatewayPagamentoService;
         }
 
@@ -70,6 +73,7 @@ namespace Omnimarket.Api.Services
                     throw new Exception("Este pedido ja possui vendas registradas.");
 
                 await ValidarFormaPagamentoAsync(dto.FormaPagamentoId);
+                await _comissaoMarketplaceService.AplicarSnapshotAoPedidoAsync(pedido);
 
                 var plano = new PlanoPagamento
                 {
@@ -80,20 +84,43 @@ namespace Omnimarket.Api.Services
                     DataCriacao = DateTime.UtcNow
                 };
 
+                var rateioComissao = ComissaoMarketplaceService.RatearComissaoEntreVendedores(
+                    pedido.Itens
+                        .GroupBy(i => i.Produto.Loja.UsuarioId)
+                        .Select(grupo => (
+                            VendedorId: grupo.Key,
+                            ValorBruto: grupo.Sum(item => item.ValorTotal))),
+                    pedido.ValorComissao)
+                    .ToDictionary(item => item.VendedorId);
+
+                var dataCriacaoVenda = DateTime.UtcNow;
                 var vendasCriadas = pedido.Itens
                     .GroupBy(i => i.Produto.Loja.UsuarioId)
                     .Select(grupo =>
                     {
-                        var valorBruto = Math.Round(grupo.Sum(i => i.ValorTotal), 2, MidpointRounding.AwayFromZero);
+                        var vendedorId = grupo.Key;
+                        var valorBruto = ComissaoMarketplaceService.ArredondarMoeda(
+                            grupo.Sum(i => i.ValorTotal));
+
+                        if (!rateioComissao.TryGetValue(vendedorId, out var rateioVendedor))
+                        {
+                            rateioVendedor = new RateioComissaoVendedorDto
+                            {
+                                VendedorId = vendedorId,
+                                ValorBruto = valorBruto,
+                                ValorComissao = 0m,
+                                ValorLiquidoVendedor = valorBruto
+                            };
+                        }
 
                         return new Venda
                         {
                             PedidoId = pedido.Id,
-                            VendedorId = grupo.Key,
-                            ValorBruto = valorBruto,
-                            ValorLiquido = valorBruto,
+                            VendedorId = vendedorId,
+                            ValorBruto = rateioVendedor.ValorBruto,
+                            ValorLiquido = rateioVendedor.ValorLiquidoVendedor,
                             StatusVenda = StatusVenda.Criada,
-                            DataCriacao = DateTime.UtcNow
+                            DataCriacao = dataCriacaoVenda
                         };
                     })
                     .ToList();

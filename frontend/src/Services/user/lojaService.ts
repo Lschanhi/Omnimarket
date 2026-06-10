@@ -1,8 +1,10 @@
 import { apiRequest } from "../http/apiClient";
 import type {
+  AtualizarSolicitacaoCancelamentoPayload,
   MotivoSolicitacaoCancelamentoApi,
   SolicitacaoCancelamentoLeituraApiResponse,
   StatusSolicitacaoCancelamentoApi,
+  TipoSolicitacaoPedidoApi,
 } from "../pedidos/pedidoService";
 
 export type TipoDocumentoFiscalLoja = 1 | 2;
@@ -89,6 +91,13 @@ export type LojaPedidoLeituraApiResponse = {
   statusPedido: LojaPedidoStatusPedidoApi;
   statusVenda?: LojaPedidoStatusVendaApi | null;
   tipoEntrega: string;
+  valorProdutos: number;
+  valorFrete: number;
+  valorTotal: number;
+  taxaFixaComissao: number;
+  percentualComissao: number;
+  valorComissao: number;
+  valorLiquidoVendedor: number;
   valorTotalPedido: number;
   valorTotalLoja: number;
   quantidadeItens: number;
@@ -115,6 +124,11 @@ export type LojaSolicitacaoCancelamentoListagemApiResponse = {
   total: number;
   page: number;
   pageSize: number;
+};
+
+export type LojaAtualizarSolicitacaoCancelamentoResponse = {
+  mensagem: string;
+  solicitacao: SolicitacaoCancelamentoLeituraApiResponse;
 };
 
 export type LojaPedidoListagemApiResponse = {
@@ -187,6 +201,20 @@ function normalizarStatusSolicitacaoCancelamento(
     case "Aberta":
     default:
       return "Aberta";
+  }
+}
+
+function normalizarTipoSolicitacaoPedido(valor: unknown): TipoSolicitacaoPedidoApi {
+  switch (valor) {
+    case "Devolucao":
+      return "Devolucao";
+    case "Troca":
+      return "Troca";
+    case "ProblemaEntrega":
+      return "ProblemaEntrega";
+    case "Cancelamento":
+    default:
+      return "Cancelamento";
   }
 }
 
@@ -514,6 +542,22 @@ function normalizarPedidoLoja(valor: unknown): LojaPedidoLeituraApiResponse | nu
     statusPedido,
     statusVenda,
     tipoEntrega: lerTexto(pedido.tipoEntrega ?? pedido.TipoEntrega),
+    valorProdutos: lerNumero(pedido.valorProdutos ?? pedido.ValorProdutos, 0),
+    valorFrete: lerNumero(pedido.valorFrete ?? pedido.ValorFrete, 0),
+    valorTotal: lerNumero(pedido.valorTotal ?? pedido.ValorTotal, 0),
+    taxaFixaComissao: lerNumero(
+      pedido.taxaFixaComissao ?? pedido.TaxaFixaComissao,
+      0,
+    ),
+    percentualComissao: lerNumero(
+      pedido.percentualComissao ?? pedido.PercentualComissao,
+      0,
+    ),
+    valorComissao: lerNumero(pedido.valorComissao ?? pedido.ValorComissao, 0),
+    valorLiquidoVendedor: lerNumero(
+      pedido.valorLiquidoVendedor ?? pedido.ValorLiquidoVendedor,
+      0,
+    ),
     valorTotalPedido: lerNumero(pedido.valorTotalPedido ?? pedido.ValorTotalPedido, 0),
     valorTotalLoja: lerNumero(pedido.valorTotalLoja ?? pedido.ValorTotalLoja, 0),
     quantidadeItens: lerNumero(pedido.quantidadeItens ?? pedido.QuantidadeItens, itens.length),
@@ -640,6 +684,9 @@ function normalizarSolicitacaoCancelamentoLoja(
     statusVendaOrigem: lerTexto(
       solicitacao.statusVendaOrigem ?? solicitacao.StatusVendaOrigem,
     ),
+    tipoSolicitacao: normalizarTipoSolicitacaoPedido(
+      solicitacao.tipoSolicitacao ?? solicitacao.TipoSolicitacao,
+    ),
     motivo: normalizarMotivoSolicitacaoCancelamento(
       solicitacao.motivo ?? solicitacao.Motivo,
     ),
@@ -716,6 +763,27 @@ function normalizarRespostaListaSolicitacoesCancelamentoLoja(
     total: lerNumero(resposta.total ?? resposta.Total, items.length),
     page: lerNumero(resposta.page ?? resposta.Page, 1),
     pageSize: lerNumero(resposta.pageSize ?? resposta.PageSize, items.length),
+  };
+}
+
+function normalizarRespostaAtualizacaoSolicitacaoCancelamentoLoja(
+  valor: unknown,
+): LojaAtualizarSolicitacaoCancelamentoResponse {
+  const resposta = lerObjeto(valor);
+  const solicitacao = normalizarSolicitacaoCancelamentoLoja(
+    resposta?.solicitacao ?? resposta?.Solicitacao ?? resposta?.data ?? resposta?.Data,
+  );
+
+  if (!solicitacao) {
+    throw new Error("A API retornou uma solicitacao invalida ao atualizar a tratativa.");
+  }
+
+  return {
+    mensagem: lerTexto(
+      resposta?.mensagem ?? resposta?.Mensagem,
+      "Solicitacao atualizada com sucesso.",
+    ),
+    solicitacao,
   };
 }
 
@@ -851,6 +919,22 @@ export async function listarTodasSolicitacoesCancelamentoDaMinhaLoja(pageSize = 
 
     page += 1;
   }
+}
+
+export async function atualizarStatusSolicitacaoCancelamentoDaMinhaLoja(
+  solicitacaoId: number,
+  payload: AtualizarSolicitacaoCancelamentoPayload,
+) {
+  const resposta = await apiRequest<unknown>(
+    `/api/lojas/minha/solicitacoes-cancelamento/${solicitacaoId}/status`,
+    {
+      method: "PUT",
+      authenticated: true,
+      body: payload,
+    },
+  );
+
+  return normalizarRespostaAtualizacaoSolicitacaoCancelamentoLoja(resposta);
 }
 
 export async function buscarPedidoDaMinhaLoja(pedidoId: number) {

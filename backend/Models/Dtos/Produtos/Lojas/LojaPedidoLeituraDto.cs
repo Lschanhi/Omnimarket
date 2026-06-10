@@ -15,6 +15,13 @@ namespace Omnimarket.Api.Models.Dtos.Produtos.Lojas
         public StatusPedido StatusPedido { get; set; }
         public StatusVenda? StatusVenda { get; set; }
         public string TipoEntrega { get; set; } = string.Empty;
+        public decimal ValorProdutos { get; set; }
+        public decimal ValorFrete { get; set; }
+        public decimal ValorTotal { get; set; }
+        public decimal TaxaFixaComissao { get; set; }
+        public decimal PercentualComissao { get; set; }
+        public decimal ValorComissao { get; set; }
+        public decimal ValorLiquidoVendedor { get; set; }
         public decimal ValorTotalPedido { get; set; }
         public decimal ValorTotalLoja { get; set; }
         public int QuantidadeItens { get; set; }
