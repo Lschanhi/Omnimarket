@@ -30,7 +30,9 @@ public class FinanceiroServiceTests
         Assert.Equal(1, plano.FormaPagamentoId);
         Assert.Equal(1, resposta.FormaPagamentoId);
         Assert.Equal(StatusVenda.Criada, venda.StatusVenda);
-        Assert.Equal(venda.ValorBruto, venda.ValorLiquido);
+        Assert.Equal(60m, venda.ValorBruto);
+        Assert.Equal(55.50m, venda.ValorLiquido);
+        Assert.Equal(4.50m, resposta.Vendas.Single().ValorComissao);
     }
 
     [Fact]
@@ -126,7 +128,9 @@ public class FinanceiroServiceTests
 
         Assert.Equal(0m, pedidoSalvo.ValorFrete);
         Assert.Equal(2, vendas.Count);
-        Assert.Contains(vendas, v => v.ValorBruto == 50m && v.ValorLiquido == 50m);
-        Assert.Contains(vendas, v => v.ValorBruto == 70m && v.ValorLiquido == 70m);
+        Assert.Equal(7.50m, pedidoSalvo.ValorComissao);
+        Assert.Equal(112.50m, pedidoSalvo.ValorLiquidoVendedor);
+        Assert.Contains(vendas, v => v.ValorBruto == 50m && v.ValorLiquido == 46.88m);
+        Assert.Contains(vendas, v => v.ValorBruto == 70m && v.ValorLiquido == 65.62m);
     }
 }

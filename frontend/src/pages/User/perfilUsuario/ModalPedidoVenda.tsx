@@ -408,24 +408,26 @@ export function ModalPedidoVenda({
 
               <div className="mt-4 space-y-3 text-sm text-neutral-300">
                 <div className="flex items-center justify-between gap-4">
-                  <span>Itens da loja</span>
-                  <span>{pedido.subtotal}</span>
+                  <span>Valor dos produtos</span>
+                  <span>{pedido.valorProdutos ?? pedido.subtotal}</span>
                 </div>
-                {pedido.valorTotalPedido ? (
-                  <div className="flex items-center justify-between gap-4">
-                    <span>Total do pedido</span>
-                    <span>{pedido.valorTotalPedido}</span>
-                  </div>
-                ) : null}
-                {!pedido.pedidoMultiloja && pedido.frete ? (
-                  <div className="flex items-center justify-between gap-4">
-                    <span>Frete do pedido</span>
-                    <span>{pedido.frete}</span>
-                  </div>
-                ) : null}
+                <div className="flex items-center justify-between gap-4">
+                  <span>Frete</span>
+                  <span>{pedido.valorFrete ?? pedido.frete}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span>Total pago pelo cliente</span>
+                  <span>{pedido.valorTotalPedido ?? pedido.valorTotal ?? pedido.total}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span>Comissao do marketplace</span>
+                  <span>{pedido.valorComissao ?? "R$ 0,00"}</span>
+                </div>
                 <div className="flex items-center justify-between gap-4 border-t border-white/10 pt-3">
-                  <span className="font-medium text-white">Total considerado pela loja</span>
-                  <span className="font-semibold text-yellow-300">{pedido.total}</span>
+                  <span className="font-medium text-white">Valor liquido do vendedor</span>
+                  <span className="font-semibold text-yellow-300">
+                    {pedido.valorLiquidoVendedor ?? pedido.total}
+                  </span>
                 </div>
               </div>
             </div>

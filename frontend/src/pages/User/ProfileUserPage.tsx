@@ -2395,10 +2395,10 @@ export function PerfilUsuarioPage() {
             <div className="space-y-6">
               {/* Exibe o resumo numerico da conta mesmo quando o usuario ainda nao possui dados completos. */}
               <UserStats
-                title={visaoAtiva === "loja" ? "Desempenho da loja" : "Minha atividade"}
+                title={visaoAtiva === "loja" ? "Resumo financeiro" : "Minha atividade"}
                 description={
                   visaoAtiva === "loja"
-                    ? "Resumo rápido da operação da loja para orientar vitrine, vendas e receita."
+                    ? "Acompanhe o bruto vendido, a comissao do marketplace, o liquido da loja e a quantidade de pedidos."
                     : "Resumo rápido da conta de comprador com seus dados principais."
                 }
                 stats={statsAtivos}

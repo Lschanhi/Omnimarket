@@ -24,6 +24,10 @@ public class PedidoServiceTests
         Assert.Equal(70m, pedido.ValorTotalProdutos);
         Assert.Equal(0m, pedido.ValorFrete);
         Assert.Equal(70m, pedido.ValorTotalPedido);
+        Assert.Equal(1.50m, pedido.TaxaFixaComissao);
+        Assert.Equal(0.05m, pedido.PercentualComissao);
+        Assert.Equal(5.00m, pedido.ValorComissao);
+        Assert.Equal(65.00m, pedido.ValorLiquidoVendedor);
         Assert.Single(pedido.Itens);
         Assert.Equal(2, pedido.Itens[0].Quantidade);
         Assert.Equal(8, produto.Estoque);
@@ -98,6 +102,8 @@ public class PedidoServiceTests
 
         Assert.Equal(StatusPedido.Pendente, pedidoSalvo.StatusPedidosId);
         Assert.Equal(75m, pedidoSalvo.ValorTotalPedido);
+        Assert.Equal(5.25m, pedidoSalvo.ValorComissao);
+        Assert.Equal(69.75m, pedidoSalvo.ValorLiquidoVendedor);
         Assert.Single(pedidoSalvo.Itens);
         Assert.Equal(3, pedidoSalvo.Itens[0].Quantidade);
         Assert.Empty(carrinho.Itens);

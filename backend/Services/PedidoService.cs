@@ -21,12 +21,17 @@ namespace Omnimarket.Api.Services
         ];
 
         private readonly DataContext _context;
+        private readonly ComissaoMarketplaceService _comissaoMarketplaceService;
         private readonly FinanceiroService _financeiroService;
 
-        public PedidoService(DataContext context, FinanceiroService financeiroService)
+        public PedidoService(
+            DataContext context,
+            FinanceiroService financeiroService,
+            ComissaoMarketplaceService comissaoMarketplaceService)
         {
             _context = context;
             _financeiroService = financeiroService;
+            _comissaoMarketplaceService = comissaoMarketplaceService;
         }
 
         public async Task<Pedido> CriarPedido(int usuarioId, PedidoDto dto)
@@ -112,6 +117,9 @@ namespace Omnimarket.Api.Services
                 pedido.ValorTotalProdutos = pedido.Itens.Sum(i => i.ValorTotal);
                 pedido.ValorFrete = 0m;
                 pedido.ValorTotalPedido = pedido.ValorTotalProdutos;
+                await _comissaoMarketplaceService.AplicarSnapshotAoPedidoAsync(
+                    pedido,
+                    sobrescrever: true);
 
                 await RemoverItensCompradosDoCarrinhoAsync(usuarioId, itensAgrupados);
                 await _context.TBL_PEDIDO.AddAsync(pedido);
@@ -754,6 +762,12 @@ namespace Omnimarket.Api.Services
                 .Count() > 1;
 
             var statusVenda = VendaStatusHelper.ObterStatusParaExibicao(venda?.StatusVenda);
+            var resumoFinanceiro = CalcularResumoFinanceiroDaLoja(
+                pedido,
+                venda,
+                lojaId,
+                itensDaLoja,
+                pedidoMultiloja);
 
             return new LojaPedidoLeituraDto
             {
@@ -767,8 +781,15 @@ namespace Omnimarket.Api.Services
                 StatusPedido = pedido.StatusPedidosId,
                 StatusVenda = statusVenda,
                 TipoEntrega = EntregaHelper.ObterNomeTipoEntrega(pedido.TipoEntregaId),
+                ValorProdutos = resumoFinanceiro.ValorProdutos,
+                ValorFrete = resumoFinanceiro.ValorFrete,
+                ValorTotal = resumoFinanceiro.ValorTotal,
+                TaxaFixaComissao = pedido.TaxaFixaComissao,
+                PercentualComissao = pedido.PercentualComissao,
+                ValorComissao = resumoFinanceiro.ValorComissao,
+                ValorLiquidoVendedor = resumoFinanceiro.ValorLiquidoVendedor,
                 ValorTotalPedido = pedido.ValorTotalPedido,
-                ValorTotalLoja = itensDaLoja.Sum(i => i.ValorTotal),
+                ValorTotalLoja = resumoFinanceiro.ValorProdutos,
                 QuantidadeItens = itensDaLoja.Sum(i => i.Quantidade),
                 DataPedido = pedido.DataPedido,
                 Observacao = pedido.Observacao,
@@ -941,9 +962,15 @@ namespace Omnimarket.Api.Services
                 Id = pedido.Id,
                 Status = pedido.StatusPedidosId,
                 TipoEntrega = EntregaHelper.ObterNomeTipoEntrega(pedido.TipoEntregaId),
+                ValorProdutos = pedido.ValorTotalProdutos,
                 ValorTotalProdutos = pedido.ValorTotalProdutos,
                 ValorFrete = pedido.ValorFrete,
+                ValorTotal = pedido.ValorTotalPedido,
                 ValorTotalPedido = pedido.ValorTotalPedido,
+                TaxaFixaComissao = pedido.TaxaFixaComissao,
+                PercentualComissao = pedido.PercentualComissao,
+                ValorComissao = pedido.ValorComissao,
+                ValorLiquidoVendedor = pedido.ValorLiquidoVendedor,
                 DataPedido = pedido.DataPedido,
                 Observacao = pedido.Observacao,
                 TipoLogradouroEntrega = pedido.TipoLogradouroEntrega,
@@ -973,6 +1000,62 @@ namespace Omnimarket.Api.Services
                     })
                     .ToList()
             };
+        }
+
+        private static ResumoFinanceiroLojaDto CalcularResumoFinanceiroDaLoja(
+            Pedido pedido,
+            Venda? venda,
+            int lojaId,
+            IReadOnlyCollection<ItensPedido> itensDaLoja,
+            bool pedidoMultiloja)
+        {
+            var valorProdutosDaLoja = ComissaoMarketplaceService.ArredondarMoeda(
+                itensDaLoja.Sum(i => i.ValorTotal));
+            var valorFreteDaLoja = pedidoMultiloja ? 0m : pedido.ValorFrete;
+            var valorTotalDaLoja = ComissaoMarketplaceService.ArredondarMoeda(
+                valorProdutosDaLoja + valorFreteDaLoja);
+
+            if (venda != null)
+            {
+                var valorBruto = ComissaoMarketplaceService.ArredondarMoeda(venda.ValorBruto);
+                var valorComissao = ComissaoMarketplaceService.ArredondarMoeda(
+                    venda.ValorBruto - venda.ValorLiquido);
+
+                return new ResumoFinanceiroLojaDto(
+                    ValorProdutos: valorBruto,
+                    ValorFrete: valorFreteDaLoja,
+                    ValorTotal: ComissaoMarketplaceService.ArredondarMoeda(valorBruto + valorFreteDaLoja),
+                    ValorComissao: valorComissao,
+                    ValorLiquidoVendedor: ComissaoMarketplaceService.ArredondarMoeda(venda.ValorLiquido));
+            }
+
+            if (!ComissaoMarketplaceService.PedidoJaPossuiSnapshotDeComissao(pedido))
+            {
+                return new ResumoFinanceiroLojaDto(
+                    ValorProdutos: valorProdutosDaLoja,
+                    ValorFrete: valorFreteDaLoja,
+                    ValorTotal: valorTotalDaLoja,
+                    ValorComissao: 0m,
+                    ValorLiquidoVendedor: valorProdutosDaLoja);
+            }
+
+            var rateio = ComissaoMarketplaceService
+                .RatearComissaoEntreVendedores(
+                    pedido.Itens
+                        .Where(i => i.Produto != null)
+                        .GroupBy(i => i.Produto!.LojaId)
+                        .Select(g => (
+                            VendedorId: g.Key,
+                            ValorBruto: g.Sum(item => item.ValorTotal))),
+                    pedido.ValorComissao)
+                .FirstOrDefault(r => r.VendedorId == lojaId);
+
+            return new ResumoFinanceiroLojaDto(
+                ValorProdutos: valorProdutosDaLoja,
+                ValorFrete: valorFreteDaLoja,
+                ValorTotal: valorTotalDaLoja,
+                ValorComissao: rateio?.ValorComissao ?? 0m,
+                ValorLiquidoVendedor: rateio?.ValorLiquidoVendedor ?? valorProdutosDaLoja);
         }
 
         private async Task<T> ExecutarComEstrategiaETransacaoAsync<T>(
@@ -1005,5 +1088,11 @@ namespace Omnimarket.Api.Services
         }
 
         private sealed record ItemAgrupadoPedido(int ProdutoId, int Quantidade);
+        private sealed record ResumoFinanceiroLojaDto(
+            decimal ValorProdutos,
+            decimal ValorFrete,
+            decimal ValorTotal,
+            decimal ValorComissao,
+            decimal ValorLiquidoVendedor);
     }
 }

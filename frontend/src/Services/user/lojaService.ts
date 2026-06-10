@@ -91,6 +91,13 @@ export type LojaPedidoLeituraApiResponse = {
   statusPedido: LojaPedidoStatusPedidoApi;
   statusVenda?: LojaPedidoStatusVendaApi | null;
   tipoEntrega: string;
+  valorProdutos: number;
+  valorFrete: number;
+  valorTotal: number;
+  taxaFixaComissao: number;
+  percentualComissao: number;
+  valorComissao: number;
+  valorLiquidoVendedor: number;
   valorTotalPedido: number;
   valorTotalLoja: number;
   quantidadeItens: number;
@@ -535,6 +542,22 @@ function normalizarPedidoLoja(valor: unknown): LojaPedidoLeituraApiResponse | nu
     statusPedido,
     statusVenda,
     tipoEntrega: lerTexto(pedido.tipoEntrega ?? pedido.TipoEntrega),
+    valorProdutos: lerNumero(pedido.valorProdutos ?? pedido.ValorProdutos, 0),
+    valorFrete: lerNumero(pedido.valorFrete ?? pedido.ValorFrete, 0),
+    valorTotal: lerNumero(pedido.valorTotal ?? pedido.ValorTotal, 0),
+    taxaFixaComissao: lerNumero(
+      pedido.taxaFixaComissao ?? pedido.TaxaFixaComissao,
+      0,
+    ),
+    percentualComissao: lerNumero(
+      pedido.percentualComissao ?? pedido.PercentualComissao,
+      0,
+    ),
+    valorComissao: lerNumero(pedido.valorComissao ?? pedido.ValorComissao, 0),
+    valorLiquidoVendedor: lerNumero(
+      pedido.valorLiquidoVendedor ?? pedido.ValorLiquidoVendedor,
+      0,
+    ),
     valorTotalPedido: lerNumero(pedido.valorTotalPedido ?? pedido.ValorTotalPedido, 0),
     valorTotalLoja: lerNumero(pedido.valorTotalLoja ?? pedido.ValorTotalLoja, 0),
     quantidadeItens: lerNumero(pedido.quantidadeItens ?? pedido.QuantidadeItens, itens.length),

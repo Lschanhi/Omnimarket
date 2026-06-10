@@ -12,6 +12,10 @@ import type {
 } from "../types/perfil";
 import type { HomeProduct } from "../types/home";
 import {
+  getResumoFinanceiroVendedor,
+  type ResumoFinanceiroVendedorResponse,
+} from "../Services/financeiro/financeiroService";
+import {
   AUTH_CHANGED_EVENT,
   getStoredUser,
   isAuthenticated,
@@ -61,6 +65,9 @@ const INITIAL_STATS: UsuarioStatsData = {
   totalCompras: 0,
   faturamentoBruto: 0,
   ticketMedio: 0,
+  totalComissaoMarketplace: 0,
+  totalLiquidoVendedor: 0,
+  quantidadePedidos: 0,
 };
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -72,6 +79,10 @@ const dateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
   timeStyle: "short",
 });
+
+function formatarPercentual(valor: number) {
+  return `${(valor * 100).toFixed(2)}%`;
+}
 
 const FLUXO_VENDAS_BASE: PerfilVendaStatusItem[] = [
   {
@@ -480,6 +491,13 @@ function mapearCompras(
       pedido.observacao?.trim() ||
       resumoItens ||
       "Abra o pedido para visualizar os itens, a entrega e as opcoes de acompanhamento.";
+    const valorProdutos = Number(pedido.valorProdutos ?? pedido.valorTotalProdutos);
+    const valorFrete = Number(pedido.valorFrete ?? 0);
+    const valorTotal = Number(pedido.valorTotal ?? pedido.valorTotalPedido);
+    const valorComissao = Number(pedido.valorComissao ?? 0);
+    const valorLiquidoVendedor = Number(pedido.valorLiquidoVendedor ?? 0);
+    const taxaFixaComissao = Number(pedido.taxaFixaComissao ?? 0);
+    const percentualComissao = Number(pedido.percentualComissao ?? 0);
 
     return {
       id: `pedido-${pedido.id}`,
@@ -501,9 +519,17 @@ function mapearCompras(
           pedido.observacao?.trim() ||
           "Sem observacoes adicionais informadas para este pedido.",
         enderecoEntrega: formatarEnderecoEntrega(pedido),
-        subtotal: currencyFormatter.format(Number(pedido.valorTotalProdutos)),
-        frete: currencyFormatter.format(Number(pedido.valorFrete)),
-        total: currencyFormatter.format(Number(pedido.valorTotalPedido)),
+        valorProdutos: currencyFormatter.format(valorProdutos),
+        valorFrete: currencyFormatter.format(valorFrete),
+        valorTotal: currencyFormatter.format(valorTotal),
+        valorComissao: currencyFormatter.format(valorComissao),
+        valorLiquidoVendedor: currencyFormatter.format(valorLiquidoVendedor),
+        taxaFixaComissao: currencyFormatter.format(taxaFixaComissao),
+        percentualComissao: formatarPercentual(percentualComissao),
+        subtotal: currencyFormatter.format(valorProdutos),
+        frete: currencyFormatter.format(valorFrete),
+        total: currencyFormatter.format(valorTotal),
+        valorTotalPedido: currencyFormatter.format(Number(pedido.valorTotalPedido ?? valorTotal)),
         pedidoMultiloja,
         podeCancelar: Boolean(pedido.podeCancelar),
         podeConfirmarRecebimento: Boolean(pedido.podeConfirmarRecebimento),
@@ -568,10 +594,13 @@ function mapearVendasLoja(
       pedido.observacao.trim() ||
       resumoItens ||
       "Abra o pedido para ver os itens, a entrega e as acoes do fluxo da venda.";
-    const freteDaLoja =
-      pedido.pedidoMultiloja || Number(pedido.valorTotalPedido) < Number(pedido.valorTotalLoja)
-        ? ""
-        : currencyFormatter.format(Number(pedido.valorTotalPedido) - Number(pedido.valorTotalLoja));
+    const valorProdutos = Number(pedido.valorProdutos ?? pedido.valorTotalLoja);
+    const valorFrete = Number(pedido.valorFrete ?? 0);
+    const valorTotal = Number(pedido.valorTotal ?? valorProdutos + valorFrete);
+    const valorComissao = Number(pedido.valorComissao ?? 0);
+    const valorLiquidoVendedor = Number(pedido.valorLiquidoVendedor ?? valorProdutos);
+    const taxaFixaComissao = Number(pedido.taxaFixaComissao ?? 0);
+    const percentualComissao = Number(pedido.percentualComissao ?? 0);
 
     return {
       id: `venda-pedido-${pedido.pedidoId}`,
@@ -596,9 +625,16 @@ function mapearVendasLoja(
           pedido.observacao.trim() ||
           "Sem observacoes adicionais informadas para este pedido.",
         enderecoEntrega: formatarEnderecoEntrega(pedido),
-        subtotal: currencyFormatter.format(Number(pedido.valorTotalLoja)),
-        frete: freteDaLoja,
-        total: currencyFormatter.format(Number(pedido.valorTotalLoja)),
+        valorProdutos: currencyFormatter.format(valorProdutos),
+        valorFrete: currencyFormatter.format(valorFrete),
+        valorTotal: currencyFormatter.format(valorTotal),
+        valorComissao: currencyFormatter.format(valorComissao),
+        valorLiquidoVendedor: currencyFormatter.format(valorLiquidoVendedor),
+        taxaFixaComissao: currencyFormatter.format(taxaFixaComissao),
+        percentualComissao: formatarPercentual(percentualComissao),
+        subtotal: currencyFormatter.format(valorProdutos),
+        frete: currencyFormatter.format(valorFrete),
+        total: currencyFormatter.format(valorTotal),
         valorTotalPedido: currencyFormatter.format(Number(pedido.valorTotalPedido)),
         pedidoMultiloja: pedido.pedidoMultiloja,
         possuiSolicitacaoCancelamentoAtiva: Boolean(
@@ -618,6 +654,7 @@ function mapearVendasLoja(
 
 function mapearStats(
   metricas: LojaMetricasApiResponse | null,
+  resumoFinanceiro: ResumoFinanceiroVendedorResponse | null,
   totalCompras: number,
   totalProdutos: number,
 ): UsuarioStatsData {
@@ -628,8 +665,13 @@ function mapearStats(
     totalVendas:
       metricas?.pedidosPorStatus.reduce((acumulador, item) => acumulador + item.total, 0) ?? 0,
     totalCompras,
-    faturamentoBruto: Number(metricas?.faturamentoBruto ?? 0),
+    faturamentoBruto: Number(
+      resumoFinanceiro?.totalVendidoBruto ?? metricas?.faturamentoBruto ?? 0,
+    ),
     ticketMedio: Number(metricas?.ticketMedio ?? 0),
+    totalComissaoMarketplace: Number(resumoFinanceiro?.totalComissaoMarketplace ?? 0),
+    totalLiquidoVendedor: Number(resumoFinanceiro?.totalLiquidoVendedor ?? 0),
+    quantidadePedidos: Number(resumoFinanceiro?.quantidadePedidos ?? 0),
   };
 }
 
@@ -728,10 +770,11 @@ export function usePerfilUsuarioData() {
           return;
         }
 
-        const [pedidos, lojaAtual, metricas, produtos, enderecosDetalhados] = await Promise.all([
+        const [pedidos, lojaAtual, metricas, resumoFinanceiro, produtos, enderecosDetalhados] = await Promise.all([
           listarPedidosUsuario(perfil.id),
           obterMinhaLoja().catch(() => null),
           obterMinhasMetricasLoja().catch(() => null),
+          getResumoFinanceiroVendedor().catch(() => null),
           listarProdutos(),
           listarEnderecos(perfil.id).catch(() => []),
         ]);
@@ -818,7 +861,7 @@ export function usePerfilUsuarioData() {
         sincronizarSessaoComPerfil(perfil);
         setUsuario(mapearUsuario(perfil, telefones, enderecos));
         setLoja(lojaAtual);
-        setStats(mapearStats(metricas, compras.length, produtosDaLoja.length));
+        setStats(mapearStats(metricas, resumoFinanceiro, compras.length, produtosDaLoja.length));
         setFluxoVendas(criarFluxoStatusVendas(metricas));
         setTabItems({
           produtos: produtosDaLoja,

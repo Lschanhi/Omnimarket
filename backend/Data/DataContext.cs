@@ -28,6 +28,7 @@ namespace Omnimarket.Api.Data
         public DbSet<FormaPagamento> TBL_FORMA_PAGAMENTO { get; set; }
         public DbSet<PlanoPagamento> TBL_PLANO_PAGAMENTO { get; set; }
         public DbSet<Venda> TBL_VENDA { get; set; }
+        public DbSet<ConfiguracaoMarketplace> TBL_CONFIGURACAO_MARKETPLACE { get; set; }
         public DbSet<SolicitacaoCancelamento> TBL_SOLICITACAO_CANCELAMENTO { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -49,6 +50,7 @@ namespace Omnimarket.Api.Data
             modelBuilder.Entity<FormaPagamento>().ToTable("TBL_FORMA_PAGAMENTO");
             modelBuilder.Entity<PlanoPagamento>().ToTable("TBL_PLANO_PAGAMENTO");
             modelBuilder.Entity<Venda>().ToTable("TBL_VENDA");
+            modelBuilder.Entity<ConfiguracaoMarketplace>().ToTable("TBL_CONFIGURACAO_MARKETPLACE");
             modelBuilder.Entity<SolicitacaoCancelamento>().ToTable("TBL_SOLICITACAO_PEDIDO");
 
             modelBuilder.Entity<Usuario>()
@@ -190,6 +192,14 @@ namespace Omnimarket.Api.Data
                 .Property(v => v.StatusVenda)
                 .HasConversion<string>();
 
+            modelBuilder.Entity<ConfiguracaoMarketplace>()
+                .Property(c => c.PercentualComissao)
+                .HasColumnType("decimal(5,4)");
+
+            modelBuilder.Entity<Pedido>()
+                .Property(p => p.PercentualComissao)
+                .HasColumnType("decimal(5,4)");
+
             modelBuilder.Entity<SolicitacaoCancelamento>()
                 .Property(s => s.TipoSolicitacao)
                 .HasConversion<string>();
@@ -327,6 +337,9 @@ namespace Omnimarket.Api.Data
 
             modelBuilder.Entity<SolicitacaoCancelamento>()
                 .HasIndex(s => new { s.Status, s.DataCriacao });
+
+            modelBuilder.Entity<ConfiguracaoMarketplace>()
+                .HasIndex(c => c.Ativo);
 
             var dataSeedPadrao = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 

@@ -12,6 +12,7 @@ internal sealed class ServiceTestFixture : IDisposable
     public AuthService AuthService { get; }
     public AvaliacaoProdutoService AvaliacaoProdutoService { get; }
     public CarrinhoService CarrinhoService { get; }
+    public ComissaoMarketplaceService ComissaoMarketplaceService { get; }
     public EnderecoService EnderecoService { get; }
     public FinanceiroService FinanceiroService { get; }
     public LojaService LojaService { get; }
@@ -62,10 +63,17 @@ internal sealed class ServiceTestFixture : IDisposable
         AuthService = new AuthService(Context, tokenService);
         ArquivoUploadService = new ArquivoUploadService(ArquivoStorageService, blobStorageOptions);
         CarrinhoService = new CarrinhoService(Context);
+        ComissaoMarketplaceService = new ComissaoMarketplaceService(Context);
         EnderecoService = new EnderecoService(Context);
-        FinanceiroService = new FinanceiroService(Context, gatewayPagamentoService);
+        FinanceiroService = new FinanceiroService(
+            Context,
+            ComissaoMarketplaceService,
+            gatewayPagamentoService);
         LojaService = new LojaService(Context, ArquivoStorageService, blobStorageOptions);
-        PedidoService = new PedidoService(Context, FinanceiroService);
+        PedidoService = new PedidoService(
+            Context,
+            FinanceiroService,
+            ComissaoMarketplaceService);
         ProdutoMidiaService = new ProdutoMidiaService(Context, ArquivoStorageService, blobStorageOptions);
         ProdutoService = new ProdutoService(Context, ArquivoStorageService, blobStorageOptions);
         ReciboPedidoService = new ReciboPedidoService(Context);

@@ -91,9 +91,15 @@ export type PedidoLeituraApiResponse = {
   id: number;
   status: string;
   tipoEntrega: string;
+  valorProdutos: number;
   valorTotalProdutos: number;
   valorFrete: number;
+  valorTotal: number;
   valorTotalPedido: number;
+  taxaFixaComissao: number;
+  percentualComissao: number;
+  valorComissao: number;
+  valorLiquidoVendedor: number;
   dataPedido: string;
   observacao: string;
   tipoLogradouroEntrega: string;

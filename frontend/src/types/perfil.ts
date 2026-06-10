@@ -69,6 +69,9 @@ export interface UsuarioStatsData {
   totalCompras: number;
   faturamentoBruto: number;
   ticketMedio: number;
+  totalComissaoMarketplace: number;
+  totalLiquidoVendedor: number;
+  quantidadePedidos: number;
 }
 
 export interface PerfilStatCardItem {
@@ -139,6 +142,13 @@ export interface PerfilPedidoDetalhe {
   dataPedido: string;
   observacao: string;
   enderecoEntrega: string;
+  valorProdutos?: string;
+  valorFrete?: string;
+  valorTotal?: string;
+  valorComissao?: string;
+  valorLiquidoVendedor?: string;
+  taxaFixaComissao?: string;
+  percentualComissao?: string;
   subtotal: string;
   frete: string;
   total: string;

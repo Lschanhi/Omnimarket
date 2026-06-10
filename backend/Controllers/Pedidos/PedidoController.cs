@@ -45,6 +45,10 @@ namespace Omnimarket.Api.Controllers
                     valorProdutos = pedido.ValorTotalProdutos,
                     valorFrete = pedido.ValorFrete,
                     valorTotal = pedido.ValorTotalPedido,
+                    valorComissao = pedido.ValorComissao,
+                    valorLiquidoVendedor = pedido.ValorLiquidoVendedor,
+                    taxaFixaComissao = pedido.TaxaFixaComissao,
+                    percentualComissao = pedido.PercentualComissao,
                     status = pedido.StatusPedidosId
                 });
             }

@@ -17,6 +17,10 @@ export type CriarPedidoResponse = {
   valorProdutos: number;
   valorFrete: number;
   valorTotal: number;
+  valorComissao: number;
+  valorLiquidoVendedor: number;
+  taxaFixaComissao: number;
+  percentualComissao: number;
   status: string;
 };
 
