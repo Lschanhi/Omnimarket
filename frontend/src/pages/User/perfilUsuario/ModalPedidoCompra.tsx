@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   CalendarDays,
   CircleAlert,
@@ -288,23 +288,15 @@ export function ModalPedidoCompra({
   onCriarSolicitacaoCancelamento,
   onCancelarSolicitacaoCancelamento,
 }: ModalPedidoCompraProps) {
+  const tipoSolicitacaoInicial = obterTipoSolicitacaoInicial(pedido);
+  const motivoSolicitacaoInicial =
+    obterMotivosDisponiveis(tipoSolicitacaoInicial)[0]?.value ?? "Outro";
   const [mostrarOpcoesProblema, setMostrarOpcoesProblema] = useState(false);
-  const [tipoSolicitacao, setTipoSolicitacao] = useState<TipoSolicitacaoPedidoApi>(
-    obterTipoSolicitacaoInicial(pedido),
-  );
+  const [tipoSolicitacao, setTipoSolicitacao] =
+    useState<TipoSolicitacaoPedidoApi>(tipoSolicitacaoInicial);
   const [motivoSolicitacao, setMotivoSolicitacao] =
-    useState<MotivoSolicitacaoCancelamentoApi>("Outro");
+    useState<MotivoSolicitacaoCancelamentoApi>(motivoSolicitacaoInicial);
   const [observacaoSolicitacao, setObservacaoSolicitacao] = useState("");
-
-  useEffect(() => {
-    const tipoInicial = obterTipoSolicitacaoInicial(pedido);
-    const motivosDisponiveis = obterMotivosDisponiveis(tipoInicial);
-
-    setTipoSolicitacao(tipoInicial);
-    setMotivoSolicitacao(motivosDisponiveis[0]?.value ?? "Outro");
-    setObservacaoSolicitacao("");
-    setMostrarOpcoesProblema(false);
-  }, [isOpen, pedido?.pedidoId, pedido?.statusFluxoKey]);
 
   const solicitacaoAtiva =
     solicitacoesCancelamento.find((solicitacao) =>
