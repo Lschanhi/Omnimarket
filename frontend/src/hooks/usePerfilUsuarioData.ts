@@ -505,6 +505,7 @@ function mapearCompras(
         frete: currencyFormatter.format(Number(pedido.valorFrete)),
         total: currencyFormatter.format(Number(pedido.valorTotalPedido)),
         pedidoMultiloja,
+        podeCancelar: Boolean(pedido.podeCancelar),
         podeConfirmarRecebimento: Boolean(pedido.podeConfirmarRecebimento),
         possuiSolicitacaoCancelamentoAtiva: Boolean(
           pedido.possuiSolicitacaoCancelamentoAtiva,

@@ -272,13 +272,13 @@ namespace Omnimarket.Api.Services
                 if (pedido.StatusPedidosId == StatusPedido.Enviado)
                 {
                     throw new Exception(
-                        "Pedido enviado nao pode ser cancelado diretamente pelo cliente. Abra uma SolicitacaoCancelamento para tratar devolucao ou cancelamento.");
+                        "Pedido enviado nao pode ser cancelado diretamente pelo cliente. Abra uma solicitacao do pedido para tratar cancelamento, devolucao, troca ou problema de entrega.");
                 }
 
                 if (pedido.StatusPedidosId == StatusPedido.Entregue)
                 {
                     throw new Exception(
-                        "Pedido entregue nao pode ser cancelado diretamente. Abra uma SolicitacaoCancelamento para seguir o fluxo de devolucao.");
+                        "Pedido entregue nao pode ser cancelado diretamente. Abra uma solicitacao do pedido para seguir o fluxo de devolucao ou troca.");
                 }
 
                 if (pedido.StatusPedidosId != StatusPedido.Pendente &&
@@ -455,7 +455,7 @@ namespace Omnimarket.Api.Services
                     VendaStatusHelper.ObterStatusOperacional(venda?.StatusVenda) == StatusVenda.Concluida)
                 {
                     throw new InvalidOperationException(
-                        "Pedido enviado ou concluido nao pode ser cancelado diretamente pela loja. Use a SolicitacaoCancelamento para registrar e tratar o caso.");
+                        "Pedido enviado ou concluido nao pode ser cancelado diretamente pela loja. Use a solicitacao do pedido para registrar e tratar o caso.");
                 }
 
                 if (pedido.StatusPedidosId != StatusPedido.Pendente &&
@@ -537,7 +537,7 @@ namespace Omnimarket.Api.Services
             if (await ExisteSolicitacaoCancelamentoAtivaDoPedidoAsync(pedidoId))
             {
                 throw new InvalidOperationException(
-                    "Existe uma SolicitacaoCancelamento ativa para este pedido. Resolva a tratativa antes de confirmar o recebimento.");
+                    "Existe uma solicitacao ativa para este pedido. Resolva a tratativa antes de confirmar o recebimento.");
             }
 
             pedido.StatusPedidosId = StatusPedido.Entregue;
@@ -953,6 +953,8 @@ namespace Omnimarket.Api.Services
                 CepEntrega = pedido.CepEntrega,
                 CidadeEntrega = pedido.CidadeEntrega,
                 UfEntrega = pedido.UfEntrega,
+                PodeCancelar = pedido.StatusPedidosId == StatusPedido.Pendente ||
+                    pedido.StatusPedidosId == StatusPedido.Pago,
                 PodeConfirmarRecebimento = pedido.StatusPedidosId == StatusPedido.Enviado &&
                     !possuiSolicitacaoCancelamentoAtiva,
                 PossuiSolicitacaoCancelamentoAtiva = possuiSolicitacaoCancelamentoAtiva,

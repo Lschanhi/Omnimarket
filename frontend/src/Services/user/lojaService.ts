@@ -1,8 +1,10 @@
 import { apiRequest } from "../http/apiClient";
 import type {
+  AtualizarSolicitacaoCancelamentoPayload,
   MotivoSolicitacaoCancelamentoApi,
   SolicitacaoCancelamentoLeituraApiResponse,
   StatusSolicitacaoCancelamentoApi,
+  TipoSolicitacaoPedidoApi,
 } from "../pedidos/pedidoService";
 
 export type TipoDocumentoFiscalLoja = 1 | 2;
@@ -117,6 +119,11 @@ export type LojaSolicitacaoCancelamentoListagemApiResponse = {
   pageSize: number;
 };
 
+export type LojaAtualizarSolicitacaoCancelamentoResponse = {
+  mensagem: string;
+  solicitacao: SolicitacaoCancelamentoLeituraApiResponse;
+};
+
 export type LojaPedidoListagemApiResponse = {
   items: LojaPedidoLeituraApiResponse[];
   total: number;
@@ -187,6 +194,20 @@ function normalizarStatusSolicitacaoCancelamento(
     case "Aberta":
     default:
       return "Aberta";
+  }
+}
+
+function normalizarTipoSolicitacaoPedido(valor: unknown): TipoSolicitacaoPedidoApi {
+  switch (valor) {
+    case "Devolucao":
+      return "Devolucao";
+    case "Troca":
+      return "Troca";
+    case "ProblemaEntrega":
+      return "ProblemaEntrega";
+    case "Cancelamento":
+    default:
+      return "Cancelamento";
   }
 }
 
@@ -640,6 +661,9 @@ function normalizarSolicitacaoCancelamentoLoja(
     statusVendaOrigem: lerTexto(
       solicitacao.statusVendaOrigem ?? solicitacao.StatusVendaOrigem,
     ),
+    tipoSolicitacao: normalizarTipoSolicitacaoPedido(
+      solicitacao.tipoSolicitacao ?? solicitacao.TipoSolicitacao,
+    ),
     motivo: normalizarMotivoSolicitacaoCancelamento(
       solicitacao.motivo ?? solicitacao.Motivo,
     ),
@@ -716,6 +740,27 @@ function normalizarRespostaListaSolicitacoesCancelamentoLoja(
     total: lerNumero(resposta.total ?? resposta.Total, items.length),
     page: lerNumero(resposta.page ?? resposta.Page, 1),
     pageSize: lerNumero(resposta.pageSize ?? resposta.PageSize, items.length),
+  };
+}
+
+function normalizarRespostaAtualizacaoSolicitacaoCancelamentoLoja(
+  valor: unknown,
+): LojaAtualizarSolicitacaoCancelamentoResponse {
+  const resposta = lerObjeto(valor);
+  const solicitacao = normalizarSolicitacaoCancelamentoLoja(
+    resposta?.solicitacao ?? resposta?.Solicitacao ?? resposta?.data ?? resposta?.Data,
+  );
+
+  if (!solicitacao) {
+    throw new Error("A API retornou uma solicitacao invalida ao atualizar a tratativa.");
+  }
+
+  return {
+    mensagem: lerTexto(
+      resposta?.mensagem ?? resposta?.Mensagem,
+      "Solicitacao atualizada com sucesso.",
+    ),
+    solicitacao,
   };
 }
 
@@ -851,6 +896,22 @@ export async function listarTodasSolicitacoesCancelamentoDaMinhaLoja(pageSize = 
 
     page += 1;
   }
+}
+
+export async function atualizarStatusSolicitacaoCancelamentoDaMinhaLoja(
+  solicitacaoId: number,
+  payload: AtualizarSolicitacaoCancelamentoPayload,
+) {
+  const resposta = await apiRequest<unknown>(
+    `/api/lojas/minha/solicitacoes-cancelamento/${solicitacaoId}/status`,
+    {
+      method: "PUT",
+      authenticated: true,
+      body: payload,
+    },
+  );
+
+  return normalizarRespostaAtualizacaoSolicitacaoCancelamentoLoja(resposta);
 }
 
 export async function buscarPedidoDaMinhaLoja(pedidoId: number) {

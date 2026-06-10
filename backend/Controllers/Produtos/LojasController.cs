@@ -176,6 +176,7 @@ namespace Omnimarket.Api.Controllers
 
         [Authorize]
         [HttpGet("minha/solicitacoes-cancelamento")]
+        [HttpGet("minha/solicitacoes-pedido")]
         public async Task<IActionResult> ListarSolicitacoesCancelamentoDaMinhaLoja(
             [FromQuery] StatusSolicitacaoCancelamento? status,
             [FromQuery] int page = 1,
@@ -199,6 +200,7 @@ namespace Omnimarket.Api.Controllers
 
         [Authorize]
         [HttpPut("minha/solicitacoes-cancelamento/{solicitacaoId:int}/status")]
+        [HttpPut("minha/solicitacoes-pedido/{solicitacaoId:int}/status")]
         public async Task<IActionResult> AtualizarStatusSolicitacaoCancelamentoDaMinhaLoja(
             int solicitacaoId,
             [FromBody] SolicitacaoCancelamentoAtualizacaoDto dto)
@@ -221,11 +223,11 @@ namespace Omnimarket.Api.Controllers
                     dto);
 
                 if (solicitacao == null)
-                    return NotFound(new { mensagem = "Solicitacao de cancelamento nao encontrada para a sua loja." });
+                    return NotFound(new { mensagem = "Solicitacao do pedido nao encontrada para a sua loja." });
 
                 return Ok(new
                 {
-                    mensagem = "Solicitacao de cancelamento atualizada com sucesso!",
+                    mensagem = "Solicitacao do pedido atualizada com sucesso!",
                     solicitacao
                 });
             }

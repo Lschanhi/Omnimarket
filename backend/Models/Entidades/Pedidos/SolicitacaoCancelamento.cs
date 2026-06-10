@@ -33,6 +33,9 @@ namespace Omnimarket.Api.Models.Entidades
         public Usuario? ResponsavelAnalise { get; set; }
 
         [Required]
+        public TipoSolicitacaoPedido TipoSolicitacao { get; set; } = TipoSolicitacaoPedido.Cancelamento;
+
+        [Required]
         public MotivoSolicitacaoCancelamento Motivo { get; set; }
 
         [Required]

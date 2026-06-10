@@ -69,7 +69,7 @@ internal sealed class ServiceTestFixture : IDisposable
         ProdutoMidiaService = new ProdutoMidiaService(Context, ArquivoStorageService, blobStorageOptions);
         ProdutoService = new ProdutoService(Context, ArquivoStorageService, blobStorageOptions);
         ReciboPedidoService = new ReciboPedidoService(Context);
-        SolicitacaoCancelamentoService = new SolicitacaoCancelamentoService(Context);
+        SolicitacaoCancelamentoService = new SolicitacaoCancelamentoService(Context, FinanceiroService);
         TelefoneService = new TelefoneService(Context);
         UsuarioPerfilService = new UsuarioPerfilService(Context, ArquivoStorageService, blobStorageOptions);
     }

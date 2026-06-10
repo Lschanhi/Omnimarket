@@ -49,7 +49,7 @@ namespace Omnimarket.Api.Data
             modelBuilder.Entity<FormaPagamento>().ToTable("TBL_FORMA_PAGAMENTO");
             modelBuilder.Entity<PlanoPagamento>().ToTable("TBL_PLANO_PAGAMENTO");
             modelBuilder.Entity<Venda>().ToTable("TBL_VENDA");
-            modelBuilder.Entity<SolicitacaoCancelamento>().ToTable("TBL_SOLICITACAO_CANCELAMENTO");
+            modelBuilder.Entity<SolicitacaoCancelamento>().ToTable("TBL_SOLICITACAO_PEDIDO");
 
             modelBuilder.Entity<Usuario>()
                 .HasOne(u => u.FotoPerfil)
@@ -188,6 +188,10 @@ namespace Omnimarket.Api.Data
 
             modelBuilder.Entity<Venda>()
                 .Property(v => v.StatusVenda)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<SolicitacaoCancelamento>()
+                .Property(s => s.TipoSolicitacao)
                 .HasConversion<string>();
 
             modelBuilder.Entity<SolicitacaoCancelamento>()

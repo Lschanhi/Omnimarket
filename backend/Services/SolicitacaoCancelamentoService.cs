@@ -17,11 +17,41 @@ namespace Omnimarket.Api.Services
             StatusSolicitacaoCancelamento.Aprovada
         ];
 
-        private readonly DataContext _context;
+        private static readonly MotivoSolicitacaoCancelamento[] MotivosCancelamento =
+        [
+            MotivoSolicitacaoCancelamento.Arrependimento,
+            MotivoSolicitacaoCancelamento.Outro
+        ];
 
-        public SolicitacaoCancelamentoService(DataContext context)
+        private static readonly MotivoSolicitacaoCancelamento[] MotivosDevolucao =
+        [
+            MotivoSolicitacaoCancelamento.Arrependimento,
+            MotivoSolicitacaoCancelamento.ProdutoComDefeito,
+            MotivoSolicitacaoCancelamento.ProdutoIncorreto,
+            MotivoSolicitacaoCancelamento.Outro
+        ];
+
+        private static readonly MotivoSolicitacaoCancelamento[] MotivosTroca =
+        [
+            MotivoSolicitacaoCancelamento.ProdutoComDefeito,
+            MotivoSolicitacaoCancelamento.ProdutoIncorreto,
+            MotivoSolicitacaoCancelamento.Outro
+        ];
+
+        private static readonly MotivoSolicitacaoCancelamento[] MotivosProblemaEntrega =
+        [
+            MotivoSolicitacaoCancelamento.AtrasoEntrega,
+            MotivoSolicitacaoCancelamento.EntregaNaoRecebida,
+            MotivoSolicitacaoCancelamento.Outro
+        ];
+
+        private readonly DataContext _context;
+        private readonly FinanceiroService _financeiroService;
+
+        public SolicitacaoCancelamentoService(DataContext context, FinanceiroService financeiroService)
         {
             _context = context;
+            _financeiroService = financeiroService;
         }
 
         public async Task<SolicitacaoCancelamentoLeituraDto?> CriarAsync(
@@ -37,7 +67,6 @@ namespace Omnimarket.Api.Services
                 return null;
 
             var venda = await ResolverVendaAsync(pedidoId, dto.VendaId);
-
             var statusVendaOperacional = VendaStatusHelper.ObterStatusOperacional(venda.StatusVenda);
 
             if (statusVendaOperacional == StatusVenda.Cancelada)
@@ -46,26 +75,23 @@ namespace Omnimarket.Api.Services
             if (statusVendaOperacional == StatusVenda.Criada)
                 throw new InvalidOperationException("A venda ainda nao foi confirmada para essa loja.");
 
-            if (statusVendaOperacional == StatusVenda.Pendente ||
-                statusVendaOperacional == StatusVenda.EmSeparacao ||
-                statusVendaOperacional == StatusVenda.Pronto)
-            {
-                throw new InvalidOperationException(
-                    "Enquanto o pedido ainda nao foi enviado, use o cancelamento direto em vez de abrir uma solicitacao.");
-            }
+            var tipoSolicitacao = ResolverTipoSolicitacao(pedido.StatusPedidosId, dto);
+
+            ValidarCriacao(tipoSolicitacao, pedido.StatusPedidosId, statusVendaOperacional, dto.Motivo);
 
             var existeSolicitacaoAtiva = await _context.TBL_SOLICITACAO_CANCELAMENTO.AnyAsync(s =>
                 s.VendaId == venda.Id &&
                 StatusesAtivos.Contains(s.Status));
 
             if (existeSolicitacaoAtiva)
-                throw new InvalidOperationException("Ja existe uma solicitacao de cancelamento ativa para esta venda.");
+                throw new InvalidOperationException("Ja existe uma solicitacao ativa para esta venda.");
 
             var solicitacao = new SolicitacaoCancelamento
             {
                 PedidoId = pedidoId,
                 VendaId = venda.Id,
                 SolicitanteId = compradorId,
+                TipoSolicitacao = tipoSolicitacao,
                 Motivo = dto.Motivo,
                 Status = StatusSolicitacaoCancelamento.Aberta,
                 StatusPedidoOrigem = venda.Pedido.StatusPedidosId,
@@ -177,6 +203,9 @@ namespace Omnimarket.Api.Services
             var solicitacao = await _context.TBL_SOLICITACAO_CANCELAMENTO
                 .Include(s => s.Pedido)
                 .ThenInclude(p => p.Usuario)
+                .Include(s => s.Pedido)
+                .ThenInclude(p => p.Itens)
+                .ThenInclude(i => i.Produto)
                 .Include(s => s.Venda)
                 .ThenInclude(v => v.Vendedor)
                 .ThenInclude(u => u.Loja)
@@ -207,6 +236,11 @@ namespace Omnimarket.Api.Services
                 : dto.ObservacaoAnalise.Trim();
             solicitacao.DataAtualizacao = agora;
 
+            if (dto.Status == StatusSolicitacaoCancelamento.Concluida)
+            {
+                await AplicarConclusaoAsync(solicitacao, vendedorId, agora);
+            }
+
             if (dto.Status == StatusSolicitacaoCancelamento.Recusada ||
                 dto.Status == StatusSolicitacaoCancelamento.Cancelada ||
                 dto.Status == StatusSolicitacaoCancelamento.Concluida)
@@ -217,6 +251,45 @@ namespace Omnimarket.Api.Services
             await _context.SaveChangesAsync();
 
             return Mapear(solicitacao);
+        }
+
+        private async Task AplicarConclusaoAsync(
+            SolicitacaoCancelamento solicitacao,
+            int usuarioResponsavelId,
+            DateTime dataConclusao)
+        {
+            if (solicitacao.TipoSolicitacao != TipoSolicitacaoPedido.Cancelamento &&
+                solicitacao.TipoSolicitacao != TipoSolicitacaoPedido.Devolucao)
+            {
+                return;
+            }
+
+            var pedidoMultiloja = solicitacao.Pedido.Itens
+                .Where(item => item.Produto != null)
+                .Select(item => item.Produto!.LojaId)
+                .Distinct()
+                .Count() > 1;
+
+            if (pedidoMultiloja)
+            {
+                throw new InvalidOperationException(
+                    "A conclusao com estorno automatico ainda nao esta disponivel para pedidos com itens de outras lojas.");
+            }
+
+            foreach (var item in solicitacao.Pedido.Itens)
+            {
+                if (item.Produto != null)
+                    item.Produto.Estoque += item.Quantidade;
+            }
+
+            solicitacao.Pedido.StatusPedidosId = StatusPedido.Cancelado;
+            solicitacao.Venda.StatusVenda = StatusVenda.Cancelada;
+            solicitacao.Venda.DataAtualizacao = dataConclusao;
+
+            await _financeiroService.CancelarFluxoFinanceiroDoPedidoAsync(
+                solicitacao.PedidoId,
+                usuarioResponsavelId,
+                $"solicitacao-{solicitacao.TipoSolicitacao.ToString().ToLowerInvariant()}");
         }
 
         private async Task<SolicitacaoCancelamentoLeituraDto?> BuscarParaCompradorAsync(int solicitacaoId, int compradorId)
@@ -259,6 +332,100 @@ namespace Omnimarket.Api.Services
             }
 
             return vendas[0];
+        }
+
+        private static TipoSolicitacaoPedido ResolverTipoSolicitacao(
+            StatusPedido statusPedidoAtual,
+            SolicitacaoCancelamentoCriacaoDto dto)
+        {
+            if (dto.TipoSolicitacao.HasValue)
+                return dto.TipoSolicitacao.Value;
+
+            if (statusPedidoAtual == StatusPedido.Entregue)
+                return TipoSolicitacaoPedido.Devolucao;
+
+            return TipoSolicitacaoPedido.Cancelamento;
+        }
+
+        private static void ValidarCriacao(
+            TipoSolicitacaoPedido tipoSolicitacao,
+            StatusPedido statusPedidoAtual,
+            StatusVenda statusVendaOperacional,
+            MotivoSolicitacaoCancelamento motivo)
+        {
+            switch (tipoSolicitacao)
+            {
+                case TipoSolicitacaoPedido.Cancelamento:
+                    if (statusVendaOperacional == StatusVenda.Pendente ||
+                        statusVendaOperacional == StatusVenda.EmSeparacao ||
+                        statusVendaOperacional == StatusVenda.Pronto)
+                    {
+                        throw new InvalidOperationException(
+                            "Enquanto o pedido ainda nao foi enviado, use o cancelamento direto em vez de abrir uma solicitacao.");
+                    }
+
+                    if (statusPedidoAtual == StatusPedido.Entregue)
+                    {
+                        throw new InvalidOperationException(
+                            "Pedido entregue deve seguir como devolucao ou troca em vez de cancelamento.");
+                    }
+
+                    if (!MotivosCancelamento.Contains(motivo))
+                    {
+                        throw new InvalidOperationException(
+                            "Cancelamentos aceitam arrependimento ou outro motivo informado pelo comprador.");
+                    }
+
+                    break;
+
+                case TipoSolicitacaoPedido.Devolucao:
+                    if (statusPedidoAtual != StatusPedido.Entregue)
+                    {
+                        throw new InvalidOperationException(
+                            "A devolucao fica disponivel somente depois que o pedido for entregue.");
+                    }
+
+                    if (!MotivosDevolucao.Contains(motivo))
+                    {
+                        throw new InvalidOperationException(
+                            "A devolucao aceita arrependimento, produto com defeito, produto incorreto ou outro motivo.");
+                    }
+
+                    break;
+
+                case TipoSolicitacaoPedido.Troca:
+                    if (statusPedidoAtual != StatusPedido.Entregue)
+                    {
+                        throw new InvalidOperationException(
+                            "A troca fica disponivel somente depois que o pedido for entregue.");
+                    }
+
+                    if (!MotivosTroca.Contains(motivo))
+                    {
+                        throw new InvalidOperationException(
+                            "A troca aceita produto com defeito, produto incorreto ou outro motivo.");
+                    }
+
+                    break;
+
+                case TipoSolicitacaoPedido.ProblemaEntrega:
+                    if (statusPedidoAtual != StatusPedido.Enviado)
+                    {
+                        throw new InvalidOperationException(
+                            "Problemas de entrega podem ser abertos somente quando o pedido estiver enviado e ainda nao tiver sido confirmado como entregue.");
+                    }
+
+                    if (!MotivosProblemaEntrega.Contains(motivo))
+                    {
+                        throw new InvalidOperationException(
+                            "Use atraso na entrega, entrega nao recebida ou outro motivo para problemas de entrega.");
+                    }
+
+                    break;
+
+                default:
+                    throw new InvalidOperationException("Tipo de solicitacao nao suportado.");
+            }
         }
 
         private static void ValidarTransicao(
@@ -308,6 +475,7 @@ namespace Omnimarket.Api.Services
                 StatusVendaAtual = VendaStatusHelper.ObterStatusOperacional(solicitacao.Venda.StatusVenda),
                 StatusPedidoOrigem = solicitacao.StatusPedidoOrigem,
                 StatusVendaOrigem = solicitacao.StatusVendaOrigem,
+                TipoSolicitacao = solicitacao.TipoSolicitacao,
                 Motivo = solicitacao.Motivo,
                 Status = solicitacao.Status,
                 Observacao = solicitacao.Observacao,

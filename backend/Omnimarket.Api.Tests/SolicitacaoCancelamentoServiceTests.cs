@@ -18,6 +18,7 @@ public class SolicitacaoCancelamentoServiceTests
             scenario.CompradorId,
             new SolicitacaoCancelamentoCriacaoDto
             {
+                TipoSolicitacao = TipoSolicitacaoPedido.ProblemaEntrega,
                 Motivo = MotivoSolicitacaoCancelamento.AtrasoEntrega,
                 Observacao = "Cliente deseja abrir tratativa."
             });
@@ -25,6 +26,7 @@ public class SolicitacaoCancelamentoServiceTests
         Assert.NotNull(solicitacao);
         Assert.Equal(scenario.PedidoId, solicitacao!.PedidoId);
         Assert.Equal(StatusSolicitacaoCancelamento.Aberta, solicitacao.Status);
+        Assert.Equal(TipoSolicitacaoPedido.ProblemaEntrega, solicitacao.TipoSolicitacao);
         Assert.Equal(StatusVenda.Enviada, solicitacao.StatusVendaOrigem);
         Assert.Equal(StatusVenda.Enviada, solicitacao.StatusVendaAtual);
         Assert.Equal(MotivoSolicitacaoCancelamento.AtrasoEntrega, solicitacao.Motivo);
@@ -44,6 +46,7 @@ public class SolicitacaoCancelamentoServiceTests
                 scenario.CompradorId,
                 new SolicitacaoCancelamentoCriacaoDto
                 {
+                    TipoSolicitacao = TipoSolicitacaoPedido.Cancelamento,
                     Motivo = MotivoSolicitacaoCancelamento.Arrependimento
                 }));
 
@@ -64,6 +67,7 @@ public class SolicitacaoCancelamentoServiceTests
                 scenario.CompradorId,
                 new SolicitacaoCancelamentoCriacaoDto
                 {
+                    TipoSolicitacao = TipoSolicitacaoPedido.Cancelamento,
                     Motivo = MotivoSolicitacaoCancelamento.ProdutoIncorreto
                 }));
 
@@ -89,6 +93,7 @@ public class SolicitacaoCancelamentoServiceTests
             scenario.CompradorId,
             new SolicitacaoCancelamentoCriacaoDto
             {
+                TipoSolicitacao = TipoSolicitacaoPedido.ProblemaEntrega,
                 Motivo = MotivoSolicitacaoCancelamento.EntregaNaoRecebida
             });
 
@@ -153,6 +158,7 @@ public class SolicitacaoCancelamentoServiceTests
             scenario.CompradorId,
             new SolicitacaoCancelamentoCriacaoDto
             {
+                TipoSolicitacao = TipoSolicitacaoPedido.Cancelamento,
                 Motivo = MotivoSolicitacaoCancelamento.Arrependimento,
                 Observacao = "Cliente quer devolver o produto."
             });
@@ -172,7 +178,78 @@ public class SolicitacaoCancelamentoServiceTests
         Assert.Equal(lojaId, solicitacao.LojaId);
         Assert.Equal(scenario.VendedorId, solicitacao.VendedorId);
         Assert.Equal(StatusSolicitacaoCancelamento.Aberta, solicitacao.Status);
+        Assert.Equal(TipoSolicitacaoPedido.Cancelamento, solicitacao.TipoSolicitacao);
         Assert.Equal(StatusVenda.Enviada, solicitacao.StatusVendaAtual);
+    }
+
+    [Fact]
+    public async Task CriarAsync_DevePermitirDevolucaoAposEntrega()
+    {
+        using var fixture = new ServiceTestFixture();
+        var scenario = await fixture.CriarPedidoEntregueAsync();
+
+        var solicitacao = await fixture.SolicitacaoCancelamentoService.CriarAsync(
+            scenario.PedidoId,
+            scenario.CompradorId,
+            new SolicitacaoCancelamentoCriacaoDto
+            {
+                TipoSolicitacao = TipoSolicitacaoPedido.Devolucao,
+                Motivo = MotivoSolicitacaoCancelamento.Arrependimento,
+                Observacao = "Cliente quer devolver o item apos a entrega."
+            });
+
+        Assert.NotNull(solicitacao);
+        Assert.Equal(TipoSolicitacaoPedido.Devolucao, solicitacao!.TipoSolicitacao);
+        Assert.Equal(StatusPedido.Entregue, solicitacao.StatusPedidoAtual);
+    }
+
+    [Fact]
+    public async Task AtualizarStatusDaLojaAsync_DeveConcluirDevolucaoComEstornoAutomatico()
+    {
+        using var fixture = new ServiceTestFixture();
+        var scenario = await fixture.CriarPedidoEntregueAsync();
+        var lojaId = await fixture.Context.TBL_LOJA
+            .Where(l => l.UsuarioId == scenario.VendedorId)
+            .Select(l => l.Id)
+            .SingleAsync();
+
+        var solicitacaoCriada = await fixture.SolicitacaoCancelamentoService.CriarAsync(
+            scenario.PedidoId,
+            scenario.CompradorId,
+            new SolicitacaoCancelamentoCriacaoDto
+            {
+                TipoSolicitacao = TipoSolicitacaoPedido.Devolucao,
+                Motivo = MotivoSolicitacaoCancelamento.Arrependimento
+            });
+
+        await fixture.SolicitacaoCancelamentoService.AtualizarStatusDaLojaAsync(
+            lojaId,
+            scenario.VendedorId,
+            solicitacaoCriada!.Id,
+            new SolicitacaoCancelamentoAtualizacaoDto
+            {
+                Status = StatusSolicitacaoCancelamento.Aprovada,
+                ObservacaoAnalise = "Devolucao aprovada pela loja."
+            });
+
+        var concluida = await fixture.SolicitacaoCancelamentoService.AtualizarStatusDaLojaAsync(
+            lojaId,
+            scenario.VendedorId,
+            solicitacaoCriada.Id,
+            new SolicitacaoCancelamentoAtualizacaoDto
+            {
+                Status = StatusSolicitacaoCancelamento.Concluida
+            });
+
+        fixture.Context.ChangeTracker.Clear();
+
+        var pedido = await fixture.Context.TBL_PEDIDO.SingleAsync(p => p.Id == scenario.PedidoId);
+        var plano = await fixture.Context.TBL_PLANO_PAGAMENTO.SingleAsync(p => p.Id == scenario.PlanoPagamentoId);
+
+        Assert.NotNull(concluida);
+        Assert.Equal(StatusSolicitacaoCancelamento.Concluida, concluida!.Status);
+        Assert.Equal(StatusPedido.Cancelado, pedido.StatusPedidosId);
+        Assert.Equal(StatusPagamento.Estornado, plano.StatusPagamento);
     }
 
     [Fact]
@@ -188,6 +265,7 @@ public class SolicitacaoCancelamentoServiceTests
             scenario.CompradorId,
             new SolicitacaoCancelamentoCriacaoDto
             {
+                TipoSolicitacao = TipoSolicitacaoPedido.Cancelamento,
                 Motivo = MotivoSolicitacaoCancelamento.Outro,
                 Observacao = "Cliente desistiu da solicitacao."
             });

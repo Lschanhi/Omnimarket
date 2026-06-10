@@ -19,6 +19,7 @@ namespace Omnimarket.Api.Models.Dtos.Pedidos
         public string CepEntrega { get; set; } = string.Empty;
         public string CidadeEntrega { get; set; } = string.Empty;
         public string UfEntrega { get; set; } = string.Empty;
+        public bool PodeCancelar { get; set; }
         public bool PodeConfirmarRecebimento { get; set; }
         public bool PossuiSolicitacaoCancelamentoAtiva { get; set; }
         public List<ItemPedidoLeituraDto> Itens { get; set; } = new();

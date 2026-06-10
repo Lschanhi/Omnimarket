@@ -45,7 +45,7 @@ export function StatusComprasTabs({
 
       {isCarregando ? (
         <p className="text-xs text-neutral-500">
-          Atualizando o status das solicitacoes de cancelamento e devolucao...
+          Atualizando o status das solicitacoes de cancelamento, devolucao e troca...
         </p>
       ) : null}
     </div>

@@ -221,6 +221,7 @@ public class PedidoServiceTests
             scenario.CompradorId,
             new SolicitacaoCancelamentoCriacaoDto
             {
+                TipoSolicitacao = TipoSolicitacaoPedido.ProblemaEntrega,
                 Motivo = MotivoSolicitacaoCancelamento.EntregaNaoRecebida
             });
 
@@ -233,7 +234,7 @@ public class PedidoServiceTests
             fixture.PedidoService.ConfirmarEntregaPedidoAsync(scenario.PedidoId, scenario.CompradorId));
 
         Assert.Equal(
-            "Existe uma SolicitacaoCancelamento ativa para este pedido. Resolva a tratativa antes de confirmar o recebimento.",
+            "Existe uma solicitacao ativa para este pedido. Resolva a tratativa antes de confirmar o recebimento.",
             excecao.Message);
     }
 
@@ -249,7 +250,7 @@ public class PedidoServiceTests
             fixture.PedidoService.CancelarPedido(scenario.PedidoId, scenario.CompradorId));
 
         Assert.Equal(
-            "Pedido enviado nao pode ser cancelado diretamente pelo cliente. Abra uma SolicitacaoCancelamento para tratar devolucao ou cancelamento.",
+            "Pedido enviado nao pode ser cancelado diretamente pelo cliente. Abra uma solicitacao do pedido para tratar cancelamento, devolucao, troca ou problema de entrega.",
             excecao.Message);
     }
 
@@ -527,6 +528,7 @@ public class PedidoServiceTests
             scenario.CompradorId,
             new SolicitacaoCancelamentoCriacaoDto
             {
+                TipoSolicitacao = TipoSolicitacaoPedido.ProblemaEntrega,
                 Motivo = MotivoSolicitacaoCancelamento.EntregaNaoRecebida,
                 Observacao = "Cliente iniciou tratativa com a loja."
             });
