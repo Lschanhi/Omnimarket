@@ -701,6 +701,19 @@ function sincronizarSessaoComPerfil(perfil: UsuarioPerfilApiResponse) {
   });
 }
 
+async function carregarComFallback<T>(
+  carregamento: Promise<T>,
+  fallback: T,
+  contexto: string,
+) {
+  try {
+    return await carregamento;
+  } catch (error) {
+    console.warn(`[PerfilUsuario] Falha ao carregar ${contexto}.`, error);
+    return fallback;
+  }
+}
+
 export function usePerfilUsuarioData() {
   const [usuario, setUsuario] = useState<UsuarioPerfil | null>(null);
   const [loja, setLoja] = useState<LojaGestaoApiResponse | null>(null);
@@ -770,28 +783,41 @@ export function usePerfilUsuarioData() {
           return;
         }
 
-        const [pedidos, lojaAtual, metricas, resumoFinanceiro, produtos, enderecosDetalhados] = await Promise.all([
-          listarPedidosUsuario(perfil.id),
-          obterMinhaLoja().catch(() => null),
-          obterMinhasMetricasLoja().catch(() => null),
-          getResumoFinanceiroVendedor().catch(() => null),
-          listarProdutos(),
-          listarEnderecos(perfil.id).catch(() => []),
-        ]);
+        const [pedidos, lojaAtual, metricas, resumoFinanceiro, produtos, enderecosDetalhados] =
+          await Promise.all([
+            carregarComFallback(listarPedidosUsuario(perfil.id), [], "os pedidos do usuario"),
+            carregarComFallback(obterMinhaLoja(), null, "a loja do usuario"),
+            carregarComFallback(obterMinhasMetricasLoja(), null, "as metricas da loja"),
+            carregarComFallback(
+              getResumoFinanceiroVendedor(),
+              null,
+              "o resumo financeiro da loja",
+            ),
+            carregarComFallback(listarProdutos(), [], "o catalogo publico"),
+            carregarComFallback(
+              listarEnderecos(perfil.id),
+              [],
+              "os enderecos detalhados do usuario",
+            ),
+          ]);
 
         if (!isMounted) {
           return;
         }
 
         const pedidosLoja = lojaAtual
-          ? await listarTodosPedidosDaMinhaLoja().catch((error) => {
-              if (error instanceof ApiError && error.status === 404) {
-                // Mantem o perfil carregando enquanto a API publicada ainda nao expuser a rota nova.
-                return [];
-              }
+          ? await carregarComFallback(
+              listarTodosPedidosDaMinhaLoja().catch((error) => {
+                if (error instanceof ApiError && error.status === 404) {
+                  // Mantem o perfil carregando enquanto a API publicada ainda nao expuser a rota nova.
+                  return [];
+                }
 
-              throw error;
-            })
+                throw error;
+              }),
+              [],
+              "os pedidos da loja",
+            )
           : [];
 
         if (!isMounted) {
