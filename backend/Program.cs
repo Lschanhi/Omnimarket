@@ -168,28 +168,28 @@ builder.Services.AddScoped<AdminPedidoService>();
 builder.Services.AddScoped<AdminVendaService>();
 builder.Services.AddScoped<LegacyImageMigrationService>();
 
-// Permite configurar origens autorizadas via appsettings/variavel de ambiente,
-// mantendo um conjunto padrao util para desenvolvimento local.
-var allowedOrigins = builder.Configuration
+// Permite complementar as origens autorizadas via appsettings/variavel de ambiente
+// sem perder o conjunto padrao usado nos ambientes locais e publicados.
+var defaultAllowedOrigins = new[]
+{
+    "http://localhost:5173",
+    "https://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://127.0.0.1:5173",
+    "https://omnimarket-web.azurewebsites.net",
+    "https://omnimarket-web-prod.azurewebsites.net",
+    "https://omnimarket-zeta.vercel.app"
+};
+
+var configuredAllowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
-    .Get<string[]>()
-    ?.Where(origin => !string.IsNullOrWhiteSpace(origin))
+    .Get<string[]>();
+
+var allowedOrigins = defaultAllowedOrigins
+    .Concat(configuredAllowedOrigins ?? Array.Empty<string>())
+    .Where(origin => !string.IsNullOrWhiteSpace(origin))
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .ToArray();
-
-if (allowedOrigins is null || allowedOrigins.Length == 0)
-{
-    allowedOrigins = new[]
-    {
-        "http://localhost:5173",
-        "https://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://127.0.0.1:5173",
-        "https://omnimarket-web.azurewebsites.net",
-        "https://omnimarket-web-prod.azurewebsites.net",
-        "https://omnimarket-zeta.vercel.app"
-    };
-}
 
 builder.Services.AddCors(options =>
 {
