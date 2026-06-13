@@ -105,6 +105,17 @@ const CAMPOS_ENDERECO_CADASTRO: CampoEnderecoCadastro[] = [
   "enderecoUf",
 ];
 
+const CAMPOS_ENDERECO_CADASTRO_PREENCHIMENTO: CampoEnderecoCadastro[] = [
+  "enderecoNome",
+  "enderecoNumero",
+  "enderecoComplemento",
+  "enderecoCep",
+  "enderecoCidade",
+  "enderecoUf",
+];
+
+const TIPO_LOGRADOURO_PADRAO = TIPOS_LOGRADOURO_FALLBACK[0]?.codigo ?? "Rua";
+
 const initialFormData: CadastroFormData = {
   tipoCadastro: "comprador",
   nomeCompleto: "",
@@ -119,7 +130,7 @@ const initialFormData: CadastroFormData = {
   nomeFantasia: "",
   tipoDocumentoFiscalLoja: "1",
   documentoFiscalLoja: "",
-  enderecoTipoLogradouro: TIPOS_LOGRADOURO_FALLBACK[0]?.codigo ?? "Rua",
+  enderecoTipoLogradouro: TIPO_LOGRADOURO_PADRAO,
   enderecoNome: "",
   enderecoNumero: "",
   enderecoComplemento: "",
@@ -201,7 +212,7 @@ function BlocoEnderecoCadastro({
   onToggle,
   titulo,
 }: BlocoEnderecoCadastroProps) {
-  const mostrarCampos = isVisible || temConteudoNoEnderecoVendedor(formData);
+  const mostrarCampos = isVisible || temConteudoNoEnderecoCadastro(formData);
 
   return (
     <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
@@ -375,11 +386,11 @@ function separarNomeCompleto(nomeCompleto: string) {
   };
 }
 
-function temConteudoNoEnderecoVendedor(formData: CadastroFormData) {
-  return CAMPOS_ENDERECO_CADASTRO.some((campo) => formData[campo].trim() !== "");
+function temConteudoNoEnderecoCadastro(formData: CadastroFormData) {
+  return CAMPOS_ENDERECO_CADASTRO_PREENCHIMENTO.some((campo) => formData[campo].trim() !== "");
 }
 
-function temErroNoEnderecoVendedor(errors: FormErrors) {
+function temErroNoEnderecoCadastro(errors: FormErrors) {
   return CAMPOS_ENDERECO_CADASTRO.some((campo) => Boolean(errors[campo]));
 }
 
@@ -390,6 +401,29 @@ function limparErrosVendedor(errors: FormErrors) {
     tipoDocumentoFiscalLoja: "",
     documentoFiscalLoja: "",
     aceitouTermoFiscalResponsabilidade: "",
+  };
+}
+
+function limparErrosEndereco(errors: FormErrors) {
+  return CAMPOS_ENDERECO_CADASTRO.reduce<FormErrors>(
+    (currentErrors, campo) => ({
+      ...currentErrors,
+      [campo]: "",
+    }),
+    { ...errors },
+  );
+}
+
+function limparCamposEndereco(formData: CadastroFormData): CadastroFormData {
+  return {
+    ...formData,
+    enderecoTipoLogradouro: TIPO_LOGRADOURO_PADRAO,
+    enderecoNome: "",
+    enderecoNumero: "",
+    enderecoComplemento: "",
+    enderecoCep: "",
+    enderecoCidade: "",
+    enderecoUf: "",
   };
 }
 
@@ -411,9 +445,22 @@ export function CadastroPage() {
       tipoCadastro === "vendedor" ? { ...currentErrors } : limparErrosVendedor(currentErrors),
     );
 
-    if (temConteudoNoEnderecoVendedor(formData)) {
+    if (temConteudoNoEnderecoCadastro(formData)) {
       setMostrarCamposEndereco(true);
     }
+  }
+
+  function handleToggleEndereco() {
+    const enderecoEstaAberto = mostrarCamposEndereco || temConteudoNoEnderecoCadastro(formData);
+
+    if (enderecoEstaAberto) {
+      setFormData((currentData) => limparCamposEndereco(currentData));
+      setErrors((currentErrors) => limparErrosEndereco(currentErrors));
+      setMostrarCamposEndereco(false);
+      return;
+    }
+
+    setMostrarCamposEndereco(true);
   }
 
   function handleInputChange(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -492,7 +539,7 @@ export function CadastroPage() {
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
 
-      if (temErroNoEnderecoVendedor(validationErrors)) {
+      if (temErroNoEnderecoCadastro(validationErrors)) {
         setMostrarCamposEndereco(true);
       }
 
@@ -504,8 +551,7 @@ export function CadastroPage() {
 
     try {
       const { nome, sobrenome } = separarNomeCompleto(formData.nomeCompleto);
-      const incluirEnderecoNoCadastro =
-        isCadastroVendedor || temConteudoNoEnderecoVendedor(formData);
+      const incluirEnderecoNoCadastro = temConteudoNoEnderecoCadastro(formData);
       const payloadRegistro = {
         cpf: formData.cpf.replace(/\D/g, ""),
         nome,
@@ -544,6 +590,14 @@ export function CadastroPage() {
       try {
         await loginUsuario(formData.email.trim(), formData.senha);
         autenticadoAutomaticamente = true;
+
+        if (!incluirEnderecoNoCadastro) {
+          alert(
+            "Sua conta foi criada com sucesso! Quando quiser abrir a loja, adicione um endereco principal no perfil para concluir essa etapa.",
+          );
+          navigate({ to: "/perfilUsuario" });
+          return;
+        }
 
         const perfil = await obterPerfilUsuario();
         const enderecoPrincipal =
@@ -805,9 +859,7 @@ export function CadastroPage() {
                     formData={formData}
                     isVisible={mostrarCamposEndereco}
                     onChange={handleInputChange}
-                    onToggle={() =>
-                      setMostrarCamposEndereco((currentState) => !currentState)
-                    }
+                    onToggle={handleToggleEndereco}
                   />
                 </section>
               ) : null}
@@ -869,12 +921,12 @@ export function CadastroPage() {
 
                     <BlocoEnderecoCadastro
                       titulo="Endereco inicial"
-                      descricao="Use o botao de mais para preencher o endereco que sera vinculado ao cadastro de vendedor."
+                      descricao="Se quiser abrir a loja agora, use o botao de mais para preencher o endereco inicial. Se preferir, voce pode concluir essa etapa depois no perfil."
                       errors={errors}
                       formData={formData}
                       isVisible={mostrarCamposEndereco}
                       onChange={handleInputChange}
-                      onToggle={() => setMostrarCamposEndereco((currentState) => !currentState)}
+                      onToggle={handleToggleEndereco}
                     />
                   </section>
 
@@ -912,7 +964,9 @@ export function CadastroPage() {
                 {isLoading
                   ? "Cadastrando..."
                   : isCadastroVendedor
-                    ? "Criar conta e loja"
+                    ? temConteudoNoEnderecoCadastro(formData)
+                      ? "Criar conta e loja"
+                      : "Criar conta"
                     : "Criar conta"}
               </Botao>
 

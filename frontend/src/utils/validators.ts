@@ -100,7 +100,7 @@ export function validarFormulario(formData: CadastroFormData): FormErrors {
     }
   }
 
-  if (formData.tipoCadastro === "vendedor" || temConteudoNoEndereco(formData)) {
+  if (temConteudoNoEndereco(formData)) {
     if (!formData.enderecoNome.trim()) {
       errors.enderecoNome = "Informe o nome do endereco.";
     }
