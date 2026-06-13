@@ -40,7 +40,6 @@ export interface UsuarioPerfil {
   enderecoPrincipalId?: number;
   avatarUrl?: string;
   resumo?: string;
-  contaVerificada?: boolean;
 }
 
 export interface PerfilInfoItem {
@@ -55,7 +54,7 @@ export interface PerfilIdentityCardData {
   resumo: string;
   avatarUrl?: string;
   fotoHint: string;
-  badge: string;
+  badge?: string;
   infoItems: PerfilInfoItem[];
   footerText: string;
 }

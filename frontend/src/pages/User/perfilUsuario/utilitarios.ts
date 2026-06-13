@@ -358,7 +358,6 @@ export function criarCardComprador(
     endereco: string;
     avatarUrl?: string;
     resumo?: string;
-    contaVerificada?: boolean;
   } | null,
   podeGerenciarLoja: boolean,
 ): PerfilIdentityCardData | null {
@@ -372,7 +371,6 @@ export function criarCardComprador(
     resumo: usuario.resumo || "Area pronta para bio, cargo ou descricao curta do usuario.",
     avatarUrl: usuario.avatarUrl,
     fotoHint: "Clique na foto para alterar",
-    badge: usuario.contaVerificada ? "Conta verificada" : "Conta em configuracao",
     infoItems: [
       { key: "email", label: "Email", value: usuario.email },
       { key: "telefone", label: "Telefone", value: usuario.telefone },
@@ -447,7 +445,6 @@ export function criarStatsComprador(
   usuario: {
     telefones: Array<unknown>;
     enderecos: Array<unknown>;
-    contaVerificada?: boolean;
   } | null,
   stats: { totalCompras: number },
 ): PerfilStatCardItem[] {
@@ -466,11 +463,6 @@ export function criarStatsComprador(
       key: "enderecos",
       label: "Enderecos",
       value: `${usuario?.enderecos.length ?? 0}`,
-    },
-    {
-      key: "status-conta",
-      label: "Conta",
-      value: usuario?.contaVerificada ? "Verificada" : "Em ajuste",
     },
   ];
 }

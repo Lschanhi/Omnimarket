@@ -90,9 +90,11 @@ export function UserCard({
             </p>
           </div>
 
-          <div className="inline-flex rounded-full border border-yellow-400/30 bg-yellow-400/10 px-4 py-1 text-xs font-medium uppercase tracking-[0.2em] text-yellow-300">
-            {card?.badge || "Em configuracao"}
-          </div>
+          {card?.badge ? (
+            <div className="inline-flex rounded-full border border-yellow-400/30 bg-yellow-400/10 px-4 py-1 text-xs font-medium uppercase tracking-[0.2em] text-yellow-300">
+              {card.badge}
+            </div>
+          ) : null}
         </div>
 
         <div className="border-t border-white/10" />
