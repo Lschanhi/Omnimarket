@@ -179,6 +179,10 @@ function formatarStatusSolicitacaoResumo(status: string) {
   }
 }
 
+function obterCpfUsuarioFormatado(cpf: string | undefined) {
+  return cpf ? normalizarDocumentoFiscalParaInput(cpf, "1") : "";
+}
+
 function obterDataReferenciaSolicitacao(solicitacao: SolicitacaoCancelamentoLeituraApiResponse) {
   return (
     solicitacao.dataAtualizacao ??
@@ -959,6 +963,8 @@ export function PerfilUsuarioPage() {
       return;
     }
 
+    const cpfUsuarioFormatado = obterCpfUsuarioFormatado(usuario.cpf);
+
     setLojaErroAcao("");
     setLojaForm(
       loja
@@ -974,7 +980,7 @@ export function PerfilUsuarioPage() {
         : {
             nomeFantasia: usuario.nome,
             tipoDocumentoFiscal: "1",
-            documentoFiscal: "",
+            documentoFiscal: cpfUsuarioFormatado,
             descricao: "",
             emailContato: usuario.email,
             ativa: true,
@@ -1866,6 +1872,7 @@ export function PerfilUsuarioPage() {
   function handleLojaInputChange(
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) {
+    const cpfUsuarioFormatado = obterCpfUsuarioFormatado(usuario?.cpf);
     const target = event.target;
 
     if (target instanceof HTMLInputElement && target.type === "checkbox") {
@@ -1891,10 +1898,20 @@ export function PerfilUsuarioPage() {
       };
 
       if (name === "tipoDocumentoFiscal") {
-        proximoEstado.documentoFiscal = normalizarDocumentoFiscalParaInput(
-          currentData.documentoFiscal,
-          valorMascarado,
-        );
+        if (!loja && valorMascarado === "1") {
+          proximoEstado.documentoFiscal = cpfUsuarioFormatado;
+        } else if (
+          !loja &&
+          valorMascarado === "2" &&
+          currentData.documentoFiscal === cpfUsuarioFormatado
+        ) {
+          proximoEstado.documentoFiscal = "";
+        } else {
+          proximoEstado.documentoFiscal = normalizarDocumentoFiscalParaInput(
+            currentData.documentoFiscal,
+            valorMascarado,
+          );
+        }
       }
 
       return proximoEstado;

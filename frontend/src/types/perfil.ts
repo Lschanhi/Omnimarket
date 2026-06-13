@@ -28,6 +28,7 @@ export interface UsuarioEnderecoPerfil {
 // Define os dados basicos do usuario exibidos no topo da pagina.
 export interface UsuarioPerfil {
   id: number;
+  cpf: string;
   nome: string;
   primeiroNome: string;
   sobrenome: string;
