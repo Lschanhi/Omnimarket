@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recibo de pedido devolvido</title>
+    <link rel="stylesheet" href="./recibo-apresentacao.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="page-header">
+        <span class="eyebrow">Apresentacao</span>
+        <h1>Exemplo de recibo para devolucao total</h1>
+        <p>
+          Modelo separado para mostrar o caso em que o pedido foi entregue, devolvido e
+          depois reembolsado integralmente.
+        </p>
+      </header>
+
+      <article class="receipt">
+        <div class="receipt__hero">
+          <div class="brand-row">
+            <span class="brand">OmniMarket</span>
+            <span class="status-chip status-chip--returned">Devolucao concluida</span>
+          </div>
+
+          <div class="receipt__title">
+            <h2>Recibo da compra</h2>
+            <p>Pedido #2852 atualizado em 10/06/2026, 16:08.</p>
+          </div>
+        </div>
+
+        <div class="receipt__body">
+          <div class="meta-grid">
+            <div class="card">
+              <p class="card__label">Status</p>
+              <p class="card__value"><strong>Devolvido</strong>Item retornado e reembolso emitido</p>
+            </div>
+
+            <div class="card">
+              <p class="card__label">Data do pedido</p>
+              <p class="card__value"><strong>28/05/2026, 14:21</strong>Compra aprovada</p>
+            </div>
+
+            <div class="card">
+              <p class="card__label">Entrega confirmada</p>
+              <p class="card__value"><strong>02/06/2026, 18:07</strong>Recebimento registrado</p>
+            </div>
+
+            <div class="card">
+              <p class="card__label">Devolucao concluida</p>
+              <p class="card__value"><strong>10/06/2026, 16:08</strong>Fluxo encerrado</p>
+            </div>
+          </div>
+
+          <h3 class="section-title">Devolucao e reembolso</h3>
+
+          <div class="info-grid">
+            <div class="card">
+              <p class="card__label">Motivo da devolucao</p>
+              <p class="card__value">
+                Produto com defeito. A loja aprovou a devolucao e recebeu o item de volta.
+              </p>
+            </div>
+
+            <div class="card">
+              <p class="card__label">Tratativa financeira</p>
+              <p class="card__value">
+                <strong>Reembolso concluido</strong>Credito devolvido em 10/06/2026.
+              </p>
+            </div>
+          </div>
+
+          <h3 class="section-title">Itens do pedido</h3>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Qtd.</th>
+                <th>Unitario</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <span class="item-name">Headset Hyper Black</span>
+                  <span class="item-store">Audio Forge</span>
+                  <span class="item-note">Situacao: devolvido apos entrega</span>
+                </td>
+                <td>1x</td>
+                <td>R$ 349,90</td>
+                <td>R$ 349,90</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="summary-wrap">
+            <div class="summary">
+              <table>
+                <tbody>
+                  <tr>
+                    <td>Total original</td>
+                    <td>R$ 349,90</td>
+                  </tr>
+                  <tr>
+                    <td>Frete</td>
+                    <td>R$ 18,00</td>
+                  </tr>
+                  <tr>
+                    <td>Valor devolvido</td>
+                    <td class="positive">R$ 367,90</td>
+                  </tr>
+                  <tr class="total-row">
+                    <td>Total final do pedido</td>
+                    <td>R$ 0,00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="notice notice--returned">
+            <p>
+              <strong>Resumo da tratativa</strong>
+              O pedido foi entregue, mas a devolucao foi aprovada e finalizada. O cliente
+              devolveu o produto e recebeu estorno integral.
+            </p>
+          </div>
+
+          <p class="footnote">
+            Documento demonstrativo gerado para acompanhamento da compra. Nao substitui
+            nota fiscal.
+          </p>
+        </div>
+      </article>
+    </main>
+  </body>
+</html>

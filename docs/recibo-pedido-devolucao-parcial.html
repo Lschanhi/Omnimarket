@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recibo de devolucao parcial</title>
+    <link rel="stylesheet" href="./recibo-apresentacao.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="page-header">
+        <span class="eyebrow">Apresentacao</span>
+        <h1>Exemplo de recibo para devolucao parcial</h1>
+        <p>
+          Modelo separado para mostrar o caso em que apenas parte dos itens foi devolvida
+          e o restante da compra permaneceu valido.
+        </p>
+      </header>
+
+      <article class="receipt">
+        <div class="receipt__hero">
+          <div class="brand-row">
+            <span class="brand">OmniMarket</span>
+            <span class="status-chip status-chip--partial">Devolucao parcial</span>
+          </div>
+
+          <div class="receipt__title">
+            <h2>Recibo da compra</h2>
+            <p>Pedido #2861 atualizado em 12/06/2026, 18:22.</p>
+          </div>
+        </div>
+
+        <div class="receipt__body">
+          <div class="meta-grid">
+            <div class="card">
+              <p class="card__label">Status</p>
+              <p class="card__value">
+                <strong>Devolucao parcial</strong>Parte do pedido mantida pelo cliente
+              </p>
+            </div>
+
+            <div class="card">
+              <p class="card__label">Data do pedido</p>
+              <p class="card__value"><strong>30/05/2026, 09:46</strong>Compra aprovada</p>
+            </div>
+
+            <div class="card">
+              <p class="card__label">Entrega confirmada</p>
+              <p class="card__value"><strong>04/06/2026, 11:02</strong>Recebimento registrado</p>
+            </div>
+
+            <div class="card">
+              <p class="card__label">Ajuste final</p>
+              <p class="card__value"><strong>12/06/2026, 18:22</strong>Um item devolvido</p>
+            </div>
+          </div>
+
+          <h3 class="section-title">Tratativa do pedido</h3>
+
+          <div class="info-grid">
+            <div class="card">
+              <p class="card__label">Motivo</p>
+              <p class="card__value">
+                Um dos itens apresentou divergencia de cor e foi devolvido. O restante da
+                compra foi mantido normalmente.
+              </p>
+            </div>
+
+            <div class="card">
+              <p class="card__label">Resultado financeiro</p>
+              <p class="card__value">
+                <strong>Estorno parcial concluido</strong>Apenas o item devolvido foi reembolsado.
+              </p>
+            </div>
+          </div>
+
+          <h3 class="section-title">Itens do pedido</h3>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Qtd.</th>
+                <th>Unitario</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <span class="item-name">Camiseta Classic Tee</span>
+                  <span class="item-store">Urban North</span>
+                  <span class="item-note">Situacao: mantido pelo cliente</span>
+                </td>
+                <td>1x</td>
+                <td>R$ 79,90</td>
+                <td>R$ 79,90</td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="item-name">Jaqueta Street Wind</span>
+                  <span class="item-store">Urban North</span>
+                  <span class="item-note">Situacao: devolvido e reembolsado</span>
+                </td>
+                <td>1x</td>
+                <td>R$ 219,90</td>
+                <td>R$ 219,90</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="summary-wrap">
+            <div class="summary">
+              <table>
+                <tbody>
+                  <tr>
+                    <td>Total original</td>
+                    <td>R$ 299,80</td>
+                  </tr>
+                  <tr>
+                    <td>Frete</td>
+                    <td>R$ 22,00</td>
+                  </tr>
+                  <tr>
+                    <td>Valor devolvido</td>
+                    <td class="negative">- R$ 219,90</td>
+                  </tr>
+                  <tr class="total-row">
+                    <td>Valor mantido no pedido</td>
+                    <td>R$ 101,90</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="notice notice--partial">
+            <p>
+              <strong>Resumo da tratativa</strong>
+              Apenas parte do pedido voltou para a loja. O documento pode destacar item a
+              item o que foi mantido e o que gerou reembolso.
+            </p>
+          </div>
+
+          <p class="footnote">
+            Documento demonstrativo gerado para acompanhamento da compra. Nao substitui
+            nota fiscal.
+          </p>
+        </div>
+      </article>
+    </main>
+  </body>
+</html>

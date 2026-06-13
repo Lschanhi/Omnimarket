@@ -63,6 +63,14 @@ No App Service da API, configure `Application settings` com os valores reais de 
 - `BlobStorage__FotoPerfilLojaContainerName=foto-perfil-loja`
 - `Cors__AllowedOrigins__0=https://omnimarket-web-prod.azurewebsites.net`
 
+No Azure SQL Server usado por essa connection string, confirme tambem a parte de rede:
+
+- em `Networking`, habilite `Allow Azure services and resources to access this server` ou cadastre explicitamente os IPs de saida do App Service
+- valide usuario, senha, nome do banco e servidor na connection string final publicada
+- antes de testar a home, confira `https://SEU-BACKEND.azurewebsites.net/health/database`
+  - `200` indica que a API alcancou o banco
+  - `503` indica indisponibilidade do banco ou bloqueio de rede/firewall
+
 ### Frontend
 
 O frontend usa `VITE_API_BASE_URL` em tempo de build. Por isso:
@@ -75,4 +83,3 @@ O frontend usa `VITE_API_BASE_URL` em tempo de build. Por isso:
 1. O frontend atual esta preparado para App Service com SPA rewrite via `frontend/public/web.config`.
 2. O backend e publicado como app .NET compilada.
 3. Se quiser ambientes `staging` e `production`, a proxima evolucao natural e usar deployment slots e environments separados no GitHub.
-

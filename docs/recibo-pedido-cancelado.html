@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recibo de pedido cancelado</title>
+    <link rel="stylesheet" href="./recibo-apresentacao.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="page-header">
+        <span class="eyebrow">Apresentacao</span>
+        <h1>Exemplo de recibo para pedido cancelado</h1>
+        <p>
+          Modelo separado para mostrar o caso em que a compra foi cancelada antes da
+          entrega e o valor foi estornado integralmente.
+        </p>
+      </header>
+
+      <article class="receipt">
+        <div class="receipt__hero">
+          <div class="brand-row">
+            <span class="brand">OmniMarket</span>
+            <span class="status-chip status-chip--cancelled">Pedido cancelado</span>
+          </div>
+
+          <div class="receipt__title">
+            <h2>Recibo da compra</h2>
+            <p>Pedido #2847 atualizado em 08/06/2026, 12:39.</p>
+          </div>
+        </div>
+
+        <div class="receipt__body">
+          <div class="meta-grid">
+            <div class="card">
+              <p class="card__label">Status</p>
+              <p class="card__value"><strong>Cancelado</strong>Entrega nao realizada</p>
+            </div>
+
+            <div class="card">
+              <p class="card__label">Data do pedido</p>
+              <p class="card__value"><strong>25/05/2026, 23:13</strong>Compra original</p>
+            </div>
+
+            <div class="card">
+              <p class="card__label">Data do cancelamento</p>
+              <p class="card__value">
+                <strong>08/06/2026, 12:39</strong>Fluxo encerrado antes do envio
+              </p>
+            </div>
+
+            <div class="card">
+              <p class="card__label">Lojas</p>
+              <p class="card__value"><strong>Hackhinho Master</strong>Venda unificada</p>
+            </div>
+          </div>
+
+          <h3 class="section-title">Cancelamento e observacoes</h3>
+
+          <div class="info-grid">
+            <div class="card">
+              <p class="card__label">Motivo</p>
+              <p class="card__value">
+                Cancelamento solicitado pelo cliente antes da expedicao do pedido.
+              </p>
+            </div>
+
+            <div class="card">
+              <p class="card__label">Reembolso</p>
+              <p class="card__value">
+                <strong>Concluido</strong>Valor devolvido para o mesmo meio de pagamento.
+              </p>
+            </div>
+          </div>
+
+          <h3 class="section-title">Itens do pedido</h3>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Qtd.</th>
+                <th>Unitario</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <span class="item-name">Funko Carnage</span>
+                  <span class="item-store">Hackhinho Master</span>
+                  <span class="item-note">Situacao: cancelado antes do envio</span>
+                </td>
+                <td>1x</td>
+                <td>R$ 110,00</td>
+                <td>R$ 110,00</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="summary-wrap">
+            <div class="summary">
+              <table>
+                <tbody>
+                  <tr>
+                    <td>Subtotal original</td>
+                    <td>R$ 110,00</td>
+                  </tr>
+                  <tr>
+                    <td>Frete</td>
+                    <td>R$ 0,00</td>
+                  </tr>
+                  <tr>
+                    <td>Estorno</td>
+                    <td class="negative">- R$ 110,00</td>
+                  </tr>
+                  <tr class="total-row">
+                    <td>Total final do pedido</td>
+                    <td>R$ 0,00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="notice notice--cancelled">
+            <p>
+              <strong>Resumo da tratativa</strong>
+              Pedido cancelado antes da entrega. O cliente nao recebeu os itens e o valor
+              foi reembolsado integralmente.
+            </p>
+          </div>
+
+          <p class="footnote">
+            Documento demonstrativo gerado para acompanhamento da compra. Nao substitui
+            nota fiscal.
+          </p>
+        </div>
+      </article>
+    </main>
+  </body>
+</html>
