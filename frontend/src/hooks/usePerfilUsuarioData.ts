@@ -177,6 +177,7 @@ function mapearUsuario(
 
   return {
     id: perfil.id,
+    cpf: perfil.cpf,
     nome: `${perfil.nome} ${perfil.sobrenome}`.trim(),
     primeiroNome: perfil.nome,
     sobrenome: perfil.sobrenome,
