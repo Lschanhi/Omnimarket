@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exemplos de recibo para cancelamento e devolucao</title>
+    <style>
+      :root {
+        --bg: #f3f5f8;
+        --panel: #ffffff;
+        --ink: #0f172a;
+        --muted: #5b6476;
+        --line: #d8dee8;
+        --hero: #1c2535;
+        --hero-soft: #243146;
+        --accent: #d3a646;
+        --cancel: #b83a3a;
+        --cancel-soft: #fee2e2;
+        --return: #126b77;
+        --return-soft: #d9f2f5;
+        --partial: #8a5a14;
+        --partial-soft: #fef0c7;
+        --shadow: 0 28px 50px rgba(15, 23, 42, 0.08);
+        --radius-xl: 28px;
+        --radius-lg: 22px;
+        --radius-md: 18px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background:
+          radial-gradient(circle at top, rgba(211, 166, 70, 0.18), transparent 28%),
+          linear-gradient(180deg, #fbfcfe 0%, var(--bg) 100%);
+        color: var(--ink);
+      }
+
+      .page {
+        width: min(1180px, calc(100% - 32px));
+        margin: 40px auto 64px;
+      }
+
+      .page-header {
+        margin-bottom: 28px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(211, 166, 70, 0.14);
+        color: #7b5a10;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .page-header h1 {
+        margin: 16px 0 8px;
+        font-size: clamp(2rem, 4vw, 3rem);
+        line-height: 1.05;
+      }
+
+      .page-header p {
+        max-width: 760px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.7;
+      }
+
+      .receipts {
+        display: grid;
+        gap: 32px;
+      }
+
+      .receipt {
+        overflow: hidden;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: var(--radius-xl);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+
+      .receipt__hero {
+        display: grid;
+        gap: 18px;
+        padding: 30px 32px;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent 45%),
+          linear-gradient(180deg, var(--hero-soft), var(--hero));
+        color: #f8fafc;
+      }
+
+      .brand-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: rgba(211, 166, 70, 0.14);
+        color: #ffd979;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+
+      .status-chip--cancelled {
+        background: rgba(248, 113, 113, 0.16);
+        color: #ffd2d2;
+      }
+
+      .status-chip--returned {
+        background: rgba(45, 212, 191, 0.16);
+        color: #b6fff2;
+      }
+
+      .status-chip--partial {
+        background: rgba(251, 191, 36, 0.18);
+        color: #ffe6a6;
+      }
+
+      .receipt__title h2 {
+        margin: 0 0 8px;
+        font-size: clamp(2rem, 3vw, 2.6rem);
+        line-height: 1.1;
+      }
+
+      .receipt__title p {
+        margin: 0;
+        color: rgba(248, 250, 252, 0.82);
+        font-size: 1.02rem;
+      }
+
+      .receipt__body {
+        padding: 28px;
+      }
+
+      .meta-grid,
+      .info-grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .meta-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 24px;
+      }
+
+      .card,
+      .summary,
+      .notice {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: #fff;
+      }
+
+      .card {
+        padding: 18px 18px 20px;
+      }
+
+      .card__label {
+        margin: 0 0 10px;
+        color: #334155;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .card__value {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+
+      .card__value strong {
+        display: block;
+        font-size: 1.1rem;
+        line-height: 1.3;
+      }
+
+      .section-title {
+        margin: 28px 0 14px;
+        font-size: 1.15rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .items-table th {
+        padding: 0 0 14px;
+        border-bottom: 1px solid var(--line);
+        color: #31425d;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.15em;
+        text-align: left;
+        text-transform: uppercase;
+      }
+
+      .items-table th:nth-child(2),
+      .items-table td:nth-child(2) {
+        text-align: center;
+      }
+
+      .items-table th:nth-child(3),
+      .items-table th:nth-child(4),
+      .items-table td:nth-child(3),
+      .items-table td:nth-child(4) {
+        text-align: right;
+      }
+
+      .items-table td {
+        padding: 18px 0;
+        border-bottom: 1px solid #e8edf4;
+        vertical-align: top;
+      }
+
+      .item-name {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 1.05rem;
+        font-weight: 700;
+      }
+
+      .item-store,
+      .item-note {
+        display: block;
+        color: var(--muted);
+        font-size: 0.94rem;
+        line-height: 1.5;
+      }
+
+      .summary-wrap {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+      }
+
+      .summary {
+        width: min(360px, 100%);
+        padding: 20px;
+      }
+
+      .summary table td {
+        padding: 8px 0;
+        font-size: 1rem;
+      }
+
+      .summary table td:last-child {
+        text-align: right;
+        font-weight: 700;
+      }
+
+      .summary .total-row td {
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+        font-size: 1.1rem;
+        font-weight: 800;
+      }
+
+      .summary .negative {
+        color: var(--cancel);
+      }
+
+      .summary .positive {
+        color: var(--return);
+      }
+
+      .notice {
+        margin-top: 24px;
+        padding: 18px 20px;
+      }
+
+      .notice p {
+        margin: 0;
+        color: #334155;
+        line-height: 1.65;
+      }
+
+      .notice strong {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .notice--cancelled {
+        border-color: rgba(184, 58, 58, 0.16);
+        background: var(--cancel-soft);
+      }
+
+      .notice--returned {
+        border-color: rgba(18, 107, 119, 0.16);
+        background: var(--return-soft);
+      }
+
+      .notice--partial {
+        border-color: rgba(138, 90, 20, 0.16);
+        background: var(--partial-soft);
+      }
+
+      .footnote {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.65;
+      }
+
+      @media (max-width: 960px) {
+        .meta-grid,
+        .info-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .page {
+          width: min(100% - 20px, 100%);
+          margin: 24px auto 48px;
+        }
+
+        .receipt__hero,
+        .receipt__body {
+          padding: 22px;
+        }
+
+        .brand-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .meta-grid,
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .items-table thead {
+          display: none;
+        }
+
+        .items-table,
+        .items-table tbody,
+        .items-table tr,
+        .items-table td {
+          display: block;
+          width: 100%;
+        }
+
+        .items-table tr {
+          padding: 16px 0;
+          border-bottom: 1px solid #e8edf4;
+        }
+
+        .items-table td {
+          padding: 4px 0;
+          border: 0;
+          text-align: left !important;
+        }
+
+        .items-table td::before {
+          display: block;
+          margin-bottom: 4px;
+          color: #334155;
+          font-size: 0.75rem;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .items-table td:nth-child(1)::before {
+          content: "Produto";
+        }
+
+        .items-table td:nth-child(2)::before {
+          content: "Qtd.";
+        }
+
+        .items-table td:nth-child(3)::before {
+          content: "Unitario";
+        }
+
+        .items-table td:nth-child(4)::before {
+          content: "Total";
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="page-header">
+        <span class="eyebrow">Exemplo visual</span>
+        <h1>Como o recibo pode aparecer em casos de cancelamento e devolucao</h1>
+        <p>
+          Este arquivo mostra tres cenarios no mesmo estilo do recibo atual: uma compra
+          cancelada antes da entrega, uma devolucao total depois da entrega e uma devolucao
+          parcial com parte do pedido mantida.
+        </p>
+      </header>
+
+      <section class="receipts">
+        <article class="receipt">
+          <div class="receipt__hero">
+            <div class="brand-row">
+              <span class="brand">OmniMarket</span>
+              <span class="status-chip status-chip--cancelled">Pedido cancelado</span>
+            </div>
+
+            <div class="receipt__title">
+              <h2>Recibo da compra</h2>
+              <p>Pedido #2847 atualizado em 08/06/2026, 12:39.</p>
+            </div>
+          </div>
+
+          <div class="receipt__body">
+            <div class="meta-grid">
+              <div class="card">
+                <p class="card__label">Status</p>
+                <p class="card__value"><strong>Cancelado</strong>Entrega nao realizada</p>
+              </div>
+
+              <div class="card">
+                <p class="card__label">Data do pedido</p>
+                <p class="card__value"><strong>25/05/2026, 23:13</strong>Compra original</p>
+              </div>
+
+              <div class="card">
+                <p class="card__label">Data do cancelamento</p>
+                <p class="card__value">
+                  <strong>08/06/2026, 12:39</strong>Fluxo encerrado antes do envio
+                </p>
+              </div>
+
+              <div class="card">
+                <p class="card__label">Lojas</p>
+                <p class="card__value"><strong>Hackhinho Master</strong>Venda unificada</p>
+              </div>
+            </div>
+
+            <h3 class="section-title">Cancelamento e observacoes</h3>
+
+            <div class="info-grid">
+              <div class="card">
+                <p class="card__label">Motivo</p>
+                <p class="card__value">
+                  Cancelamento solicitado pelo cliente antes da expedicao do pedido.
+                </p>
+              </div>
+
+              <div class="card">
+                <p class="card__label">Reembolso</p>
+                <p class="card__value">
+                  <strong>Concluido</strong>Valor devolvido para o mesmo meio de pagamento.
+                </p>
+              </div>
+            </div>
+
+            <h3 class="section-title">Itens do pedido</h3>
+
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Qtd.</th>
+                  <th>Unitario</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="item-name">Funko Carnage</span>
+                    <span class="item-store">Hackhinho Master</span>
+                    <span class="item-note">Situacao: cancelado antes do envio</span>
+                  </td>
+                  <td>1x</td>
+                  <td>R$ 110,00</td>
+                  <td>R$ 110,00</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="summary-wrap">
+              <div class="summary">
+                <table>
+                  <tbody>
+                    <tr>
+                      <td>Subtotal original</td>
+                      <td>R$ 110,00</td>
+                    </tr>
+                    <tr>
+                      <td>Frete</td>
+                      <td>R$ 0,00</td>
+                    </tr>
+                    <tr>
+                      <td>Estorno</td>
+                      <td class="negative">- R$ 110,00</td>
+                    </tr>
+                    <tr class="total-row">
+                      <td>Total final do pedido</td>
+                      <td>R$ 0,00</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="notice notice--cancelled">
+              <p>
+                <strong>Resumo da tratativa</strong>
+                Pedido cancelado antes da entrega. O cliente nao recebeu os itens e o valor foi
+                reembolsado integralmente.
+              </p>
+            </div>
+
+            <p class="footnote">
+              Documento demonstrativo gerado para acompanhamento da compra. Nao substitui nota
+              fiscal.
+            </p>
+          </div>
+        </article>
+
+        <article class="receipt">
+          <div class="receipt__hero">
+            <div class="brand-row">
+              <span class="brand">OmniMarket</span>
+              <span class="status-chip status-chip--returned">Devolucao concluida</span>
+            </div>
+
+            <div class="receipt__title">
+              <h2>Recibo da compra</h2>
+              <p>Pedido #2852 atualizado em 10/06/2026, 16:08.</p>
+            </div>
+          </div>
+
+          <div class="receipt__body">
+            <div class="meta-grid">
+              <div class="card">
+                <p class="card__label">Status</p>
+                <p class="card__value"><strong>Devolvido</strong>Item retornado e reembolso emitido</p>
+              </div>
+
+              <div class="card">
+                <p class="card__label">Data do pedido</p>
+                <p class="card__value"><strong>28/05/2026, 14:21</strong>Compra aprovada</p>
+              </div>
+
+              <div class="card">
+                <p class="card__label">Entrega confirmada</p>
+                <p class="card__value"><strong>02/06/2026, 18:07</strong>Recebimento registrado</p>
+              </div>
+
+              <div class="card">
+                <p class="card__label">Devolucao concluida</p>
+                <p class="card__value"><strong>10/06/2026, 16:08</strong>Fluxo encerrado</p>
+              </div>
+            </div>
+
+            <h3 class="section-title">Devolucao e reembolso</h3>
+
+            <div class="info-grid">
+              <div class="card">
+                <p class="card__label">Motivo da devolucao</p>
+                <p class="card__value">
+                  Produto com defeito. A loja aprovou a devolucao e recebeu o item de volta.
+                </p>
+              </div>
+
+              <div class="card">
+                <p class="card__label">Tratativa financeira</p>
+                <p class="card__value">
+                  <strong>Reembolso concluido</strong>Credito devolvido em 10/06/2026.
+                </p>
+              </div>
+            </div>
+
+            <h3 class="section-title">Itens do pedido</h3>
+
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Qtd.</th>
+                  <th>Unitario</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="item-name">Headset Hyper Black</span>
+                    <span class="item-store">Audio Forge</span>
+                    <span class="item-note">Situacao: devolvido apos entrega</span>
+                  </td>
+                  <td>1x</td>
+                  <td>R$ 349,90</td>
+                  <td>R$ 349,90</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="summary-wrap">
+              <div class="summary">
+                <table>
+                  <tbody>
+                    <tr>
+                      <td>Total original</td>
+                      <td>R$ 349,90</td>
+                    </tr>
+                    <tr>
+                      <td>Frete</td>
+                      <td>R$ 18,00</td>
+                    </tr>
+                    <tr>
+                      <td>Valor devolvido</td>
+                      <td class="positive">R$ 367,90</td>
+                    </tr>
+                    <tr class="total-row">
+                      <td>Total final do pedido</td>
+                      <td>R$ 0,00</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="notice notice--returned">
+              <p>
+                <strong>Resumo da tratativa</strong>
+                O pedido foi entregue, mas a devolucao foi aprovada e finalizada. O cliente
+                devolveu o produto e recebeu estorno integral.
+              </p>
+            </div>
+
+            <p class="footnote">
+              Documento demonstrativo gerado para acompanhamento da compra. Nao substitui nota
+              fiscal.
+            </p>
+          </div>
+        </article>
+
+        <article class="receipt">
+          <div class="receipt__hero">
+            <div class="brand-row">
+              <span class="brand">OmniMarket</span>
+              <span class="status-chip status-chip--partial">Devolucao parcial</span>
+            </div>
+
+            <div class="receipt__title">
+              <h2>Recibo da compra</h2>
+              <p>Pedido #2861 atualizado em 12/06/2026, 18:22.</p>
+            </div>
+          </div>
+
+          <div class="receipt__body">
+            <div class="meta-grid">
+              <div class="card">
+                <p class="card__label">Status</p>
+                <p class="card__value">
+                  <strong>Devolucao parcial</strong>Parte do pedido mantida pelo cliente
+                </p>
+              </div>
+
+              <div class="card">
+                <p class="card__label">Data do pedido</p>
+                <p class="card__value"><strong>30/05/2026, 09:46</strong>Compra aprovada</p>
+              </div>
+
+              <div class="card">
+                <p class="card__label">Entrega confirmada</p>
+                <p class="card__value"><strong>04/06/2026, 11:02</strong>Recebimento registrado</p>
+              </div>
+
+              <div class="card">
+                <p class="card__label">Ajuste final</p>
+                <p class="card__value"><strong>12/06/2026, 18:22</strong>Um item devolvido</p>
+              </div>
+            </div>
+
+            <h3 class="section-title">Tratativa do pedido</h3>
+
+            <div class="info-grid">
+              <div class="card">
+                <p class="card__label">Motivo</p>
+                <p class="card__value">
+                  Um dos itens apresentou divergencia de cor e foi devolvido. O restante da compra
+                  foi mantido normalmente.
+                </p>
+              </div>
+
+              <div class="card">
+                <p class="card__label">Resultado financeiro</p>
+                <p class="card__value">
+                  <strong>Estorno parcial concluido</strong>Apenas o item devolvido foi reembolsado.
+                </p>
+              </div>
+            </div>
+
+            <h3 class="section-title">Itens do pedido</h3>
+
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Qtd.</th>
+                  <th>Unitario</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="item-name">Camiseta Classic Tee</span>
+                    <span class="item-store">Urban North</span>
+                    <span class="item-note">Situacao: mantido pelo cliente</span>
+                  </td>
+                  <td>1x</td>
+                  <td>R$ 79,90</td>
+                  <td>R$ 79,90</td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="item-name">Jaqueta Street Wind</span>
+                    <span class="item-store">Urban North</span>
+                    <span class="item-note">Situacao: devolvido e reembolsado</span>
+                  </td>
+                  <td>1x</td>
+                  <td>R$ 219,90</td>
+                  <td>R$ 219,90</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="summary-wrap">
+              <div class="summary">
+                <table>
+                  <tbody>
+                    <tr>
+                      <td>Total original</td>
+                      <td>R$ 299,80</td>
+                    </tr>
+                    <tr>
+                      <td>Frete</td>
+                      <td>R$ 22,00</td>
+                    </tr>
+                    <tr>
+                      <td>Valor devolvido</td>
+                      <td class="negative">- R$ 219,90</td>
+                    </tr>
+                    <tr class="total-row">
+                      <td>Valor mantido no pedido</td>
+                      <td>R$ 101,90</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="notice notice--partial">
+              <p>
+                <strong>Resumo da tratativa</strong>
+                Apenas parte do pedido voltou para a loja. O documento pode destacar item a item o
+                que foi mantido e o que gerou reembolso.
+              </p>
+            </div>
+
+            <p class="footnote">
+              Documento demonstrativo gerado para acompanhamento da compra. Nao substitui nota
+              fiscal.
+            </p>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

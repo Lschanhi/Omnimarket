@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Omnimarket.Api.Models.Configuracoes;
 using Omnimarket.Api.Data;
+using Omnimarket.Api.Extensions;
 using Omnimarket.Api.Services;
 using Omnimarket.Api.Services.Interfaces;
 using Omnimarket.Api.Utils;
@@ -284,6 +285,7 @@ else
 }
 
 app.UseCors("FrontendLocal");
+app.UseApiExceptionHandling();
 app.UseAuthentication();
 app.UseAuthorization();
 
