@@ -202,7 +202,6 @@ function mapearUsuario(
     enderecos,
     enderecoPrincipalId: enderecoPrincipal?.id,
     avatarUrl: perfil.avatarUrl ?? undefined,
-    contaVerificada: true,
   };
 }
 

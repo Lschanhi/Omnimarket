@@ -9,9 +9,20 @@ interface UserStatsProps {
 }
 
 export function UserStats({ title, description, stats }: UserStatsProps) {
+  const gridColumnsClass =
+    stats.length >= 5
+      ? "xl:grid-cols-5"
+      : stats.length === 4
+        ? "xl:grid-cols-4"
+        : stats.length === 3
+          ? "xl:grid-cols-3"
+          : stats.length === 2
+            ? "xl:grid-cols-2"
+            : "xl:grid-cols-1";
+
   return (
     <ProfileSection title={title} description={description}>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className={`grid gap-3 sm:grid-cols-2 ${gridColumnsClass}`}>
         {stats.map(({ key, label, value }) => (
           <div
             key={key}
