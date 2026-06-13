@@ -57,7 +57,17 @@ type CampoSelectProps = {
   icon?: ReactNode;
 } & SelectHTMLAttributes<HTMLSelectElement>;
 
-const CAMPOS_ENDERECO_VENDEDOR: Array<keyof CadastroFormData> = [
+type BlocoEnderecoCadastroProps = {
+  descricao: string;
+  errors: FormErrors;
+  formData: CadastroFormData;
+  isVisible: boolean;
+  onChange: (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  onToggle: () => void;
+  titulo: string;
+};
+
+const CAMPOS_ENDERECO_CADASTRO: Array<keyof CadastroFormData> = [
   "enderecoTipoLogradouro",
   "enderecoNome",
   "enderecoNumero",
@@ -152,6 +162,126 @@ function CampoSelect({ children, label, error, className, icon, ...props }: Camp
   );
 }
 
+function BlocoEnderecoCadastro({
+  descricao,
+  errors,
+  formData,
+  isVisible,
+  onChange,
+  onToggle,
+  titulo,
+}: BlocoEnderecoCadastroProps) {
+  const mostrarCampos = isVisible || temConteudoNoEnderecoVendedor(formData);
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h4 className="text-sm font-semibold text-white">{titulo}</h4>
+          <p className="text-sm text-neutral-400">{descricao}</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onToggle}
+          className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${
+            mostrarCampos
+              ? "border-red-400/30 bg-red-400/10 text-red-300 hover:border-red-400/50 hover:bg-red-400/20"
+              : "border-yellow-400/30 bg-yellow-400/10 text-yellow-300 hover:border-yellow-400/50 hover:bg-yellow-400/20"
+          }`}
+          aria-label={mostrarCampos ? "Ocultar endereco" : "Adicionar endereco"}
+        >
+          {mostrarCampos ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+        </button>
+      </div>
+
+      {mostrarCampos ? (
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <CampoSelect
+            label="Tipo de logradouro"
+            id="enderecoTipoLogradouro"
+            name="enderecoTipoLogradouro"
+            value={formData.enderecoTipoLogradouro}
+            onChange={onChange}
+            error={errors.enderecoTipoLogradouro}
+            icon={<MapPin className="h-5 w-5" />}
+          >
+            {TIPOS_LOGRADOURO_FALLBACK.map((tipo) => (
+              <option key={tipo.codigo} value={tipo.codigo}>
+                {tipo.descricao}
+              </option>
+            ))}
+          </CampoSelect>
+
+          <CampoCadastro
+            label="Nome do endereco"
+            id="enderecoNome"
+            name="enderecoNome"
+            value={formData.enderecoNome}
+            onChange={onChange}
+            placeholder="Rua, avenida ou local"
+            error={errors.enderecoNome}
+            icon={<MapPin className="h-5 w-5" />}
+          />
+
+          <CampoCadastro
+            label="Numero"
+            id="enderecoNumero"
+            name="enderecoNumero"
+            value={formData.enderecoNumero}
+            onChange={onChange}
+            placeholder="123"
+            error={errors.enderecoNumero}
+          />
+
+          <CampoCadastro
+            label="Complemento"
+            id="enderecoComplemento"
+            name="enderecoComplemento"
+            value={formData.enderecoComplemento}
+            onChange={onChange}
+            placeholder="Apartamento, bloco, sala..."
+            error={errors.enderecoComplemento}
+          />
+
+          <CampoCadastro
+            label="CEP"
+            id="enderecoCep"
+            name="enderecoCep"
+            inputMode="numeric"
+            maxLength={9}
+            value={formData.enderecoCep}
+            onChange={onChange}
+            placeholder="00000-000"
+            error={errors.enderecoCep}
+          />
+
+          <CampoCadastro
+            label="Cidade"
+            id="enderecoCidade"
+            name="enderecoCidade"
+            value={formData.enderecoCidade}
+            onChange={onChange}
+            placeholder="Sua cidade"
+            error={errors.enderecoCidade}
+          />
+
+          <CampoCadastro
+            label="UF"
+            id="enderecoUf"
+            name="enderecoUf"
+            maxLength={2}
+            value={formData.enderecoUf}
+            onChange={onChange}
+            placeholder="SP"
+            error={errors.enderecoUf}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function separarNomeCompleto(nomeCompleto: string) {
   const partes = nomeCompleto.trim().split(/\s+/).filter(Boolean);
   const nome = partes[0] ?? "";
@@ -164,11 +294,11 @@ function separarNomeCompleto(nomeCompleto: string) {
 }
 
 function temConteudoNoEnderecoVendedor(formData: CadastroFormData) {
-  return CAMPOS_ENDERECO_VENDEDOR.some((campo) => formData[campo].trim() !== "");
+  return CAMPOS_ENDERECO_CADASTRO.some((campo) => formData[campo].trim() !== "");
 }
 
 function temErroNoEnderecoVendedor(errors: FormErrors) {
-  return CAMPOS_ENDERECO_VENDEDOR.some((campo) => Boolean(errors[campo]));
+  return CAMPOS_ENDERECO_CADASTRO.some((campo) => Boolean(errors[campo]));
 }
 
 function limparErrosVendedor(errors: FormErrors) {
@@ -177,13 +307,6 @@ function limparErrosVendedor(errors: FormErrors) {
     nomeFantasia: "",
     tipoDocumentoFiscalLoja: "",
     documentoFiscalLoja: "",
-    enderecoTipoLogradouro: "",
-    enderecoNome: "",
-    enderecoNumero: "",
-    enderecoComplemento: "",
-    enderecoCep: "",
-    enderecoCidade: "",
-    enderecoUf: "",
   };
 }
 
@@ -191,7 +314,7 @@ export function CadastroPage() {
   const [formData, setFormData] = useState<CadastroFormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [mostrarEnderecoVendedor, setMostrarEnderecoVendedor] = useState(false);
+  const [mostrarCamposEndereco, setMostrarCamposEndereco] = useState(false);
   const navigate = useNavigate();
   const isCadastroVendedor = formData.tipoCadastro === "vendedor";
 
@@ -205,8 +328,8 @@ export function CadastroPage() {
       tipoCadastro === "vendedor" ? { ...currentErrors } : limparErrosVendedor(currentErrors),
     );
 
-    if (tipoCadastro === "vendedor" && temConteudoNoEnderecoVendedor(formData)) {
-      setMostrarEnderecoVendedor(true);
+    if (temConteudoNoEnderecoVendedor(formData)) {
+      setMostrarCamposEndereco(true);
     }
   }
 
@@ -270,8 +393,8 @@ export function CadastroPage() {
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
 
-      if (isCadastroVendedor && temErroNoEnderecoVendedor(validationErrors)) {
-        setMostrarEnderecoVendedor(true);
+      if (temErroNoEnderecoVendedor(validationErrors)) {
+        setMostrarCamposEndereco(true);
       }
 
       return;
@@ -282,6 +405,8 @@ export function CadastroPage() {
 
     try {
       const { nome, sobrenome } = separarNomeCompleto(formData.nomeCompleto);
+      const incluirEnderecoNoCadastro =
+        isCadastroVendedor || temConteudoNoEnderecoVendedor(formData);
       const payloadRegistro = {
         cpf: formData.cpf.replace(/\D/g, ""),
         nome,
@@ -291,7 +416,7 @@ export function CadastroPage() {
         confirmPassword: formData.confirmarSenha,
         aceitouTermos: true,
         telefones: [normalizarTelefoneParaApi(formData.telefone, true)],
-        enderecos: isCadastroVendedor
+        enderecos: incluirEnderecoNoCadastro
           ? [
               {
                 cep: formData.enderecoCep.replace(/\D/g, ""),
@@ -565,6 +690,29 @@ export function CadastroPage() {
                 />
               </div>
 
+              {!isCadastroVendedor ? (
+                <section className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <div className="space-y-1">
+                    <h3 className="text-base font-semibold text-white">Endereco</h3>
+                    <p className="text-sm text-neutral-400">
+                      Se quiser, voce ja pode adicionar um endereco no cadastro de comprador.
+                    </p>
+                  </div>
+
+                  <BlocoEnderecoCadastro
+                    titulo="Endereco"
+                    descricao="Clique no botao de mais para abrir os campos de endereco do comprador."
+                    errors={errors}
+                    formData={formData}
+                    isVisible={mostrarCamposEndereco}
+                    onChange={handleInputChange}
+                    onToggle={() =>
+                      setMostrarCamposEndereco((currentState) => !currentState)
+                    }
+                  />
+                </section>
+              ) : null}
+
               {isCadastroVendedor ? (
                 <section className="space-y-4 rounded-3xl border border-yellow-400/15 bg-yellow-400/5 p-4">
                   <div className="space-y-1">
@@ -619,124 +767,15 @@ export function CadastroPage() {
                     />
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-semibold text-white">Endereco inicial</h4>
-                        <p className="text-sm text-neutral-400">
-                          Use o botao de mais para preencher o endereco que sera vinculado ao
-                          cadastro de vendedor.
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setMostrarEnderecoVendedor((currentState) => !currentState)
-                        }
-                        className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${
-                          mostrarEnderecoVendedor
-                            ? "border-red-400/30 bg-red-400/10 text-red-300 hover:border-red-400/50 hover:bg-red-400/20"
-                            : "border-yellow-400/30 bg-yellow-400/10 text-yellow-300 hover:border-yellow-400/50 hover:bg-yellow-400/20"
-                        }`}
-                        aria-label={
-                          mostrarEnderecoVendedor
-                            ? "Ocultar endereco inicial"
-                            : "Adicionar endereco inicial"
-                        }
-                      >
-                        {mostrarEnderecoVendedor ? (
-                          <Minus className="h-4 w-4" />
-                        ) : (
-                          <Plus className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-
-                    {mostrarEnderecoVendedor || temConteudoNoEnderecoVendedor(formData) ? (
-                      <div className="mt-4 grid gap-4 md:grid-cols-2">
-                        <CampoSelect
-                          label="Tipo de logradouro"
-                          id="enderecoTipoLogradouro"
-                          name="enderecoTipoLogradouro"
-                          value={formData.enderecoTipoLogradouro}
-                          onChange={handleInputChange}
-                          error={errors.enderecoTipoLogradouro}
-                          icon={<MapPin className="h-5 w-5" />}
-                        >
-                          {TIPOS_LOGRADOURO_FALLBACK.map((tipo) => (
-                            <option key={tipo.codigo} value={tipo.codigo}>
-                              {tipo.descricao}
-                            </option>
-                          ))}
-                        </CampoSelect>
-
-                        <CampoCadastro
-                          label="Nome do endereco"
-                          id="enderecoNome"
-                          name="enderecoNome"
-                          value={formData.enderecoNome}
-                          onChange={handleInputChange}
-                          placeholder="Rua, avenida ou local"
-                          error={errors.enderecoNome}
-                          icon={<MapPin className="h-5 w-5" />}
-                        />
-
-                        <CampoCadastro
-                          label="Numero"
-                          id="enderecoNumero"
-                          name="enderecoNumero"
-                          value={formData.enderecoNumero}
-                          onChange={handleInputChange}
-                          placeholder="123"
-                          error={errors.enderecoNumero}
-                        />
-
-                        <CampoCadastro
-                          label="Complemento"
-                          id="enderecoComplemento"
-                          name="enderecoComplemento"
-                          value={formData.enderecoComplemento}
-                          onChange={handleInputChange}
-                          placeholder="Apartamento, bloco, sala..."
-                          error={errors.enderecoComplemento}
-                        />
-
-                        <CampoCadastro
-                          label="CEP"
-                          id="enderecoCep"
-                          name="enderecoCep"
-                          inputMode="numeric"
-                          maxLength={9}
-                          value={formData.enderecoCep}
-                          onChange={handleInputChange}
-                          placeholder="00000-000"
-                          error={errors.enderecoCep}
-                        />
-
-                        <CampoCadastro
-                          label="Cidade"
-                          id="enderecoCidade"
-                          name="enderecoCidade"
-                          value={formData.enderecoCidade}
-                          onChange={handleInputChange}
-                          placeholder="Sua cidade"
-                          error={errors.enderecoCidade}
-                        />
-
-                        <CampoCadastro
-                          label="UF"
-                          id="enderecoUf"
-                          name="enderecoUf"
-                          maxLength={2}
-                          value={formData.enderecoUf}
-                          onChange={handleInputChange}
-                          placeholder="SP"
-                          error={errors.enderecoUf}
-                        />
-                      </div>
-                    ) : null}
-                  </div>
+                  <BlocoEnderecoCadastro
+                    titulo="Endereco inicial"
+                    descricao="Use o botao de mais para preencher o endereco que sera vinculado ao cadastro de vendedor."
+                    errors={errors}
+                    formData={formData}
+                    isVisible={mostrarCamposEndereco}
+                    onChange={handleInputChange}
+                    onToggle={() => setMostrarCamposEndereco((currentState) => !currentState)}
+                  />
                 </section>
               ) : null}
 
