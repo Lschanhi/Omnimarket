@@ -138,8 +138,8 @@ import {
   normalizarTelefoneParaInput,
   normalizarValorEnderecoFormulario,
   obterErroEnderecoInvalido,
+  obterNomePadraoEntrega,
   obterMensagemErroLoja,
-  obterTipoEntregaLabel,
   ordenarEntregasLoja,
   resolverAvatarLoja,
   telefoneTemConteudo,
@@ -1454,10 +1454,7 @@ export function PerfilUsuarioPage() {
 
       if (name === "tipoEntregaId") {
         const tipoEntregaId = Number(valorMascarado);
-
-        if (!currentData.nome.trim()) {
-          proximoEstado.nome = obterTipoEntregaLabel(tipoEntregaId);
-        }
+        proximoEstado.nome = obterNomePadraoEntrega(tipoEntregaId);
 
         if (tipoEntregaId === 1) {
           proximoEstado.valorFrete = "0,00";
@@ -1511,13 +1508,11 @@ export function PerfilUsuarioPage() {
         throw new Error("Selecione um tipo de entrega válido.");
       }
 
-      if (!entregaLojaForm.nome.trim()) {
-        throw new Error("Informe o nome da opção de entrega.");
-      }
+      const nomeEntrega = obterNomePadraoEntrega(tipoEntregaId);
 
       const payload: LojaEntregaMutacaoPayload = {
         tipoEntregaId,
-        nome: entregaLojaForm.nome.trim(),
+        nome: nomeEntrega,
         valorFrete: normalizarFreteParaApi(entregaLojaForm.valorFrete, tipoEntregaId),
         prazoEntregaDias: normalizarPrazoEntregaParaApi(entregaLojaForm.prazoEntregaDias),
         observacao: entregaLojaForm.observacao.trim() || undefined,

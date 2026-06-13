@@ -78,7 +78,7 @@ export const PRODUTO_FORM_INICIAL: ProdutoFormState = {
 
 export const LOJA_ENTREGA_FORM_INICIAL: LojaEntregaFormState = {
   tipoEntregaId: "1",
-  nome: "",
+  nome: "Retirada",
   valorFrete: "0,00",
   prazoEntregaDias: "0",
   observacao: "",
@@ -229,6 +229,12 @@ export function obterTipoEntregaLabel(tipoEntregaId: number | null | undefined) 
   return TIPOS_ENTREGA_OPTIONS.find((option) => option.id === tipoEntregaId)?.label ?? "Entrega";
 }
 
+export function obterNomePadraoEntrega(tipoEntregaId: number | string | null | undefined) {
+  return obterTipoEntregaLabel(
+    tipoEntregaId == null || tipoEntregaId === "" ? undefined : Number(tipoEntregaId),
+  );
+}
+
 export function criarEntregaLojaForm(opcao?: LojaEntregaOpcao): LojaEntregaFormState {
   if (!opcao) {
     return LOJA_ENTREGA_FORM_INICIAL;
@@ -237,7 +243,7 @@ export function criarEntregaLojaForm(opcao?: LojaEntregaOpcao): LojaEntregaFormS
   return {
     id: opcao.id,
     tipoEntregaId: String(opcao.tipoEntregaId ?? 1),
-    nome: opcao.nome,
+    nome: opcao.nome?.trim() || obterNomePadraoEntrega(opcao.tipoEntregaId),
     valorFrete: normalizarFreteParaInput(opcao.valorFrete),
     prazoEntregaDias: String(opcao.prazoEntregaDias ?? 0),
     observacao: opcao.observacao ?? "",
