@@ -36,6 +36,7 @@ export type LojaFormState = {
   descricao: string;
   emailContato: string;
   ativa: boolean;
+  aceitouTermoFiscalResponsabilidade: boolean;
 };
 
 export type ProdutoFormState = {

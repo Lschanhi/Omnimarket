@@ -72,6 +72,10 @@ export function validarFormulario(formData: CadastroFormData): FormErrors {
     errors.dataNascimento = "Informe sua data de nascimento.";
   }
 
+  if (!formData.aceitouTermosUso) {
+    errors.aceitouTermosUso = "Aceite o termo de uso para continuar.";
+  }
+
   if (formData.tipoCadastro === "vendedor") {
     if (!formData.nomeFantasia.trim()) {
       errors.nomeFantasia = "Informe o nome fantasia da loja.";
@@ -90,6 +94,10 @@ export function validarFormulario(formData: CadastroFormData): FormErrors {
           : "Digite um CPF no formato 000.000.000-00.";
     }
 
+    if (!formData.aceitouTermoFiscalResponsabilidade) {
+      errors.aceitouTermoFiscalResponsabilidade =
+        "Confirme que voce esta ciente das responsabilidades fiscais para vender.";
+    }
   }
 
   if (formData.tipoCadastro === "vendedor" || temConteudoNoEndereco(formData)) {
