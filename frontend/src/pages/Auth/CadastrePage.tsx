@@ -1,26 +1,74 @@
-import React, {
+import {
   useState,
   type ChangeEvent,
   type FormEvent,
   type InputHTMLAttributes,
+  type ReactNode,
+  type SelectHTMLAttributes,
 } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { CalendarDays, IdCard, LockIcon, Mail, Phone, User } from "lucide-react";
+import {
+  CalendarDays,
+  IdCard,
+  LockIcon,
+  Mail,
+  MapPin,
+  Minus,
+  Phone,
+  Plus,
+  Store,
+  User,
+} from "lucide-react";
 import { Botao } from "../../Components/Botao";
 import { PageLayout } from "../../Components/PageLayout";
-import { registrarUsuario } from "../../Services/auth/authService";
+import { loginUsuario, registrarUsuario } from "../../Services/auth/authService";
+import { obterPerfilUsuario } from "../../Services/user/usuarioService";
+import {
+  criarMinhaLoja,
+  type TipoDocumentoFiscalLoja,
+} from "../../Services/user/lojaService";
+import {
+  TIPOS_LOGRADOURO_FALLBACK,
+} from "../../Services/user/enderecoService";
 import { normalizarTelefoneParaApi } from "../../Services/user/telefoneService";
-import type { CadastroFormData, FormErrors } from "../../types/cadastroFormData";
-import { formatarCpf, formatarTelefone } from "../../utils/masks";
+import type {
+  CadastroFormData,
+  FormErrors,
+  TipoCadastro,
+  TipoDocumentoFiscalCadastro,
+} from "../../types/cadastroFormData";
+import {
+  formatarCep,
+  formatarCpf,
+  formatarDocumentoFiscal,
+  formatarTelefone,
+} from "../../utils/masks";
 import { validarFormulario } from "../../utils/validators";
 
 type CampoCadastroProps = {
   label: string;
   error?: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
 } & InputHTMLAttributes<HTMLInputElement>;
 
+type CampoSelectProps = {
+  label: string;
+  error?: string;
+  icon?: ReactNode;
+} & SelectHTMLAttributes<HTMLSelectElement>;
+
+const CAMPOS_ENDERECO_VENDEDOR: Array<keyof CadastroFormData> = [
+  "enderecoTipoLogradouro",
+  "enderecoNome",
+  "enderecoNumero",
+  "enderecoComplemento",
+  "enderecoCep",
+  "enderecoCidade",
+  "enderecoUf",
+];
+
 const initialFormData: CadastroFormData = {
+  tipoCadastro: "comprador",
   nomeCompleto: "",
   email: "",
   senha: "",
@@ -28,6 +76,16 @@ const initialFormData: CadastroFormData = {
   cpf: "",
   telefone: "",
   dataNascimento: "",
+  nomeFantasia: "",
+  tipoDocumentoFiscalLoja: "1",
+  documentoFiscalLoja: "",
+  enderecoTipoLogradouro: TIPOS_LOGRADOURO_FALLBACK[0]?.codigo ?? "Rua",
+  enderecoNome: "",
+  enderecoNumero: "",
+  enderecoComplemento: "",
+  enderecoCep: "",
+  enderecoCidade: "",
+  enderecoUf: "",
 };
 
 function CampoCadastro({ label, error, className, icon, ...props }: CampoCadastroProps) {
@@ -52,7 +110,7 @@ function CampoCadastro({ label, error, className, icon, ...props }: CampoCadastr
 
         <input
           {...props}
-          className={`${baseStyle} ${stateStyle} pl-10 ${className}`.trim()}
+          className={`${baseStyle} ${stateStyle} ${icon ? "pl-10" : ""} ${className}`.trim()}
         />
       </div>
 
@@ -61,27 +119,133 @@ function CampoCadastro({ label, error, className, icon, ...props }: CampoCadastr
   );
 }
 
+function CampoSelect({ children, label, error, className, icon, ...props }: CampoSelectProps) {
+  const baseStyle =
+    "w-full rounded-2xl border bg-[#111111] px-4 py-3 text-white outline-none transition focus:ring-2";
+  const stateStyle = error
+    ? "border-red-500/80 focus:border-red-400 focus:ring-red-500/30"
+    : "border-white/10 focus:border-yellow-400 focus:ring-yellow-400/20";
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label htmlFor={props.id} className="text-sm font-medium text-neutral-200">
+        {label}
+      </label>
+
+      <div className="relative">
+        {icon ? (
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+            {icon}
+          </span>
+        ) : null}
+
+        <select
+          {...props}
+          className={`${baseStyle} ${stateStyle} ${icon ? "pl-10" : ""} ${className}`.trim()}
+        >
+          {children}
+        </select>
+      </div>
+
+      {error ? <span className="text-sm text-red-400">{error}</span> : null}
+    </div>
+  );
+}
+
+function separarNomeCompleto(nomeCompleto: string) {
+  const partes = nomeCompleto.trim().split(/\s+/).filter(Boolean);
+  const nome = partes[0] ?? "";
+  const sobrenome = partes.slice(1).join(" ") || nome;
+
+  return {
+    nome,
+    sobrenome,
+  };
+}
+
+function temConteudoNoEnderecoVendedor(formData: CadastroFormData) {
+  return CAMPOS_ENDERECO_VENDEDOR.some((campo) => formData[campo].trim() !== "");
+}
+
+function temErroNoEnderecoVendedor(errors: FormErrors) {
+  return CAMPOS_ENDERECO_VENDEDOR.some((campo) => Boolean(errors[campo]));
+}
+
+function limparErrosVendedor(errors: FormErrors) {
+  return {
+    ...errors,
+    nomeFantasia: "",
+    tipoDocumentoFiscalLoja: "",
+    documentoFiscalLoja: "",
+    enderecoTipoLogradouro: "",
+    enderecoNome: "",
+    enderecoNumero: "",
+    enderecoComplemento: "",
+    enderecoCep: "",
+    enderecoCidade: "",
+    enderecoUf: "",
+  };
+}
+
 export function CadastroPage() {
   const [formData, setFormData] = useState<CadastroFormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [mostrarEnderecoVendedor, setMostrarEnderecoVendedor] = useState(false);
   const navigate = useNavigate();
+  const isCadastroVendedor = formData.tipoCadastro === "vendedor";
 
-  function separarNomeCompleto(nomeCompleto: string) {
-    const partes = nomeCompleto.trim().split(/\s+/).filter(Boolean);
-    const nome = partes[0] ?? "";
-    const sobrenome = partes.slice(1).join(" ") || nome;
+  function handleTipoCadastroChange(tipoCadastro: TipoCadastro) {
+    setFormData((currentData) => ({
+      ...currentData,
+      tipoCadastro,
+    }));
 
-    return {
-      nome,
-      sobrenome,
-    };
+    setErrors((currentErrors) =>
+      tipoCadastro === "vendedor" ? { ...currentErrors } : limparErrosVendedor(currentErrors),
+    );
+
+    if (tipoCadastro === "vendedor" && temConteudoNoEnderecoVendedor(formData)) {
+      setMostrarEnderecoVendedor(true);
+    }
   }
 
-  function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
+  function handleInputChange(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value } = event.target;
+
+    if (name === "tipoDocumentoFiscalLoja") {
+      const tipoDocumentoFiscalLoja = value as TipoDocumentoFiscalCadastro;
+
+      setFormData((currentData) => ({
+        ...currentData,
+        tipoDocumentoFiscalLoja,
+        documentoFiscalLoja: formatarDocumentoFiscal(
+          currentData.documentoFiscalLoja,
+          tipoDocumentoFiscalLoja,
+        ),
+      }));
+
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        tipoDocumentoFiscalLoja: "",
+        documentoFiscalLoja: "",
+      }));
+
+      return;
+    }
+
     const valorMascarado =
-      name === "cpf" ? formatarCpf(value) : name === "telefone" ? formatarTelefone(value) : value;
+      name === "cpf"
+        ? formatarCpf(value)
+        : name === "telefone"
+          ? formatarTelefone(value)
+          : name === "documentoFiscalLoja"
+            ? formatarDocumentoFiscal(value, formData.tipoDocumentoFiscalLoja)
+            : name === "enderecoCep"
+              ? formatarCep(value)
+              : name === "enderecoUf"
+                ? value.toUpperCase().slice(0, 2)
+                : value;
 
     setFormData((currentData) => ({
       ...currentData,
@@ -105,6 +269,11 @@ export function CadastroPage() {
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+
+      if (isCadastroVendedor && temErroNoEnderecoVendedor(validationErrors)) {
+        setMostrarEnderecoVendedor(true);
+      }
+
       return;
     }
 
@@ -113,8 +282,7 @@ export function CadastroPage() {
 
     try {
       const { nome, sobrenome } = separarNomeCompleto(formData.nomeCompleto);
-
-      await registrarUsuario({
+      const payloadRegistro = {
         cpf: formData.cpf.replace(/\D/g, ""),
         nome,
         sobrenome,
@@ -122,14 +290,83 @@ export function CadastroPage() {
         password: formData.senha,
         confirmPassword: formData.confirmarSenha,
         aceitouTermos: true,
-        telefones: [normalizarTelefoneParaApi(formData.telefone)],
-      });
+        telefones: [normalizarTelefoneParaApi(formData.telefone, true)],
+        enderecos: isCadastroVendedor
+          ? [
+              {
+                cep: formData.enderecoCep.replace(/\D/g, ""),
+                tipoLogradouro: formData.enderecoTipoLogradouro,
+                nomeEndereco: formData.enderecoNome.trim(),
+                numero: formData.enderecoNumero.trim(),
+                complemento: formData.enderecoComplemento.trim() || undefined,
+                cidade: formData.enderecoCidade.trim(),
+                uf: formData.enderecoUf.trim().toUpperCase(),
+                isPrincipal: true,
+              },
+            ]
+          : undefined,
+      };
 
-      alert("Cadastro realizado com sucesso!");
-      navigate({ to: "/login" });
+      await registrarUsuario(payloadRegistro);
+
+      if (!isCadastroVendedor) {
+        alert("Cadastro realizado com sucesso!");
+        navigate({ to: "/login" });
+        return;
+      }
+
+      let autenticadoAutomaticamente = false;
+
+      try {
+        await loginUsuario(formData.email.trim(), formData.senha);
+        autenticadoAutomaticamente = true;
+
+        const perfil = await obterPerfilUsuario();
+        const enderecoPrincipal =
+          perfil.enderecos.find((endereco) => endereco.isPrincipal && endereco.ativo) ??
+          perfil.enderecos.find((endereco) => endereco.ativo);
+        const telefonePrincipal =
+          perfil.telefones.find((telefone) => telefone.isPrincipal) ?? perfil.telefones[0];
+
+        if (!enderecoPrincipal || !telefonePrincipal) {
+          throw new Error(
+            "Sua conta foi criada, mas faltou localizar o endereco ou o telefone principal para abrir a loja.",
+          );
+        }
+
+        await criarMinhaLoja({
+          nomeFantasia: formData.nomeFantasia.trim(),
+          tipoDocumentoFiscal: Number(
+            formData.tipoDocumentoFiscalLoja,
+          ) as TipoDocumentoFiscalLoja,
+          documentoFiscal: formData.documentoFiscalLoja.trim(),
+          emailContato: formData.email.trim(),
+          usarEnderecoUsuario: true,
+          enderecoUsuarioId: enderecoPrincipal.id,
+          usarTelefoneUsuario: true,
+          telefoneUsuarioId: telefonePrincipal.id,
+          ativa: true,
+        });
+
+        alert("Conta e loja criadas com sucesso!");
+        navigate({ to: "/perfilUsuario" });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Nao foi possivel concluir o cadastro da loja.";
+
+        alert(
+          autenticadoAutomaticamente
+            ? `Sua conta foi criada, mas a loja nao foi concluida agora. ${message}`
+            : `Sua conta foi criada, mas nao conseguimos entrar automaticamente para finalizar a loja. ${message}`,
+        );
+
+        navigate({ to: autenticadoAutomaticamente ? "/perfilUsuario" : "/login" });
+      }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Não foi possível concluir o cadastro.";
+        error instanceof Error ? error.message : "Nao foi possivel concluir o cadastro.";
       alert(message);
     } finally {
       setIsLoading(false);
@@ -159,16 +396,16 @@ export function CadastroPage() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-sm font-semibold text-white">Cadastro rápido</p>
+                <p className="text-sm font-semibold text-white">Cadastro flexivel</p>
                 <p className="mt-1 text-sm text-neutral-400">
-                  Formulário otimizado para celular, tablet e desktop.
+                  Escolha entre comprador e vendedor no mesmo formulario.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-sm font-semibold text-white">Validação imediata</p>
+                <p className="text-sm font-semibold text-white">Loja desde o inicio</p>
                 <p className="mt-1 text-sm text-neutral-400">
-                  Erros aparecem abaixo dos campos para facilitar o preenchimento.
+                  Quem vender ja pode sair com a loja preparada e o endereco inicial.
                 </p>
               </div>
             </div>
@@ -181,9 +418,63 @@ export function CadastroPage() {
                   Finalize seu cadastro
                 </h2>
                 <p className="text-sm text-neutral-400">
-                  Preencha os campos obrigatórios para criar sua conta.
+                  Preencha os campos obrigatorios para criar sua conta.
                 </p>
               </div>
+
+              <section className="space-y-3 rounded-3xl border border-white/10 bg-white/5 p-4">
+                <div>
+                  <h3 className="text-base font-semibold text-white">Tipo de cadastro</h3>
+                  <p className="text-sm text-neutral-400">
+                    Escolha se esta conta sera usada para comprar ou para vender.
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {[
+                    {
+                      tipo: "comprador" as const,
+                      titulo: "Comprador",
+                      descricao: "Conta para comprar e acompanhar pedidos.",
+                    },
+                    {
+                      tipo: "vendedor" as const,
+                      titulo: "Vendedor",
+                      descricao: "Conta com preparo inicial para abrir a loja.",
+                    },
+                  ].map((opcao) => {
+                    const selecionado = formData.tipoCadastro === opcao.tipo;
+
+                    return (
+                      <button
+                        key={opcao.tipo}
+                        type="button"
+                        onClick={() => handleTipoCadastroChange(opcao.tipo)}
+                        className={`rounded-2xl border px-4 py-4 text-left transition ${
+                          selecionado
+                            ? "border-yellow-400/60 bg-yellow-400/10 shadow-[0_0_0_1px_rgba(250,204,21,0.22)]"
+                            : "border-white/10 bg-black/30 hover:border-white/20 hover:bg-white/5"
+                        }`}
+                        aria-pressed={selecionado}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-base font-semibold text-white">
+                            {opcao.titulo}
+                          </span>
+                          <span
+                            className={`h-3 w-3 rounded-full ${
+                              selecionado ? "bg-yellow-400" : "bg-white/20"
+                            }`}
+                          />
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-neutral-400">
+                          {opcao.descricao}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="md:col-span-2">
@@ -206,7 +497,7 @@ export function CadastroPage() {
                   type="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  placeholder="você@exemplo.com"
+                  placeholder="voce@exemplo.com"
                   error={errors.email}
                   icon={<Mail className="h-5 w-5" />}
                 />
@@ -226,7 +517,7 @@ export function CadastroPage() {
                 />
 
                 <CampoCadastro
-                  label="CPF"
+                  label={isCadastroVendedor ? "CPF do responsavel" : "CPF"}
                   id="cpf"
                   name="cpf"
                   inputMode="numeric"
@@ -256,13 +547,13 @@ export function CadastroPage() {
                   type="password"
                   value={formData.senha}
                   onChange={handleInputChange}
-                  placeholder="Mínimo de 6 caracteres"
+                  placeholder="Minimo de 6 caracteres"
                   error={errors.senha}
                   icon={<LockIcon className="h-5 w-5" />}
                 />
 
                 <CampoCadastro
-                  label="Confirmação de senha"
+                  label="Confirmacao de senha"
                   id="confirmarSenha"
                   name="confirmarSenha"
                   type="password"
@@ -274,15 +565,194 @@ export function CadastroPage() {
                 />
               </div>
 
+              {isCadastroVendedor ? (
+                <section className="space-y-4 rounded-3xl border border-yellow-400/15 bg-yellow-400/5 p-4">
+                  <div className="space-y-1">
+                    <h3 className="text-base font-semibold text-white">Dados da loja</h3>
+                    <p className="text-sm text-neutral-400">
+                      Esses dados serao usados para criar sua loja logo apos o cadastro.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="md:col-span-2">
+                      <CampoCadastro
+                        label="Nome fantasia"
+                        id="nomeFantasia"
+                        name="nomeFantasia"
+                        value={formData.nomeFantasia}
+                        onChange={handleInputChange}
+                        placeholder="Nome da sua loja"
+                        error={errors.nomeFantasia}
+                        icon={<Store className="h-5 w-5" />}
+                      />
+                    </div>
+
+                    <CampoSelect
+                      label="Tipo de documento fiscal"
+                      id="tipoDocumentoFiscalLoja"
+                      name="tipoDocumentoFiscalLoja"
+                      value={formData.tipoDocumentoFiscalLoja}
+                      onChange={handleInputChange}
+                      error={errors.tipoDocumentoFiscalLoja}
+                      icon={<IdCard className="h-5 w-5" />}
+                    >
+                      <option value="1">CPF</option>
+                      <option value="2">CNPJ</option>
+                    </CampoSelect>
+
+                    <CampoCadastro
+                      label="Documento fiscal da loja"
+                      id="documentoFiscalLoja"
+                      name="documentoFiscalLoja"
+                      inputMode="numeric"
+                      maxLength={formData.tipoDocumentoFiscalLoja === "2" ? 18 : 14}
+                      value={formData.documentoFiscalLoja}
+                      onChange={handleInputChange}
+                      placeholder={
+                        formData.tipoDocumentoFiscalLoja === "2"
+                          ? "00.000.000/0000-00"
+                          : "000.000.000-00"
+                      }
+                      error={errors.documentoFiscalLoja}
+                      icon={<IdCard className="h-5 w-5" />}
+                    />
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-semibold text-white">Endereco inicial</h4>
+                        <p className="text-sm text-neutral-400">
+                          Use o botao de mais para preencher o endereco que sera vinculado ao
+                          cadastro de vendedor.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMostrarEnderecoVendedor((currentState) => !currentState)
+                        }
+                        className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${
+                          mostrarEnderecoVendedor
+                            ? "border-red-400/30 bg-red-400/10 text-red-300 hover:border-red-400/50 hover:bg-red-400/20"
+                            : "border-yellow-400/30 bg-yellow-400/10 text-yellow-300 hover:border-yellow-400/50 hover:bg-yellow-400/20"
+                        }`}
+                        aria-label={
+                          mostrarEnderecoVendedor
+                            ? "Ocultar endereco inicial"
+                            : "Adicionar endereco inicial"
+                        }
+                      >
+                        {mostrarEnderecoVendedor ? (
+                          <Minus className="h-4 w-4" />
+                        ) : (
+                          <Plus className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+
+                    {mostrarEnderecoVendedor || temConteudoNoEnderecoVendedor(formData) ? (
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <CampoSelect
+                          label="Tipo de logradouro"
+                          id="enderecoTipoLogradouro"
+                          name="enderecoTipoLogradouro"
+                          value={formData.enderecoTipoLogradouro}
+                          onChange={handleInputChange}
+                          error={errors.enderecoTipoLogradouro}
+                          icon={<MapPin className="h-5 w-5" />}
+                        >
+                          {TIPOS_LOGRADOURO_FALLBACK.map((tipo) => (
+                            <option key={tipo.codigo} value={tipo.codigo}>
+                              {tipo.descricao}
+                            </option>
+                          ))}
+                        </CampoSelect>
+
+                        <CampoCadastro
+                          label="Nome do endereco"
+                          id="enderecoNome"
+                          name="enderecoNome"
+                          value={formData.enderecoNome}
+                          onChange={handleInputChange}
+                          placeholder="Rua, avenida ou local"
+                          error={errors.enderecoNome}
+                          icon={<MapPin className="h-5 w-5" />}
+                        />
+
+                        <CampoCadastro
+                          label="Numero"
+                          id="enderecoNumero"
+                          name="enderecoNumero"
+                          value={formData.enderecoNumero}
+                          onChange={handleInputChange}
+                          placeholder="123"
+                          error={errors.enderecoNumero}
+                        />
+
+                        <CampoCadastro
+                          label="Complemento"
+                          id="enderecoComplemento"
+                          name="enderecoComplemento"
+                          value={formData.enderecoComplemento}
+                          onChange={handleInputChange}
+                          placeholder="Apartamento, bloco, sala..."
+                          error={errors.enderecoComplemento}
+                        />
+
+                        <CampoCadastro
+                          label="CEP"
+                          id="enderecoCep"
+                          name="enderecoCep"
+                          inputMode="numeric"
+                          maxLength={9}
+                          value={formData.enderecoCep}
+                          onChange={handleInputChange}
+                          placeholder="00000-000"
+                          error={errors.enderecoCep}
+                        />
+
+                        <CampoCadastro
+                          label="Cidade"
+                          id="enderecoCidade"
+                          name="enderecoCidade"
+                          value={formData.enderecoCidade}
+                          onChange={handleInputChange}
+                          placeholder="Sua cidade"
+                          error={errors.enderecoCidade}
+                        />
+
+                        <CampoCadastro
+                          label="UF"
+                          id="enderecoUf"
+                          name="enderecoUf"
+                          maxLength={2}
+                          value={formData.enderecoUf}
+                          onChange={handleInputChange}
+                          placeholder="SP"
+                          error={errors.enderecoUf}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                </section>
+              ) : null}
+
               <Botao
                 type="submit"
                 className="h-12 text-sm font-semibold sm:text-base disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isLoading ? "Cadastrando..." : "Criar conta"}
+                {isLoading
+                  ? "Cadastrando..."
+                  : isCadastroVendedor
+                    ? "Criar conta e loja"
+                    : "Criar conta"}
               </Botao>
 
               <p className="text-center text-sm text-neutral-400">
-                Já possui uma conta?
+                Ja possui uma conta?
                 <Link
                   to="/login"
                   className="ml-2 font-semibold text-yellow-400 transition hover:text-yellow-300 hover:underline"

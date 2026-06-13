@@ -9,6 +9,10 @@ export function validarCpf(cpf: string) {
   return /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(cpf);
 }
 
+export function validarCnpj(cnpj: string) {
+  return /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(cnpj);
+}
+
 export function validarFormulario(formData: CadastroFormData): FormErrors {
   const errors: FormErrors = {};
 
@@ -46,6 +50,49 @@ export function validarFormulario(formData: CadastroFormData): FormErrors {
 
   if (!formData.dataNascimento) {
     errors.dataNascimento = "Informe sua data de nascimento.";
+  }
+
+  if (formData.tipoCadastro === "vendedor") {
+    if (!formData.nomeFantasia.trim()) {
+      errors.nomeFantasia = "Informe o nome fantasia da loja.";
+    }
+
+    if (!formData.documentoFiscalLoja.trim()) {
+      errors.documentoFiscalLoja = "Informe o documento fiscal da loja.";
+    } else if (
+      formData.tipoDocumentoFiscalLoja === "2"
+        ? !validarCnpj(formData.documentoFiscalLoja)
+        : !validarCpf(formData.documentoFiscalLoja)
+    ) {
+      errors.documentoFiscalLoja =
+        formData.tipoDocumentoFiscalLoja === "2"
+          ? "Digite um CNPJ no formato 00.000.000/0000-00."
+          : "Digite um CPF no formato 000.000.000-00.";
+    }
+
+    if (!formData.enderecoNome.trim()) {
+      errors.enderecoNome = "Informe o nome do endereco.";
+    }
+
+    if (!formData.enderecoNumero.trim()) {
+      errors.enderecoNumero = "Informe o numero do endereco.";
+    }
+
+    if (!formData.enderecoCep.trim()) {
+      errors.enderecoCep = "Informe o CEP do endereco.";
+    } else if (!/^\d{5}-\d{3}$/.test(formData.enderecoCep)) {
+      errors.enderecoCep = "Digite um CEP no formato 00000-000.";
+    }
+
+    if (!formData.enderecoCidade.trim()) {
+      errors.enderecoCidade = "Informe a cidade do endereco.";
+    }
+
+    if (!formData.enderecoUf.trim()) {
+      errors.enderecoUf = "Informe a UF do endereco.";
+    } else if (formData.enderecoUf.trim().length !== 2) {
+      errors.enderecoUf = "A UF deve ter 2 letras.";
+    }
   }
 
   return errors;

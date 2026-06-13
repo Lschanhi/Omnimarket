@@ -19,6 +19,17 @@ export type RegistrarUsuarioPayload = {
   telefones: Array<{
     ddd: string;
     numero: string;
+    isPrincipal?: boolean;
+  }>;
+  enderecos?: Array<{
+    cep: string;
+    tipoLogradouro: string;
+    nomeEndereco: string;
+    numero: string;
+    complemento?: string;
+    cidade: string;
+    uf: string;
+    isPrincipal?: boolean;
   }>;
 };
 
