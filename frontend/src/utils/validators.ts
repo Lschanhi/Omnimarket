@@ -1,6 +1,22 @@
 import type { CadastroFormData, FormErrors } from "../types/cadastroFormData";
 import type { LoginErrors, LoginFormData } from "../types/LoginFormData";
 
+const CAMPOS_ENDERECO_CADASTRO: Array<
+  | "enderecoNome"
+  | "enderecoNumero"
+  | "enderecoComplemento"
+  | "enderecoCep"
+  | "enderecoCidade"
+  | "enderecoUf"
+> = [
+  "enderecoNome",
+  "enderecoNumero",
+  "enderecoComplemento",
+  "enderecoCep",
+  "enderecoCidade",
+  "enderecoUf",
+];
+
 export function validarEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -11,6 +27,10 @@ export function validarCpf(cpf: string) {
 
 export function validarCnpj(cnpj: string) {
   return /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(cnpj);
+}
+
+function temConteudoNoEndereco(formData: CadastroFormData) {
+  return CAMPOS_ENDERECO_CADASTRO.some((campo) => formData[campo].trim() !== "");
 }
 
 export function validarFormulario(formData: CadastroFormData): FormErrors {
@@ -70,6 +90,9 @@ export function validarFormulario(formData: CadastroFormData): FormErrors {
           : "Digite um CPF no formato 000.000.000-00.";
     }
 
+  }
+
+  if (formData.tipoCadastro === "vendedor" || temConteudoNoEndereco(formData)) {
     if (!formData.enderecoNome.trim()) {
       errors.enderecoNome = "Informe o nome do endereco.";
     }
