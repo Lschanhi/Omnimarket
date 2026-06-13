@@ -6,7 +6,7 @@ namespace Omnimarket.Api.Tests;
 public class LojaServiceTests
 {
     [Fact]
-    public async Task CriarMinhaLojaAsync_DeveClonarEnderecoETelefoneDoUsuario()
+    public async Task CriarMinhaLojaAsync_DeveReutilizarEnderecoETelefoneDoUsuario()
     {
         using var fixture = new ServiceTestFixture();
         var usuario = await fixture.CriarUsuarioAsync("vendedora-pf");
@@ -33,6 +33,10 @@ public class LojaServiceTests
             .Include(l => l.Endereco)
             .Include(l => l.Telefone)
             .SingleAsync(l => l.Id == loja.Id);
+        var totalEnderecosUsuario = await fixture.Context.TBL_ENDERECO.CountAsync(
+            e => e.UsuarioId == usuario.Id);
+        var totalTelefonesUsuario = await fixture.Context.TBL_TELEFONE.CountAsync(
+            t => t.UsuarioId == usuario.Id);
 
         Assert.Equal(TipoDocumentoFiscalLoja.CPF, lojaSalva.TipoDocumentoFiscal);
         Assert.Equal("52998224725", lojaSalva.DocumentoFiscal);
@@ -40,13 +44,15 @@ public class LojaServiceTests
         Assert.Equal("Atelie da Ana", loja.NomeFantasia);
         Assert.NotNull(lojaSalva.Endereco);
         Assert.NotNull(lojaSalva.Telefone);
-        Assert.NotEqual(enderecoUsuario.Id, lojaSalva.EnderecoId);
-        Assert.NotEqual(telefoneUsuario.Id, lojaSalva.TelefoneId);
+        Assert.Equal(enderecoUsuario.Id, lojaSalva.EnderecoId);
+        Assert.Equal(telefoneUsuario.Id, lojaSalva.TelefoneId);
         Assert.Equal(enderecoUsuario.Cep, lojaSalva.Endereco!.Cep);
         Assert.Equal(enderecoUsuario.Cidade, lojaSalva.Endereco.Cidade);
         Assert.Equal(telefoneUsuario.NumeroE164, lojaSalva.Telefone!.NumeroE164);
-        Assert.False(lojaSalva.Endereco.IsPrincipal);
-        Assert.False(lojaSalva.Telefone.IsPrincipal);
+        Assert.Equal(enderecoUsuario.IsPrincipal, lojaSalva.Endereco.IsPrincipal);
+        Assert.Equal(telefoneUsuario.IsPrincipal, lojaSalva.Telefone.IsPrincipal);
+        Assert.Equal(1, totalEnderecosUsuario);
+        Assert.Equal(1, totalTelefonesUsuario);
     }
 
     [Fact]
@@ -319,7 +325,7 @@ public class LojaServiceTests
     }
 
     [Fact]
-    public async Task AtualizarMinhaLojaAsync_DeveTrocarEnderecoETelefonePorCopiasNovas()
+    public async Task AtualizarMinhaLojaAsync_DevePassarAReutilizarEnderecoETelefoneDoUsuario()
     {
         using var fixture = new ServiceTestFixture();
         var usuario = await fixture.CriarUsuarioAsync("atualiza-loja");
@@ -350,6 +356,10 @@ public class LojaServiceTests
             .Include(l => l.Endereco)
             .Include(l => l.Telefone)
             .SingleAsync(l => l.Id == lojaOriginal.Id);
+        var totalEnderecosUsuario = await fixture.Context.TBL_ENDERECO.CountAsync(
+            e => e.UsuarioId == usuario.Id);
+        var totalTelefonesUsuario = await fixture.Context.TBL_TELEFONE.CountAsync(
+            t => t.UsuarioId == usuario.Id);
 
         Assert.NotNull(lojaAtualizada);
         Assert.Equal("Loja Atualizada", lojaSalva.NomeFantasia);
@@ -358,10 +368,12 @@ public class LojaServiceTests
             lojaAtualizada!.DocumentoFiscalFormatado);
         Assert.NotEqual(enderecoOriginalId, lojaSalva.EnderecoId);
         Assert.NotEqual(telefoneOriginalId, lojaSalva.TelefoneId);
-        Assert.NotEqual(enderecoUsuario.Id, lojaSalva.EnderecoId);
-        Assert.NotEqual(telefoneUsuario.Id, lojaSalva.TelefoneId);
+        Assert.Equal(enderecoUsuario.Id, lojaSalva.EnderecoId);
+        Assert.Equal(telefoneUsuario.Id, lojaSalva.TelefoneId);
         Assert.Equal(enderecoUsuario.Cep, lojaSalva.Endereco!.Cep);
         Assert.Equal(telefoneUsuario.NumeroE164, lojaSalva.Telefone!.NumeroE164);
+        Assert.Equal(2, totalEnderecosUsuario);
+        Assert.Equal(2, totalTelefonesUsuario);
     }
 
     [Fact]

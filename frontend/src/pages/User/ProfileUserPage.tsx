@@ -117,6 +117,7 @@ import {
   criarCategoriasDaLoja,
   criarEntregaLojaForm,
   criarMensagemSucessoExclusaoCategoria,
+  deduplicarEnderecosParaFormulario,
   criarProdutoGridItem,
   criarProdutoForm,
   criarStatsComprador,
@@ -936,6 +937,10 @@ export function PerfilUsuarioPage() {
       usuario.telefones.map(mapearTelefoneParaFormulario),
       loja?.telefoneId,
     );
+    const enderecosDeduplicados = deduplicarEnderecosParaFormulario(
+      usuario.enderecos.map(mapearEnderecoParaFormulario),
+      loja?.enderecoId,
+    );
 
     setPerfilErroAcao("");
     setPerfilForm({
@@ -945,11 +950,11 @@ export function PerfilUsuarioPage() {
       password: "",
     });
     setTelefonesForm(telefonesDeduplicados.telefones);
-    setEnderecosForm(usuario.enderecos.map(mapearEnderecoParaFormulario));
+    setEnderecosForm(enderecosDeduplicados.enderecos);
     setNovoTelefoneForm(null);
     setNovoEnderecoForm(null);
     setTelefonesRemovidos(telefonesDeduplicados.telefonesDuplicadosIds);
-    setEnderecosRemovidos([]);
+    setEnderecosRemovidos(enderecosDeduplicados.enderecosDuplicadosIds);
     setModalAberto("perfil");
   }
 
@@ -2178,10 +2183,12 @@ export function PerfilUsuarioPage() {
 
       const telefoneLojaRemovido =
         loja?.telefoneId != null && telefonesRemovidos.includes(loja.telefoneId);
+      const enderecoLojaRemovido =
+        loja?.enderecoId != null && enderecosRemovidos.includes(loja.enderecoId);
       const telefoneSubstitutoId =
         telefonesForm.find((telefone) => telefone.isPrincipal && telefone.id)?.id ??
         telefonesForm.find((telefone) => telefone.id)?.id;
-      const enderecoPrincipalId =
+      const enderecoSubstitutoId =
         enderecosForm.find((endereco) => endereco.isPrincipal && endereco.id)?.id ??
         enderecosForm.find((endereco) => endereco.id)?.id ??
         usuario.enderecoPrincipalId;
@@ -2192,9 +2199,21 @@ export function PerfilUsuarioPage() {
         );
       }
 
-      if (telefoneLojaRemovido && !enderecoPrincipalId) {
+      if (enderecoLojaRemovido && !enderecoSubstitutoId) {
         throw new Error(
           "Não foi possível atualizar a loja automaticamente porque nenhum endereço principal válido foi encontrado.",
+        );
+      }
+
+      if ((telefoneLojaRemovido || enderecoLojaRemovido) && !telefoneSubstitutoId) {
+        throw new Error(
+          "Nao foi possivel atualizar a loja automaticamente porque nenhum telefone valido foi encontrado.",
+        );
+      }
+
+      if ((telefoneLojaRemovido || enderecoLojaRemovido) && !enderecoSubstitutoId) {
+        throw new Error(
+          "Nao foi possivel atualizar a loja automaticamente porque nenhum endereco valido foi encontrado.",
         );
       }
 
@@ -2247,7 +2266,7 @@ export function PerfilUsuarioPage() {
         });
       }
 
-      if (loja && telefoneLojaRemovido) {
+      if (loja && (telefoneLojaRemovido || enderecoLojaRemovido)) {
         await atualizarMinhaLoja({
           nomeFantasia: loja.nomeFantasia,
           tipoDocumentoFiscal: loja.tipoDocumentoFiscal,
@@ -2255,7 +2274,7 @@ export function PerfilUsuarioPage() {
           descricao: loja.descricao ?? undefined,
           emailContato: loja.emailContato ?? undefined,
           usarEnderecoUsuario: true,
-          enderecoUsuarioId: enderecoPrincipalId,
+          enderecoUsuarioId: enderecoSubstitutoId,
           usarTelefoneUsuario: true,
           telefoneUsuarioId: telefoneSubstitutoId,
           ativa: loja.ativa,

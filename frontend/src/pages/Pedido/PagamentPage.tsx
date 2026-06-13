@@ -393,6 +393,7 @@ export function PagamentPage() {
     Record<number, LojaEntregaOpcao[]>
   >({});
   const [isLoadingEntregas, setIsLoadingEntregas] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [errosEntregaPorLoja, setErrosEntregaPorLoja] = useState<Record<number, string>>({});
   const [isRemovingAddress, setIsRemovingAddress] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -888,6 +889,31 @@ export function PagamentPage() {
     return enderecoCriado.id;
   }
 
+  async function handleSalvarNovoEndereco() {
+    if (isSavingAddress || isSubmitting) {
+      return;
+    }
+
+    try {
+      setIsSavingAddress(true);
+      setErro("");
+
+      const enderecoId = await resolverEnderecoId();
+
+      if (!enderecoId) {
+        throw new Error("Preencha os dados do endereco para salvar.");
+      }
+
+      setEtapaAberta("entrega");
+    } catch (error) {
+      setErro(
+        error instanceof Error ? error.message : "Nao foi possivel salvar o endereco.",
+      );
+    } finally {
+      setIsSavingAddress(false);
+    }
+  }
+
   async function handleFinalizarCompra() {
     if (!isAuthenticated()) {
       navigate({ to: "/login" });
@@ -1324,6 +1350,27 @@ export function PagamentPage() {
                         />
                       </div>
 
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void handleSalvarNovoEndereco();
+                          }}
+                          disabled={isSavingAddress || isSubmitting}
+                          className="rounded-xl border border-yellow-400/30 bg-yellow-400 px-4 py-2 text-sm font-semibold text-black transition hover:border-yellow-300 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isSavingAddress
+                            ? "Salvando endereco..."
+                            : temEnderecoSalvo
+                              ? "Salvar novo endereco"
+                              : "Salvar primeiro endereco"}
+                        </button>
+
+                        <p className="text-sm text-zinc-400">
+                          Salve o endereco para liberar a selecao de entrega e concluir a compra.
+                        </p>
+                      </div>
+
                       {temEnderecoSalvo ? (
                         <p className="mt-4 text-sm text-zinc-400">
                           Se você cancelar este formulário, o checkout volta a usar o endereço
@@ -1723,6 +1770,7 @@ export function PagamentPage() {
                   void handleFinalizarCompra();
                 }}
                 disabled={
+                  isSavingAddress ||
                   isSubmitting ||
                   isLoadingEntregas ||
                   !estaAutenticado ||

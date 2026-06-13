@@ -401,7 +401,6 @@ namespace Omnimarket.Api.Services
                     throw new InvalidOperationException("Informe EnderecoUsuarioId para usar um endereco ja cadastrado no usuario.");
 
                 var enderecoUsuario = await _context.TBL_ENDERECO
-                    .AsNoTracking()
                     .FirstOrDefaultAsync(e =>
                         e.Id == enderecoUsuarioId.Value &&
                         e.UsuarioId == usuarioId &&
@@ -410,10 +409,7 @@ namespace Omnimarket.Api.Services
                 if (enderecoUsuario == null)
                     throw new InvalidOperationException("Endereco do usuario nao encontrado.");
 
-                var enderecoLoja = ClonarEndereco(enderecoUsuario, usuarioId);
-                await _context.TBL_ENDERECO.AddAsync(enderecoLoja);
-
-                return enderecoLoja;
+                return enderecoUsuario;
             }
 
             if (enderecoUsuarioId.HasValue)
@@ -449,7 +445,6 @@ namespace Omnimarket.Api.Services
                     throw new InvalidOperationException("Informe TelefoneUsuarioId para usar um telefone ja cadastrado no usuario.");
 
                 var telefoneUsuario = await _context.TBL_TELEFONE
-                    .AsNoTracking()
                     .FirstOrDefaultAsync(t =>
                         t.Id == telefoneUsuarioId.Value &&
                         t.UsuarioId == usuarioId);
@@ -457,10 +452,7 @@ namespace Omnimarket.Api.Services
                 if (telefoneUsuario == null)
                     throw new InvalidOperationException("Telefone do usuario nao encontrado.");
 
-                var telefoneLoja = ClonarTelefone(telefoneUsuario, usuarioId);
-                await _context.TBL_TELEFONE.AddAsync(telefoneLoja);
-
-                return telefoneLoja;
+                return telefoneUsuario;
             }
 
             if (telefoneUsuarioId.HasValue)
@@ -521,23 +513,6 @@ namespace Omnimarket.Api.Services
             return string.IsNullOrWhiteSpace(nomeFinal) ? "foto-perfil-loja" : nomeFinal;
         }
 
-        private static Endereco ClonarEndereco(Endereco origem, int usuarioId)
-        {
-            return new Endereco
-            {
-                UsuarioId = usuarioId,
-                TipoLogradouro = origem.TipoLogradouro,
-                NomeEndereco = origem.NomeEndereco,
-                Numero = origem.Numero,
-                Complemento = origem.Complemento,
-                Cep = origem.Cep,
-                Cidade = origem.Cidade,
-                Uf = origem.Uf,
-                IsPrincipal = false,
-                Ativo = true
-            };
-        }
-
         private static Endereco CriarEnderecoLoja(int usuarioId, EnderecoCriacaoDto dto)
         {
             return new Endereco
@@ -552,16 +527,6 @@ namespace Omnimarket.Api.Services
                 Uf = dto.Uf.Trim().ToUpperInvariant(),
                 IsPrincipal = false,
                 Ativo = true
-            };
-        }
-
-        private static Telefone ClonarTelefone(Telefone origem, int usuarioId)
-        {
-            return new Telefone
-            {
-                UsuarioId = usuarioId,
-                NumeroE164 = origem.NumeroE164,
-                IsPrincipal = false
             };
         }
 
