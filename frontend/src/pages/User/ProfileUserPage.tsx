@@ -969,6 +969,7 @@ export function PerfilUsuarioPage() {
             descricao: loja.descricao ?? "",
             emailContato: loja.emailContato ?? usuario.email,
             ativa: loja.ativa,
+            aceitouTermoFiscalResponsabilidade: false,
           }
         : {
             nomeFantasia: usuario.nome,
@@ -977,6 +978,7 @@ export function PerfilUsuarioPage() {
             descricao: "",
             emailContato: usuario.email,
             ativa: true,
+            aceitouTermoFiscalResponsabilidade: false,
           },
     );
     setModalAberto("loja");
@@ -1864,7 +1866,19 @@ export function PerfilUsuarioPage() {
   function handleLojaInputChange(
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) {
-    const { name, value } = event.target;
+    const target = event.target;
+
+    if (target instanceof HTMLInputElement && target.type === "checkbox") {
+      setLojaForm((currentData) => ({
+        ...currentData,
+        [target.name]: target.checked,
+      }));
+      setLojaErroAcao("");
+      return;
+    }
+
+    const { name, value } = target;
+
     const valorMascarado =
       name === "documentoFiscal"
         ? normalizarDocumentoFiscalParaInput(value, lojaForm.tipoDocumentoFiscal)
@@ -2271,6 +2285,13 @@ export function PerfilUsuarioPage() {
     if (!usuario.enderecoPrincipalId || !usuario.telefonePrincipalId) {
       setLojaErroAcao(
         "Cadastre um telefone e um endereço principal no perfil antes de continuar.",
+      );
+      return;
+    }
+
+    if (!loja && !lojaForm.aceitouTermoFiscalResponsabilidade) {
+      setLojaErroAcao(
+        "Confirme que voce esta ciente das responsabilidades fiscais antes de abrir a loja.",
       );
       return;
     }

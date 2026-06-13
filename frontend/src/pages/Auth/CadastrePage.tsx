@@ -43,6 +43,12 @@ import {
   formatarDocumentoFiscal,
   formatarTelefone,
 } from "../../utils/masks";
+import {
+  TERMO_FISCAL_VENDEDOR_CHECKBOX_LABEL,
+  TERMO_FISCAL_VENDEDOR_ITENS,
+  TERMO_USO_CONTA_CHECKBOX_LABEL,
+  TERMO_USO_CONTA_ITENS,
+} from "../../utils/termosResponsabilidade";
 import { validarFormulario } from "../../utils/validators";
 
 type CampoCadastroProps = {
@@ -67,7 +73,29 @@ type BlocoEnderecoCadastroProps = {
   titulo: string;
 };
 
-const CAMPOS_ENDERECO_CADASTRO: Array<keyof CadastroFormData> = [
+type CampoEnderecoCadastro =
+  | "enderecoTipoLogradouro"
+  | "enderecoNome"
+  | "enderecoNumero"
+  | "enderecoComplemento"
+  | "enderecoCep"
+  | "enderecoCidade"
+  | "enderecoUf";
+
+type BlocoTermoCheckboxProps = {
+  checkboxLabel: string;
+  checked: boolean;
+  descricao: string;
+  error?: string;
+  id: string;
+  itens: string[];
+  name: "aceitouTermosUso" | "aceitouTermoFiscalResponsabilidade";
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  titulo: string;
+  tone?: "default" | "warning";
+};
+
+const CAMPOS_ENDERECO_CADASTRO: CampoEnderecoCadastro[] = [
   "enderecoTipoLogradouro",
   "enderecoNome",
   "enderecoNumero",
@@ -86,6 +114,8 @@ const initialFormData: CadastroFormData = {
   cpf: "",
   telefone: "",
   dataNascimento: "",
+  aceitouTermosUso: false,
+  aceitouTermoFiscalResponsabilidade: false,
   nomeFantasia: "",
   tipoDocumentoFiscalLoja: "1",
   documentoFiscalLoja: "",
@@ -282,6 +312,58 @@ function BlocoEnderecoCadastro({
   );
 }
 
+function BlocoTermoCheckbox({
+  checkboxLabel,
+  checked,
+  descricao,
+  error,
+  id,
+  itens,
+  name,
+  onChange,
+  titulo,
+  tone = "default",
+}: BlocoTermoCheckboxProps) {
+  const wrapperStyle =
+    tone === "warning"
+      ? "border-yellow-400/20 bg-yellow-400/5"
+      : "border-white/10 bg-white/5";
+
+  return (
+    <section className={`space-y-4 rounded-3xl border p-4 ${wrapperStyle}`}>
+      <div className="space-y-1">
+        <h3 className="text-base font-semibold text-white">{titulo}</h3>
+        <p className="text-sm text-neutral-400">{descricao}</p>
+      </div>
+
+      <ul className="list-disc space-y-2 pl-5 text-sm leading-6 text-neutral-300">
+        {itens.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+
+      <label
+        htmlFor={id}
+        className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm text-neutral-200 ${
+          error ? "border-red-500/40 bg-red-500/10" : "border-white/10 bg-black/30"
+        }`}
+      >
+        <input
+          id={id}
+          name={name}
+          type="checkbox"
+          checked={checked}
+          onChange={onChange}
+          className="mt-0.5 h-4 w-4 cursor-pointer accent-yellow-500"
+        />
+        <span>{checkboxLabel}</span>
+      </label>
+
+      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+    </section>
+  );
+}
+
 function separarNomeCompleto(nomeCompleto: string) {
   const partes = nomeCompleto.trim().split(/\s+/).filter(Boolean);
   const nome = partes[0] ?? "";
@@ -307,6 +389,7 @@ function limparErrosVendedor(errors: FormErrors) {
     nomeFantasia: "",
     tipoDocumentoFiscalLoja: "",
     documentoFiscalLoja: "",
+    aceitouTermoFiscalResponsabilidade: "",
   };
 }
 
@@ -334,7 +417,23 @@ export function CadastroPage() {
   }
 
   function handleInputChange(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
-    const { name, value } = event.target;
+    const target = event.target;
+
+    if (target instanceof HTMLInputElement && target.type === "checkbox") {
+      setFormData((currentData) => ({
+        ...currentData,
+        [target.name]: target.checked,
+      }));
+
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        [target.name]: "",
+      }));
+
+      return;
+    }
+
+    const { name, value } = target;
 
     if (name === "tipoDocumentoFiscalLoja") {
       const tipoDocumentoFiscalLoja = value as TipoDocumentoFiscalCadastro;
@@ -414,7 +513,7 @@ export function CadastroPage() {
         email: formData.email.trim(),
         password: formData.senha,
         confirmPassword: formData.confirmarSenha,
-        aceitouTermos: true,
+        aceitouTermos: formData.aceitouTermosUso,
         telefones: [normalizarTelefoneParaApi(formData.telefone, true)],
         enderecos: incluirEnderecoNoCadastro
           ? [
@@ -714,70 +813,97 @@ export function CadastroPage() {
               ) : null}
 
               {isCadastroVendedor ? (
-                <section className="space-y-4 rounded-3xl border border-yellow-400/15 bg-yellow-400/5 p-4">
-                  <div className="space-y-1">
-                    <h3 className="text-base font-semibold text-white">Dados da loja</h3>
-                    <p className="text-sm text-neutral-400">
-                      Esses dados serao usados para criar sua loja logo apos o cadastro.
-                    </p>
-                  </div>
+                <>
+                  <section className="space-y-4 rounded-3xl border border-yellow-400/15 bg-yellow-400/5 p-4">
+                    <div className="space-y-1">
+                      <h3 className="text-base font-semibold text-white">Dados da loja</h3>
+                      <p className="text-sm text-neutral-400">
+                        Esses dados serao usados para criar sua loja logo apos o cadastro.
+                      </p>
+                    </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="md:col-span-2">
-                      <CampoCadastro
-                        label="Nome fantasia"
-                        id="nomeFantasia"
-                        name="nomeFantasia"
-                        value={formData.nomeFantasia}
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="md:col-span-2">
+                        <CampoCadastro
+                          label="Nome fantasia"
+                          id="nomeFantasia"
+                          name="nomeFantasia"
+                          value={formData.nomeFantasia}
+                          onChange={handleInputChange}
+                          placeholder="Nome da sua loja"
+                          error={errors.nomeFantasia}
+                          icon={<Store className="h-5 w-5" />}
+                        />
+                      </div>
+
+                      <CampoSelect
+                        label="Tipo de documento fiscal"
+                        id="tipoDocumentoFiscalLoja"
+                        name="tipoDocumentoFiscalLoja"
+                        value={formData.tipoDocumentoFiscalLoja}
                         onChange={handleInputChange}
-                        placeholder="Nome da sua loja"
-                        error={errors.nomeFantasia}
-                        icon={<Store className="h-5 w-5" />}
+                        error={errors.tipoDocumentoFiscalLoja}
+                        icon={<IdCard className="h-5 w-5" />}
+                      >
+                        <option value="1">CPF</option>
+                        <option value="2">CNPJ</option>
+                      </CampoSelect>
+
+                      <CampoCadastro
+                        label="Documento fiscal da loja"
+                        id="documentoFiscalLoja"
+                        name="documentoFiscalLoja"
+                        inputMode="numeric"
+                        maxLength={formData.tipoDocumentoFiscalLoja === "2" ? 18 : 14}
+                        value={formData.documentoFiscalLoja}
+                        onChange={handleInputChange}
+                        placeholder={
+                          formData.tipoDocumentoFiscalLoja === "2"
+                            ? "00.000.000/0000-00"
+                            : "000.000.000-00"
+                        }
+                        error={errors.documentoFiscalLoja}
+                        icon={<IdCard className="h-5 w-5" />}
                       />
                     </div>
 
-                    <CampoSelect
-                      label="Tipo de documento fiscal"
-                      id="tipoDocumentoFiscalLoja"
-                      name="tipoDocumentoFiscalLoja"
-                      value={formData.tipoDocumentoFiscalLoja}
+                    <BlocoEnderecoCadastro
+                      titulo="Endereco inicial"
+                      descricao="Use o botao de mais para preencher o endereco que sera vinculado ao cadastro de vendedor."
+                      errors={errors}
+                      formData={formData}
+                      isVisible={mostrarCamposEndereco}
                       onChange={handleInputChange}
-                      error={errors.tipoDocumentoFiscalLoja}
-                      icon={<IdCard className="h-5 w-5" />}
-                    >
-                      <option value="1">CPF</option>
-                      <option value="2">CNPJ</option>
-                    </CampoSelect>
-
-                    <CampoCadastro
-                      label="Documento fiscal da loja"
-                      id="documentoFiscalLoja"
-                      name="documentoFiscalLoja"
-                      inputMode="numeric"
-                      maxLength={formData.tipoDocumentoFiscalLoja === "2" ? 18 : 14}
-                      value={formData.documentoFiscalLoja}
-                      onChange={handleInputChange}
-                      placeholder={
-                        formData.tipoDocumentoFiscalLoja === "2"
-                          ? "00.000.000/0000-00"
-                          : "000.000.000-00"
-                      }
-                      error={errors.documentoFiscalLoja}
-                      icon={<IdCard className="h-5 w-5" />}
+                      onToggle={() => setMostrarCamposEndereco((currentState) => !currentState)}
                     />
-                  </div>
+                  </section>
 
-                  <BlocoEnderecoCadastro
-                    titulo="Endereco inicial"
-                    descricao="Use o botao de mais para preencher o endereco que sera vinculado ao cadastro de vendedor."
-                    errors={errors}
-                    formData={formData}
-                    isVisible={mostrarCamposEndereco}
+                  <BlocoTermoCheckbox
+                    titulo="Termo fiscal para vendedores"
+                    descricao="Antes de abrir a loja, confirme que voce entendeu os cuidados fiscais basicos da atividade de venda."
+                    id="aceitouTermoFiscalResponsabilidade"
+                    name="aceitouTermoFiscalResponsabilidade"
+                    checked={formData.aceitouTermoFiscalResponsabilidade}
                     onChange={handleInputChange}
-                    onToggle={() => setMostrarCamposEndereco((currentState) => !currentState)}
+                    itens={TERMO_FISCAL_VENDEDOR_ITENS}
+                    checkboxLabel={TERMO_FISCAL_VENDEDOR_CHECKBOX_LABEL}
+                    error={errors.aceitouTermoFiscalResponsabilidade}
+                    tone="warning"
                   />
-                </section>
+                </>
               ) : null}
+
+              <BlocoTermoCheckbox
+                titulo="Termo de uso e responsabilidade"
+                descricao="Este aceite confirma que a conta sera usada com informacoes verdadeiras e dentro das regras da plataforma."
+                id="aceitouTermosUso"
+                name="aceitouTermosUso"
+                checked={formData.aceitouTermosUso}
+                onChange={handleInputChange}
+                itens={TERMO_USO_CONTA_ITENS}
+                checkboxLabel={TERMO_USO_CONTA_CHECKBOX_LABEL}
+                error={errors.aceitouTermosUso}
+              />
 
               <Botao
                 type="submit"

@@ -11,6 +11,8 @@ export type CadastroFormData = {
   cpf: string;
   telefone: string;
   dataNascimento: string;
+  aceitouTermosUso: boolean;
+  aceitouTermoFiscalResponsabilidade: boolean;
   nomeFantasia: string;
   tipoDocumentoFiscalLoja: TipoDocumentoFiscalCadastro;
   documentoFiscalLoja: string;

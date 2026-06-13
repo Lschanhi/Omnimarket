@@ -63,6 +63,7 @@ export const LOJA_FORM_INICIAL: LojaFormState = {
   descricao: "",
   emailContato: "",
   ativa: true,
+  aceitouTermoFiscalResponsabilidade: false,
 };
 
 export const PRODUTO_FORM_INICIAL: ProdutoFormState = {

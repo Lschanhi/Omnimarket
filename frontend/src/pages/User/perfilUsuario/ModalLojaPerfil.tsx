@@ -3,6 +3,10 @@ import { Store } from "lucide-react";
 import { Botao } from "../../../Components/Botao";
 import { Input } from "../../../Components/Input";
 import { ProfileModal } from "../../../Components/perfil/ProfileModal";
+import {
+  TERMO_FISCAL_VENDEDOR_CHECKBOX_LABEL,
+  TERMO_FISCAL_VENDEDOR_ITENS,
+} from "../../../utils/termosResponsabilidade";
 import type { LojaFormState } from "./tipos";
 
 type ModalLojaPerfilProps = {
@@ -11,7 +15,9 @@ type ModalLojaPerfilProps = {
   isSalvandoLoja: boolean;
   lojaErroAcao: string;
   lojaForm: LojaFormState;
-  onChangeLojaInput: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onChangeLojaInput: (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => void;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onToggleLojaAtiva: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -32,6 +38,8 @@ export function ModalLojaPerfil({
   temLoja,
   titulo,
 }: ModalLojaPerfilProps) {
+  const exibirErroTermoFiscal = lojaErroAcao.includes("responsabilidades fiscais");
+
   return (
     <ProfileModal isOpen={isOpen} title={titulo} description={descricao} onClose={onClose}>
       <form className="space-y-5" onSubmit={onSubmit}>
@@ -94,7 +102,7 @@ export function ModalLojaPerfil({
 
         <div className="flex flex-col gap-1">
           <label htmlFor="descricao" className="text-[#6b6b6b]">
-            Descrição
+            Descricao
           </label>
           <textarea
             id="descricao"
@@ -114,12 +122,49 @@ export function ModalLojaPerfil({
             onChange={onToggleLojaAtiva}
             className="h-4 w-4 cursor-pointer accent-yellow-500"
           />
-          Loja ativa para receber publicações e vendas
+          Loja ativa para receber publicacoes e vendas
         </label>
 
         <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3 text-sm text-yellow-100">
-          O cadastro usa o endereço e o telefone principal do seu perfil atual.
+          O cadastro usa o endereco e o telefone principal do seu perfil atual.
         </div>
+
+        {!temLoja ? (
+          <section className="space-y-4 rounded-3xl border border-yellow-400/20 bg-yellow-400/5 p-4">
+            <div className="space-y-1">
+              <h3 className="text-base font-semibold text-white">Termo fiscal para vendedores</h3>
+              <p className="text-sm text-neutral-400">
+                Antes de abrir a loja, confirme que voce entendeu os cuidados fiscais basicos da
+                atividade de venda.
+              </p>
+            </div>
+
+            <ul className="list-disc space-y-2 pl-5 text-sm leading-6 text-neutral-300">
+              {TERMO_FISCAL_VENDEDOR_ITENS.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+
+            <label
+              htmlFor="aceitouTermoFiscalResponsabilidade"
+              className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm text-neutral-200 ${
+                exibirErroTermoFiscal
+                  ? "border-red-500/40 bg-red-500/10"
+                  : "border-white/10 bg-black/30"
+              }`}
+            >
+              <input
+                id="aceitouTermoFiscalResponsabilidade"
+                name="aceitouTermoFiscalResponsabilidade"
+                type="checkbox"
+                checked={lojaForm.aceitouTermoFiscalResponsabilidade}
+                onChange={onChangeLojaInput}
+                className="mt-0.5 h-4 w-4 cursor-pointer accent-yellow-500"
+              />
+              <span>{TERMO_FISCAL_VENDEDOR_CHECKBOX_LABEL}</span>
+            </label>
+          </section>
+        ) : null}
 
         {lojaErroAcao ? <p className="text-sm text-red-400">{lojaErroAcao}</p> : null}
 
