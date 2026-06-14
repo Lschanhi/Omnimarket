@@ -60,7 +60,6 @@ export function ConfirmacaoPixPage() {
   const [isConfirmingPix, setIsConfirmingPix] = useState(false);
   const [erro, setErro] = useState("");
   const [pixDemo, setPixDemo] = useState<PixCheckoutPendingState | null>(null);
-  const isPix = review?.metodoPagamentoCodigo === "pix";
 
   function navegarParaSucesso(pedidosProcessados: PedidoProcessadoResumo[], totalCheckout: number) {
     const todosItens = pedidosProcessados.flatMap((pedidoAtual) => pedidoAtual.itens);
@@ -338,11 +337,6 @@ export function ConfirmacaoPixPage() {
                   </div>
                   <div className="space-y-2 text-sm text-zinc-300">
                     <p>{formatarEnderecoCompleto(review.endereco.resumo)}</p>
-                    <p className="text-zinc-500">
-                      {review.endereco.mode === "new"
-                        ? "Este endereco sera salvo no perfil quando a compra for confirmada."
-                        : "Endereco ja salvo no perfil do comprador."}
-                    </p>
                   </div>
                 </div>
 
@@ -360,33 +354,11 @@ export function ConfirmacaoPixPage() {
                         <span className="text-zinc-500">Detalhe:</span> {review.detalhePagamento}
                       </p>
                     ) : null}
-                    <p className="text-zinc-500">
-                      {isPix
-                        ? "Depois da confirmacao, o checkout abre o QR fake para a apresentacao."
-                        : "Depois da confirmacao, a compra segue direto para a conclusao do pedido."}
-                    </p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/5 p-4">
-                  <div className="mb-3 flex items-center gap-2 text-yellow-300">
-                    {isPix ? <QrCode className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}
-                    <h2 className="font-semibold text-white">O que vai acontecer</h2>
-                  </div>
-                  <ul className="space-y-2 text-sm leading-6 text-zinc-300">
-                    <li>1. Os pedidos serao criados usando os itens separados por loja.</li>
-                    <li>2. O endereco atual sera vinculado ao checkout.</li>
-                    <li>
-                      3.{" "}
-                      {isPix
-                        ? "O sistema abre o modal do PIX fake com QR e codigo demonstrativos."
-                        : "O pagamento fake sera confirmado para concluir a compra automaticamente."}
-                    </li>
-                  </ul>
-                </div>
-
                 <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                   <h2 className="font-semibold text-white">Totais da compra</h2>
                   <div className="mt-4 space-y-3 text-sm text-zinc-300">
@@ -473,15 +445,9 @@ export function ConfirmacaoPixPage() {
                   void handleConfirmarCheckout();
                 }}
                 disabled={isSubmitting || isConfirmingPix}
-                icon={
-                  isPix ? <QrCode className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />
-                }
+                icon={<CheckCircle2 className="h-5 w-5" />}
               >
-                {isSubmitting
-                  ? "Confirmando..."
-                  : isPix
-                    ? "Confirmar e abrir PIX fake"
-                    : "Confirmar compra"}
+                {isSubmitting ? "Confirmando..." : "Confirmar compra"}
               </Botao>
             </div>
           </section>
