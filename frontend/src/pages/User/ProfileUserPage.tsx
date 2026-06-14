@@ -2377,11 +2377,11 @@ export function PerfilUsuarioPage() {
                   />
                 ) : null}
 
-                <div className="space-y-3">
+                <div className="space-y-3 pt-1">
                 <span className="inline-flex rounded-full border border-yellow-400/30 bg-yellow-400/10 px-4 py-1 text-sm font-medium text-yellow-300">
                   {heroBadge}
                 </span>
-                <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                <h1 className="text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl">
                   {heroTitulo}
                 </h1>
                 <p className="max-w-2xl text-sm leading-6 text-neutral-400 sm:text-base">
@@ -2450,7 +2450,7 @@ export function PerfilUsuarioPage() {
                 title={visaoAtiva === "loja" ? "Resumo financeiro" : "Minha atividade"}
                 description={
                   visaoAtiva === "loja"
-                    ? "Acompanhe o bruto vendido, a comissao do marketplace, o liquido da loja e a quantidade de pedidos."
+                    ? "Acompanhe as vendas brutas e o valor liquido a receber da loja."
                     : "Resumo rápido da conta de comprador com seus dados principais."
                 }
                 stats={statsAtivos}
