@@ -497,9 +497,11 @@ export function ModalPedidoCompra({
                         onClick={() => onConfirmarRecebimento(pedido)}
                         icon={<PackageCheck className="h-4 w-4" />}
                         disabled={!podeConfirmarRecebimento}
-                        className="sm:px-4"
+                        className="h-auto min-h-[52px] px-4 py-3 text-center leading-tight sm:px-4"
                       >
-                        {isConfirmandoRecebimento ? "Confirmando..." : "Confirmar recebimento"}
+                        <span className="text-center leading-tight">
+                          {isConfirmandoRecebimento ? "Confirmando..." : "Confirmar recebimento"}
+                        </span>
                       </Botao>
 
                       <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-neutral-300">
@@ -526,13 +528,15 @@ export function ModalPedidoCompra({
                           isProcessandoSolicitacao ||
                           isCancelandoPedido
                         }
-                        className="sm:px-4"
+                        className="h-auto min-h-[52px] px-4 py-3 text-center leading-tight sm:px-4"
                       >
-                        {cancelamentoDiretoDisponivel
-                          ? isCancelandoPedido
-                            ? "Cancelando..."
-                            : "Cancelar pedido"
-                          : "Problemas, devolucao e troca"}
+                        <span className="text-center leading-tight">
+                          {cancelamentoDiretoDisponivel
+                            ? isCancelandoPedido
+                              ? "Cancelando..."
+                              : "Cancelar pedido"
+                            : "Problemas, devolucao e troca"}
+                        </span>
                       </Botao>
 
                       <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-neutral-300">
@@ -550,9 +554,11 @@ export function ModalPedidoCompra({
                         onClick={() => onBaixarRecibo(pedido)}
                         icon={<Download className="h-4 w-4" />}
                         disabled={!podeBaixarRecibo}
-                        className="sm:px-4"
+                        className="h-auto min-h-[52px] px-4 py-3 text-center leading-tight sm:px-4"
                       >
-                        {isBaixandoRecibo ? "Baixando..." : "Baixar recibo"}
+                        <span className="text-center leading-tight">
+                          {isBaixandoRecibo ? "Baixando..." : "Baixar recibo"}
+                        </span>
                       </Botao>
 
                       <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-neutral-300">

@@ -514,19 +514,9 @@ export function criarStatsLoja(
       value: formatarMoeda(stats.faturamentoBruto),
     },
     {
-      key: "comissao-omnimarket",
-      label: "Comissao OmniMarket",
-      value: formatarMoeda(stats.totalComissaoMarketplace),
-    },
-    {
       key: "valor-liquido",
       label: "Liquido a receber",
       value: formatarMoeda(stats.totalLiquidoVendedor),
-    },
-    {
-      key: "total-pedidos",
-      label: "Total de pedidos",
-      value: `${stats.quantidadePedidos}`,
     },
   ];
 }

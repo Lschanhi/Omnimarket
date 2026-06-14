@@ -76,6 +76,9 @@ npm run backend:run
 - `docs/API.md`
 - `docs/RBAC.md`
 - `docs/QA_CHECKLIST.md`
+- `docs/MANUAL_OPERACAO_APLICATIVO.md`
+- `docs/MANUAL_DE_TESTE.md`
+- `docs/PLANO_DE_TESTE.md`
 - `docs/AZURE_APP_SERVICE_DEPLOY.md`
 - `docs/RENDER_DEPLOY.md`
 

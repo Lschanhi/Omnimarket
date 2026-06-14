@@ -79,10 +79,10 @@ export function ModalEntregasLoja({
               type="button"
               variant="secondary"
               onClick={handleNovaEntrega}
-              className="h-11 sm:w-auto sm:px-5"
+              className="h-auto min-h-[52px] shrink-0 rounded-2xl border-yellow-400/30 bg-yellow-400/10 px-4 py-3 text-yellow-100 hover:border-yellow-400/45 hover:bg-yellow-400/15 sm:w-auto sm:px-5"
               icon={<Plus className="h-4 w-4" />}
             >
-              Nova entrega
+              <span className="whitespace-nowrap">Nova entrega</span>
             </Botao>
           </div>
 
@@ -217,7 +217,7 @@ export function ModalEntregasLoja({
                   type="button"
                   variant="secondary"
                   onClick={handleCancelarEntrega}
-                  className="h-11 sm:w-auto sm:px-5"
+                  className="h-auto min-h-[45px] shrink-0 sm:w-auto sm:px-5"
                 >
                   Nova entrega
                 </Botao>
