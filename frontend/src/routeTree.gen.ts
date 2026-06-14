@@ -13,6 +13,7 @@ import { Route as RecuperarSenhaRouteImport } from './routes/recuperarSenha'
 import { Route as PerfilUsuarioRouteImport } from './routes/perfilUsuario'
 import { Route as PaginaSucessoRouteImport } from './routes/paginaSucesso'
 import { Route as PaginaPagamentoRouteImport } from './routes/paginaPagamento'
+import { Route as PaginaConfirmacaoPixRouteImport } from './routes/paginaConfirmacaoPix'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CarrinhoRouteImport } from './routes/carrinho'
 import { Route as CadastroRouteImport } from './routes/cadastro'
@@ -38,6 +39,11 @@ const PaginaSucessoRoute = PaginaSucessoRouteImport.update({
 const PaginaPagamentoRoute = PaginaPagamentoRouteImport.update({
   id: '/paginaPagamento',
   path: '/paginaPagamento',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaginaConfirmacaoPixRoute = PaginaConfirmacaoPixRouteImport.update({
+  id: '/paginaConfirmacaoPix',
+  path: '/paginaConfirmacaoPix',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/cadastro': typeof CadastroRoute
   '/carrinho': typeof CarrinhoRoute
   '/login': typeof LoginRoute
+  '/paginaConfirmacaoPix': typeof PaginaConfirmacaoPixRoute
   '/paginaPagamento': typeof PaginaPagamentoRoute
   '/paginaSucesso': typeof PaginaSucessoRoute
   '/perfilUsuario': typeof PerfilUsuarioRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/cadastro': typeof CadastroRoute
   '/carrinho': typeof CarrinhoRoute
   '/login': typeof LoginRoute
+  '/paginaConfirmacaoPix': typeof PaginaConfirmacaoPixRoute
   '/paginaPagamento': typeof PaginaPagamentoRoute
   '/paginaSucesso': typeof PaginaSucessoRoute
   '/perfilUsuario': typeof PerfilUsuarioRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/cadastro': typeof CadastroRoute
   '/carrinho': typeof CarrinhoRoute
   '/login': typeof LoginRoute
+  '/paginaConfirmacaoPix': typeof PaginaConfirmacaoPixRoute
   '/paginaPagamento': typeof PaginaPagamentoRoute
   '/paginaSucesso': typeof PaginaSucessoRoute
   '/perfilUsuario': typeof PerfilUsuarioRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/carrinho'
     | '/login'
+    | '/paginaConfirmacaoPix'
     | '/paginaPagamento'
     | '/paginaSucesso'
     | '/perfilUsuario'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/carrinho'
     | '/login'
+    | '/paginaConfirmacaoPix'
     | '/paginaPagamento'
     | '/paginaSucesso'
     | '/perfilUsuario'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/carrinho'
     | '/login'
+    | '/paginaConfirmacaoPix'
     | '/paginaPagamento'
     | '/paginaSucesso'
     | '/perfilUsuario'
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   CadastroRoute: typeof CadastroRoute
   CarrinhoRoute: typeof CarrinhoRoute
   LoginRoute: typeof LoginRoute
+  PaginaConfirmacaoPixRoute: typeof PaginaConfirmacaoPixRoute
   PaginaPagamentoRoute: typeof PaginaPagamentoRoute
   PaginaSucessoRoute: typeof PaginaSucessoRoute
   PerfilUsuarioRoute: typeof PerfilUsuarioRoute
@@ -188,6 +201,13 @@ declare module '@tanstack/react-router' {
       path: '/paginaPagamento'
       fullPath: '/paginaPagamento'
       preLoaderRoute: typeof PaginaPagamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paginaConfirmacaoPix': {
+      id: '/paginaConfirmacaoPix'
+      path: '/paginaConfirmacaoPix'
+      fullPath: '/paginaConfirmacaoPix'
+      preLoaderRoute: typeof PaginaConfirmacaoPixRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -240,6 +260,7 @@ const rootRouteChildren: RootRouteChildren = {
   CadastroRoute: CadastroRoute,
   CarrinhoRoute: CarrinhoRoute,
   LoginRoute: LoginRoute,
+  PaginaConfirmacaoPixRoute: PaginaConfirmacaoPixRoute,
   PaginaPagamentoRoute: PaginaPagamentoRoute,
   PaginaSucessoRoute: PaginaSucessoRoute,
   PerfilUsuarioRoute: PerfilUsuarioRoute,

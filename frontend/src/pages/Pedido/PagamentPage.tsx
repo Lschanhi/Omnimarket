@@ -13,11 +13,6 @@ import {
   type EnderecoApiResponse,
   type TipoLogradouroOption,
 } from "../../Services/user/enderecoService";
-import {
-  confirmarPagamentoFake,
-  iniciarPagamento,
-} from "../../Services/financeiro/financeiroService";
-import { criarPedido } from "../../Services/pedidos/pedidoService";
 import { isAuthenticated } from "../../Services/auth/session";
 import {
   obterPerfilUsuario,
@@ -34,6 +29,10 @@ import {
   formatarValidadeCartao,
   normalizarCep,
 } from "../../utils/masks";
+import {
+  type PixCheckoutEnderecoResumo,
+  type PixCheckoutReviewState,
+} from "./pixCheckout";
 
 type MetodoPagamento = {
   id: string;
@@ -309,6 +308,14 @@ function formatarDescricaoEntregaLoja(opcaoEntrega: LojaEntregaOpcao | null) {
   return `${opcaoEntrega.nome} - ${formatarPrazoEntrega(opcaoEntrega.prazoEntregaDias)}`;
 }
 
+function obterUrlBaseApresentacao() {
+  if (typeof window !== "undefined" && window.location.origin) {
+    return window.location.origin;
+  }
+
+  return "https://omnimarket-web-prod.azurewebsites.net";
+}
+
 function criarImagemResumoPlaceholder(label: string) {
   const titulo = label.trim().slice(0, 20) || "OmniMarket";
   const svg = `
@@ -329,6 +336,23 @@ function criarImagemResumoPlaceholder(label: string) {
   `;
 
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function criarDetalhePagamentoResumo(
+  metodoSelecionado: string,
+  pagamentoCartao: PagamentoCartaoFormState,
+) {
+  if (metodoSelecionado !== "credito" && metodoSelecionado !== "debito") {
+    return undefined;
+  }
+
+  const digitos = pagamentoCartao.numeroCartao.replace(/\D/g, "");
+
+  if (digitos.length >= 4) {
+    return `Cartao terminado em ${digitos.slice(-4)}`;
+  }
+
+  return pagamentoCartao.nomeCartao.trim() ? "Dados do cartao informados no checkout." : undefined;
 }
 
 function agruparCarrinhoPorLoja(
@@ -396,12 +420,12 @@ export function PagamentPage() {
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [errosEntregaPorLoja, setErrosEntregaPorLoja] = useState<Record<number, string>>({});
   const [isRemovingAddress, setIsRemovingAddress] = useState<number | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting] = useState(false);
   const [erro, setErro] = useState("");
   const [pagamentoCartaoForm, setPagamentoCartaoForm] = useState<PagamentoCartaoFormState>(
     PAGAMENTO_CARTAO_FORM_PADRAO,
   );
-  const { carrinhoItens, valorTotal, clearCart, carregarCarrinho, estaAutenticado } = useCart();
+  const { carrinhoItens, valorTotal, estaAutenticado } = useCart();
   const navigate = useNavigate();
 
   const subtotal = valorTotal;
@@ -914,6 +938,118 @@ export function PagamentPage() {
     }
   }
 
+  function criarResumoEnderecoCheckout(): PixCheckoutEnderecoResumo | null {
+    if (mostrarNovoEnderecoForm && enderecoTemConteudo(enderecoForm)) {
+      if (!enderecoEstaCompleto(enderecoForm)) {
+        throw new Error(
+          "Preencha o tipo de logradouro, nome do endereco, CEP, cidade, numero e UF para continuar.",
+        );
+      }
+
+      return {
+        tipoLogradouro: enderecoForm.tipoLogradouro.trim(),
+        nomeEndereco: enderecoForm.nomeEndereco.trim(),
+        numero: enderecoForm.numero.trim(),
+        complemento: enderecoForm.complemento.trim() || undefined,
+        cep: normalizarCep(enderecoForm.cep),
+        cidade: enderecoForm.cidade.trim(),
+        uf: enderecoForm.uf.trim().toUpperCase(),
+        isPrincipal: enderecoForm.isPrincipal,
+      };
+    }
+
+    if (!enderecoSelecionado) {
+      return null;
+    }
+
+    return {
+      tipoLogradouro: enderecoSelecionado.tipoLogradouro,
+      nomeEndereco: enderecoSelecionado.nomeEndereco,
+      numero: enderecoSelecionado.numero,
+      complemento: enderecoSelecionado.complemento?.trim() || undefined,
+      cep: normalizarCep(enderecoSelecionado.cep),
+      cidade: enderecoSelecionado.cidade,
+      uf: enderecoSelecionado.uf.toUpperCase(),
+      isPrincipal: enderecoSelecionado.isPrincipal,
+    };
+  }
+
+  async function criarEstadoConfirmacaoCheckout(
+    formaPagamentoId: number,
+  ): Promise<PixCheckoutReviewState> {
+    const perfilAtual = perfil ?? (await obterPerfilUsuario());
+    const resumoEndereco = criarResumoEnderecoCheckout();
+
+    if (!resumoEndereco) {
+      throw new Error("Cadastre ou selecione um endereco de entrega antes de continuar.");
+    }
+
+    const lojas = gruposCarrinhoValidos.map((grupo) => {
+      const opcoesLoja = opcoesEntregaPorLoja[grupo.lojaId] ?? [];
+      const opcaoEntregaSelecionada =
+        opcoesLoja.find((opcao) => opcao.id === fretesSelecionadosPorLoja[grupo.lojaId]) ?? null;
+
+      if (!opcaoEntregaSelecionada?.tipoEntregaId) {
+        throw new Error(
+          `Selecione uma opcao de entrega valida para a loja ${grupo.lojaNome} antes de continuar.`,
+        );
+      }
+
+      return {
+        lojaId: grupo.lojaId,
+        lojaNome: grupo.lojaNome,
+        quantidadeItens: grupo.itens.reduce(
+          (accumulator, item) => accumulator + item.quantidade,
+          0,
+        ),
+        subtotal: grupo.subtotal,
+        frete: opcaoEntregaSelecionada.valorFrete,
+        total: grupo.subtotal + opcaoEntregaSelecionada.valorFrete,
+        descricaoEntrega: formatarDescricaoEntregaLoja(opcaoEntregaSelecionada),
+        tipoEntregaId: opcaoEntregaSelecionada.tipoEntregaId,
+        itens: grupo.itens.map((item) => ({
+          produtoId: item.produtoId,
+          nome: item.nome,
+          quantidade: item.quantidade,
+          subtotal: item.subtotal,
+        })),
+      };
+    });
+
+    return {
+      comprador: {
+        id: perfilAtual.id,
+        nome: `${perfilAtual.nome} ${perfilAtual.sobrenome}`.trim(),
+        email: perfilAtual.email,
+        cpf: perfilAtual.cpf,
+      },
+      endereco:
+        mostrarNovoEnderecoForm && enderecoTemConteudo(enderecoForm)
+          ? {
+              mode: "new",
+              resumo: resumoEndereco,
+            }
+          : {
+              mode: "existing",
+              enderecoId:
+                enderecoSelecionado?.id ??
+                obterEnderecoPrincipal(enderecosExibidos)?.id ??
+                0,
+              resumo: resumoEndereco,
+            },
+      lojas,
+      subtotal,
+      freteTotal: valorFreteSelecionado,
+      total,
+      formaPagamentoId,
+      metodoPagamentoCodigo: metodo,
+      metodoPagamentoTitulo:
+        METODOS_PAGAMENTO.find((item) => item.id === metodo)?.titulo ?? "PIX",
+      detalhePagamento: criarDetalhePagamentoResumo(metodo, pagamentoCartaoForm),
+      redirecionamentoQrUrl: obterUrlBaseApresentacao(),
+    };
+  }
+
   async function handleFinalizarCompra() {
     if (!isAuthenticated()) {
       navigate({ to: "/login" });
@@ -942,9 +1078,28 @@ export function PagamentPage() {
       return;
     }
 
-    setIsSubmitting(true);
-    setErro("");
+    try {
+      setErro("");
 
+      const estadoConfirmacaoCheckout = await criarEstadoConfirmacaoCheckout(formaPagamentoId);
+
+      navigate({
+        to: "/paginaConfirmacaoPix",
+        state: (currentState) => ({
+          ...currentState,
+          pixCheckoutReview: estadoConfirmacaoCheckout,
+        }),
+      });
+    } catch (error) {
+      setErro(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel preparar a revisao do checkout.",
+      );
+    }
+  }
+
+  /*
     const pedidosProcessados: Array<{
       pedidoId: number;
       lojaNome: string;
@@ -1060,6 +1215,8 @@ export function PagamentPage() {
       setIsSubmitting(false);
     }
   }
+
+  */
 
   return (
     <PageLayout>
