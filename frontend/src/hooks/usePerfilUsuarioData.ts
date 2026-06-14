@@ -132,6 +132,114 @@ function normalizarTextoBase(valor: string) {
     .toLowerCase();
 }
 
+function normalizarTelefoneParaComparacao(numero: string) {
+  return numero.replace(/\D/g, "");
+}
+
+function normalizarTextoEnderecoParaComparacao(valor: string | undefined) {
+  return normalizarTextoBase((valor ?? "").trim());
+}
+
+function criarChaveEndereco(endereco: UsuarioEnderecoPerfil) {
+  return [
+    normalizarTextoEnderecoParaComparacao(endereco.tipoLogradouro),
+    normalizarTextoEnderecoParaComparacao(endereco.nomeEndereco),
+    normalizarTextoEnderecoParaComparacao(endereco.numero),
+    normalizarTextoEnderecoParaComparacao(endereco.complemento),
+    endereco.cep.replace(/\D/g, ""),
+    normalizarTextoEnderecoParaComparacao(endereco.cidade),
+    normalizarTextoEnderecoParaComparacao(endereco.uf),
+  ].join("|");
+}
+
+function normalizarPrincipalTelefonesPerfil(telefones: UsuarioTelefonePerfil[]) {
+  if (telefones.length === 0) {
+    return [];
+  }
+
+  const principalIndex = telefones.findIndex((telefone) => telefone.isPrincipal);
+  const indicePrincipalResolvido = principalIndex >= 0 ? principalIndex : 0;
+
+  return telefones.map((telefone, index) => ({
+    ...telefone,
+    isPrincipal: index === indicePrincipalResolvido,
+  }));
+}
+
+function normalizarPrincipalEnderecosPerfil(enderecos: UsuarioEnderecoPerfil[]) {
+  if (enderecos.length === 0) {
+    return [];
+  }
+
+  const principalIndex = enderecos.findIndex((endereco) => endereco.isPrincipal);
+  const indicePrincipalResolvido = principalIndex >= 0 ? principalIndex : 0;
+
+  return enderecos.map((endereco, index) => ({
+    ...endereco,
+    isPrincipal: index === indicePrincipalResolvido,
+  }));
+}
+
+function deduplicarTelefonesPerfil(
+  telefones: UsuarioTelefonePerfil[],
+  telefoneLojaId?: number | null,
+) {
+  const telefonesPorNumero = new Map<string, UsuarioTelefonePerfil[]>();
+
+  for (const telefone of telefones) {
+    const numeroNormalizado =
+      normalizarTelefoneParaComparacao(telefone.numero) || `sem-numero-${telefone.id}`;
+    const grupoAtual = telefonesPorNumero.get(numeroNormalizado) ?? [];
+
+    grupoAtual.push(telefone);
+    telefonesPorNumero.set(numeroNormalizado, grupoAtual);
+  }
+
+  const telefonesUnicos = Array.from(telefonesPorNumero.values()).map((grupo) => {
+    const telefoneCanonical =
+      grupo.find((telefone) => telefone.id === telefoneLojaId) ??
+      grupo.find((telefone) => telefone.isPrincipal) ??
+      grupo[0];
+
+    return {
+      ...telefoneCanonical,
+      isPrincipal: grupo.some((telefone) => telefone.isPrincipal),
+    };
+  });
+
+  return normalizarPrincipalTelefonesPerfil(telefonesUnicos);
+}
+
+function deduplicarEnderecosPerfil(
+  enderecos: UsuarioEnderecoPerfil[],
+  enderecoLojaId?: number | null,
+) {
+  const enderecosPorChave = new Map<string, UsuarioEnderecoPerfil[]>();
+
+  for (const endereco of enderecos) {
+    const chaveComparacao = criarChaveEndereco(endereco);
+    const grupoAtual = enderecosPorChave.get(chaveComparacao) ?? [];
+
+    grupoAtual.push(endereco);
+    enderecosPorChave.set(chaveComparacao, grupoAtual);
+  }
+
+  const enderecosUnicos = Array.from(enderecosPorChave.values()).map((grupo) => {
+    const enderecoCanonical =
+      grupo.find((endereco) => endereco.id === enderecoLojaId) ??
+      grupo.find((endereco) => endereco.isPrincipal) ??
+      grupo.find((endereco) => endereco.ativo) ??
+      grupo[0];
+
+    return {
+      ...enderecoCanonical,
+      isPrincipal: grupo.some((endereco) => endereco.isPrincipal),
+    };
+  });
+
+  return normalizarPrincipalEnderecosPerfil(enderecosUnicos);
+}
+
 function mapearTelefones(perfil: UsuarioPerfilApiResponse): UsuarioTelefonePerfil[] {
   return perfil.telefones.map((telefone) => ({
     id: telefone.id,
@@ -881,8 +989,14 @@ export function usePerfilUsuarioData() {
           : [];
         const compras = mapearCompras(pedidos, produtosEnriquecidosPedidos);
         const vendas = mapearVendasLoja(pedidosLoja, produtosEnriquecidosPedidos);
-        const telefones = mapearTelefones(perfil);
-        const enderecos = mapearEnderecos(perfil, enderecosDetalhados);
+        const telefones = deduplicarTelefonesPerfil(
+          mapearTelefones(perfil),
+          lojaAtual?.telefoneId,
+        );
+        const enderecos = deduplicarEnderecosPerfil(
+          mapearEnderecos(perfil, enderecosDetalhados),
+          lojaAtual?.enderecoId,
+        );
 
         sincronizarSessaoComPerfil(perfil);
         setUsuario(mapearUsuario(perfil, telefones, enderecos));

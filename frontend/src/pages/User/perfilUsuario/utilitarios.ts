@@ -568,6 +568,26 @@ export function normalizarTelefoneParaComparacao(telefone: string) {
   return telefone.replace(/\D/g, "");
 }
 
+function normalizarTextoEnderecoParaComparacao(valor: string | undefined) {
+  return (valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function criarChaveComparacaoEndereco(endereco: PerfilEnderecoFormState) {
+  return [
+    normalizarTextoEnderecoParaComparacao(endereco.tipoLogradouro),
+    normalizarTextoEnderecoParaComparacao(endereco.nomeEndereco),
+    normalizarTextoEnderecoParaComparacao(endereco.numero),
+    normalizarTextoEnderecoParaComparacao(endereco.complemento),
+    normalizarCep(endereco.cep),
+    normalizarTextoEnderecoParaComparacao(endereco.cidade),
+    normalizarTextoEnderecoParaComparacao(endereco.uf),
+  ].join("|");
+}
+
 export function normalizarTelefoneParaInput(telefone: string) {
   return formatarTelefone(telefone);
 }
@@ -752,6 +772,49 @@ export function mapearEnderecoParaFormulario(
     cidade: endereco.cidade,
     uf: endereco.uf,
     isPrincipal: endereco.isPrincipal,
+  };
+}
+
+export function deduplicarEnderecosParaFormulario(
+  enderecos: PerfilEnderecoFormState[],
+  enderecoLojaId?: number | null,
+) {
+  const enderecosPorChave = new Map<string, PerfilEnderecoFormState[]>();
+
+  for (const endereco of enderecos) {
+    const chaveComparacao = criarChaveComparacaoEndereco(endereco);
+    const grupoAtual = enderecosPorChave.get(chaveComparacao) ?? [];
+
+    grupoAtual.push(endereco);
+    enderecosPorChave.set(chaveComparacao, grupoAtual);
+  }
+
+  const enderecosUnicos: PerfilEnderecoFormState[] = [];
+  const enderecosDuplicadosIds: number[] = [];
+
+  for (const grupo of enderecosPorChave.values()) {
+    const enderecoCanonical =
+      grupo.find((endereco) => endereco.id === enderecoLojaId) ??
+      grupo.find((endereco) => endereco.isPrincipal) ??
+      grupo[0];
+
+    enderecosUnicos.push({
+      ...enderecoCanonical,
+      isPrincipal: grupo.some((endereco) => endereco.isPrincipal),
+    });
+
+    grupo.forEach((endereco) => {
+      if (endereco.id && endereco.id !== enderecoCanonical.id) {
+        enderecosDuplicadosIds.push(endereco.id);
+      }
+    });
+  }
+
+  const estadoNormalizado = normalizarPrincipalEnderecos(enderecosUnicos, null);
+
+  return {
+    enderecos: estadoNormalizado.enderecos,
+    enderecosDuplicadosIds,
   };
 }
 
