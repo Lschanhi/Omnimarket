@@ -6,7 +6,10 @@ import { Input } from "../../Components/Input";
 import { PageLayout } from "../../Components/PageLayout";
 import Apple from "../../assets/Icone_apple.png";
 import Google2 from "../../assets/Icone_google.webp";
-import { loginUsuario } from "../../Services/auth/authService";
+import {
+  loginUsuario,
+  reenviarConfirmacaoEmail,
+} from "../../Services/auth/authService";
 import type { LoginErrors, LoginFormData } from "../../types/LoginFormData";
 import { validarLogin } from "../../utils/validators";
 
@@ -19,6 +22,9 @@ export function LoginPage() {
   const [formData, setFormData] = useState<LoginFormData>(initialFormData);
   const [errors, setErrors] = useState<LoginErrors>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isReenviandoConfirmacao, setIsReenviandoConfirmacao] = useState(false);
+  const [emailPendenteConfirmacao, setEmailPendenteConfirmacao] = useState("");
+  const [feedbackConfirmacao, setFeedbackConfirmacao] = useState("");
   const navigate = useNavigate();
 
   function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
@@ -33,6 +39,11 @@ export function LoginPage() {
       ...currentErrors,
       [name]: "",
     }));
+
+    if (name === "email") {
+      setEmailPendenteConfirmacao("");
+      setFeedbackConfirmacao("");
+    }
   }
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
@@ -52,16 +63,43 @@ export function LoginPage() {
     try {
       setErrors({});
       setIsLoading(true);
+      setEmailPendenteConfirmacao("");
+      setFeedbackConfirmacao("");
 
       await loginUsuario(formData.email, formData.senha);
       alert("Login realizado com sucesso!");
       navigate({ to: "/" });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Não foi possivel realizar o login.";
+        error instanceof Error ? error.message : "Nao foi possivel realizar o login.";
+
+      if (message.toLowerCase().includes("confirme seu email")) {
+        setEmailPendenteConfirmacao(formData.email.trim());
+      }
+
       alert(message);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleReenviarConfirmacao() {
+    if (!emailPendenteConfirmacao || isReenviandoConfirmacao) {
+      return;
+    }
+
+    try {
+      setIsReenviandoConfirmacao(true);
+      const resposta = await reenviarConfirmacaoEmail(emailPendenteConfirmacao);
+      setFeedbackConfirmacao(resposta.mensagem);
+    } catch (error) {
+      setFeedbackConfirmacao(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel reenviar o link de confirmacao.",
+      );
+    } finally {
+      setIsReenviandoConfirmacao(false);
     }
   }
 
@@ -95,9 +133,9 @@ export function LoginPage() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-sm font-semibold text-white">Conta conectada</p>
+                <p className="text-sm font-semibold text-white">Conta protegida</p>
                 <p className="mt-1 text-sm text-neutral-400">
-                  Sua sessão fica pronta para usar carrinho, checkout e perfil integrados.
+                  O primeiro acesso depende da confirmacao enviada para o seu email.
                 </p>
               </div>
             </div>
@@ -119,7 +157,7 @@ export function LoginPage() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="você@exemplo.com"
+                placeholder="voce@exemplo.com"
                 value={formData.email}
                 onChange={handleInputChange}
                 error={errors.email}
@@ -145,7 +183,7 @@ export function LoginPage() {
                 </label>
 
                 <Link
-                  to={"/recuperarSenha"}
+                  to="/recuperarSenha"
                   className="text-yellow-400 transition hover:text-yellow-300 hover:underline"
                 >
                   Esqueci minha senha
@@ -160,6 +198,39 @@ export function LoginPage() {
               >
                 {isLoading ? "Entrando..." : "Entrar"}
               </Botao>
+
+              {emailPendenteConfirmacao ? (
+                <div className="space-y-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm text-yellow-100">
+                  <p className="font-medium text-white">Ative sua conta antes do primeiro login</p>
+                  <p>
+                    Essa conta ainda precisa confirmar o email. Abra o link recebido na caixa de
+                    entrada ou solicite um novo envio.
+                  </p>
+
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Botao
+                      type="button"
+                      variant="secondary"
+                      onClick={handleReenviarConfirmacao}
+                      disabled={isReenviandoConfirmacao}
+                      className="h-11 border-yellow-400/20 bg-black/30 hover:bg-black/40 sm:w-auto sm:px-6"
+                    >
+                      {isReenviandoConfirmacao ? "Reenviando..." : "Reenviar link"}
+                    </Botao>
+
+                    <Link
+                      to="/cadastro"
+                      className="inline-flex h-11 items-center justify-center rounded-2xl border border-white/10 px-5 text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/5"
+                    >
+                      Criar outra conta
+                    </Link>
+                  </div>
+
+                  {feedbackConfirmacao ? (
+                    <p className="text-xs text-neutral-200">{feedbackConfirmacao}</p>
+                  ) : null}
+                </div>
+              ) : null}
 
               <p className="text-center text-sm uppercase tracking-[0.3em] text-neutral-500">
                 ------------- Ou -------------
@@ -186,7 +257,7 @@ export function LoginPage() {
               </div>
 
               <p className="text-center text-sm text-neutral-400">
-                Ainda não possui conta?
+                Ainda nao possui conta?
                 <Link
                   to="/cadastro"
                   className="ml-2 font-semibold text-yellow-400 transition hover:text-yellow-300 hover:underline"

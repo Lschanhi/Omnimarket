@@ -49,6 +49,7 @@ namespace Omnimarket.Api.Services
                 Nome = usuario.Nome,
                 Sobrenome = usuario.Sobrenome,
                 Email = usuario.Email,
+                EmailConfirmado = usuario.EmailConfirmado,
                 Role = usuario.Role,
                 AvatarUrl = usuario.FotoPerfil == null ? null : ObterUrlLeitura(usuario.FotoPerfil),
                 Telefones = usuario.Telefones

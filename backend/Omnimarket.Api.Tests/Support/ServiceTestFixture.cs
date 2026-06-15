@@ -8,6 +8,8 @@ internal sealed class ServiceTestFixture : IDisposable
 
     public DataContext Context { get; }
     public FakeArquivoStorageService ArquivoStorageService { get; }
+    public FakeEmailSender EmailSender { get; }
+    public EmailConfirmationService EmailConfirmationService { get; }
     public ArquivoUploadService ArquivoUploadService { get; }
     public AuthService AuthService { get; }
     public AvaliacaoProdutoService AvaliacaoProdutoService { get; }
@@ -51,6 +53,7 @@ internal sealed class ServiceTestFixture : IDisposable
         var tokenService = new TokenService(configuration);
         var gatewayPagamentoService = new GatewayPagamentoFakeService();
         ArquivoStorageService = new FakeArquivoStorageService();
+        EmailSender = new FakeEmailSender();
         var blobStorageOptions = Microsoft.Extensions.Options.Options.Create(new AzureBlobStorageOptions
         {
             FotoPerfilContainerName = "foto-perfil-test",
@@ -58,9 +61,15 @@ internal sealed class ServiceTestFixture : IDisposable
             VideoProdutoContainerName = "videos-produto-test",
             FotoPerfilLojaContainerName = "foto-perfil-loja-test"
         });
+        var emailConfirmationOptions = Microsoft.Extensions.Options.Options.Create(new EmailConfirmationOptions
+        {
+            TokenExpiraEmHoras = 24,
+            NomeAplicacao = "OmniMarket Tests"
+        });
 
         AvaliacaoProdutoService = new AvaliacaoProdutoService(Context);
-        AuthService = new AuthService(Context, tokenService);
+        EmailConfirmationService = new EmailConfirmationService(Context, EmailSender, emailConfirmationOptions);
+        AuthService = new AuthService(Context, tokenService, EmailConfirmationService);
         ArquivoUploadService = new ArquivoUploadService(ArquivoStorageService, blobStorageOptions);
         CarrinhoService = new CarrinhoService(Context);
         ComissaoMarketplaceService = new ComissaoMarketplaceService(Context);
@@ -142,6 +151,8 @@ internal sealed class ServiceTestFixture : IDisposable
             Email = $"{identificador}{sequencia}@teste.com",
             PasswordHash = hash,
             PasswordSalt = salt,
+            EmailConfirmado = true,
+            DataConfirmacaoEmail = DateTime.UtcNow,
             AceitouTermos = true,
             DataAceiteTermos = DateTime.UtcNow,
             DataCadastro = DateTime.UtcNow,
@@ -152,6 +163,23 @@ internal sealed class ServiceTestFixture : IDisposable
         await Context.SaveChangesAsync();
 
         return usuario;
+    }
+
+    public string ObterUltimoTokenConfirmacao()
+    {
+        var mensagem = EmailSender.MensagensEnviadas.LastOrDefault()
+            ?? throw new InvalidOperationException("Nenhum email de confirmacao foi enviado.");
+
+        var marcador = "token=";
+        var indice = mensagem.CorpoTexto.IndexOf(marcador, StringComparison.OrdinalIgnoreCase);
+        if (indice < 0)
+            throw new InvalidOperationException("Token de confirmacao nao encontrado no corpo do email.");
+
+        var trecho = mensagem.CorpoTexto[(indice + marcador.Length)..];
+        var fimLinha = trecho.IndexOfAny(['\r', '\n']);
+        var token = fimLinha >= 0 ? trecho[..fimLinha] : trecho;
+
+        return Uri.UnescapeDataString(token.Trim());
     }
 
     public async Task<Endereco> CriarEnderecoAsync(int usuarioId, bool principal = true, bool ativo = true)

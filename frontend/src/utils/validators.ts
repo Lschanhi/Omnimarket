@@ -76,30 +76,6 @@ export function validarFormulario(formData: CadastroFormData): FormErrors {
     errors.aceitouTermosUso = "Aceite o termo de uso para continuar.";
   }
 
-  if (formData.tipoCadastro === "vendedor") {
-    if (!formData.nomeFantasia.trim()) {
-      errors.nomeFantasia = "Informe o nome fantasia da loja.";
-    }
-
-    if (!formData.documentoFiscalLoja.trim()) {
-      errors.documentoFiscalLoja = "Informe o documento fiscal da loja.";
-    } else if (
-      formData.tipoDocumentoFiscalLoja === "2"
-        ? !validarCnpj(formData.documentoFiscalLoja)
-        : !validarCpf(formData.documentoFiscalLoja)
-    ) {
-      errors.documentoFiscalLoja =
-        formData.tipoDocumentoFiscalLoja === "2"
-          ? "Digite um CNPJ no formato 00.000.000/0000-00."
-          : "Digite um CPF no formato 000.000.000-00.";
-    }
-
-    if (!formData.aceitouTermoFiscalResponsabilidade) {
-      errors.aceitouTermoFiscalResponsabilidade =
-        "Confirme que voce esta ciente das responsabilidades fiscais para vender.";
-    }
-  }
-
   if (temConteudoNoEndereco(formData)) {
     if (!formData.enderecoNome.trim()) {
       errors.enderecoNome = "Informe o nome do endereco.";

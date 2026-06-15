@@ -45,23 +45,27 @@ namespace Omnimarket.Api.Controllers
         }
 
         [HttpPost("registrar")]
-        public async Task<IActionResult> RegistrarUsuario([FromBody] UsuarioRegistroComContatoDto userDto)
+        public async Task<IActionResult> RegistrarUsuario(
+            [FromBody] UsuarioRegistroComContatoDto userDto,
+            CancellationToken cancellationToken)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var usuario = await _authService.RegistrarUsuario(userDto);
+                var apiBaseUrl = $"{Request.Scheme}://{Request.Host.ToUriComponent()}";
+                var usuario = await _authService.RegistrarUsuario(userDto, apiBaseUrl, cancellationToken);
 
                 return Ok(new
                 {
-                    mensagem = "Usuario registrado com sucesso!",
+                    mensagem = "Usuario registrado com sucesso! Confirme o email para ativar a conta.",
                     usuario = new
                     {
                         id = usuario.Id,
                         nome = $"{usuario.Nome} {usuario.Sobrenome}",
-                        email = usuario.Email
+                        email = usuario.Email,
+                        emailConfirmado = usuario.EmailConfirmado
                     }
                 });
             }
