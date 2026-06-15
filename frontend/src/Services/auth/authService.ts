@@ -39,7 +39,12 @@ export type RegistrarUsuarioResponse = {
     id: number;
     nome: string;
     email: string;
+    emailConfirmado: boolean;
   };
+};
+
+export type ConfirmacaoEmailResponse = {
+  mensagem: string;
 };
 
 export async function loginUsuario(email: string, senha: string) {
@@ -59,5 +64,22 @@ export async function registrarUsuario(payload: RegistrarUsuarioPayload) {
   return apiRequest<RegistrarUsuarioResponse>("/api/usuario/registrar", {
     method: "POST",
     body: payload,
+  });
+}
+
+export async function confirmarEmail(token: string) {
+  const query = new URLSearchParams({ token }).toString();
+
+  return apiRequest<ConfirmacaoEmailResponse>(`/api/auth/confirmar-email?${query}`, {
+    method: "GET",
+  });
+}
+
+export async function reenviarConfirmacaoEmail(email: string) {
+  return apiRequest<ConfirmacaoEmailResponse>("/api/auth/reenviar-confirmacao-email", {
+    method: "POST",
+    body: {
+      email,
+    },
   });
 }

@@ -139,8 +139,15 @@ builder.Services.AddOptions<AzureBlobStorageOptions>()
         configuration.GetSection(AzureBlobStorageOptions.AppServiceSectionName).Bind(options);
     });
 
+builder.Services.Configure<SmtpEmailOptions>(
+    builder.Configuration.GetSection(SmtpEmailOptions.SectionName));
+builder.Services.Configure<EmailConfirmationOptions>(
+    builder.Configuration.GetSection(EmailConfirmationOptions.SectionName));
+
 // Servicos de negocio que serao injetados nos controllers.
     
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+builder.Services.AddScoped<EmailConfirmationService>();
 builder.Services.AddScoped<IArquivoStorageService, AzureBlobStorageService>();
 builder.Services.AddScoped<ArquivoUploadService>();
 builder.Services.AddScoped<AuthService>();

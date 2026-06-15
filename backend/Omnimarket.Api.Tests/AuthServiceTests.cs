@@ -12,7 +12,7 @@ public class AuthServiceTests
         var dto = fixture.CriarRegistroUsuarioDto("ana");
         dto.Cpf = "529.982.247-25";
 
-        var usuario = await fixture.AuthService.RegistrarUsuario(dto);
+        var usuario = await fixture.AuthService.RegistrarUsuario(dto, "https://api.test");
 
         fixture.Context.ChangeTracker.Clear();
 
@@ -23,6 +23,8 @@ public class AuthServiceTests
 
         Assert.Equal("52998224725", usuarioSalvo.Cpf);
         Assert.Equal(dto.Email.ToLower().Trim(), usuarioSalvo.Email);
+        Assert.False(usuarioSalvo.EmailConfirmado);
+        Assert.NotNull(usuarioSalvo.EmailConfirmacaoTokenHash);
         Assert.Equal("User", usuarioSalvo.Role);
         Assert.True(usuarioSalvo.AceitouTermos);
         Assert.NotNull(usuarioSalvo.DataAceiteTermos);
@@ -40,7 +42,7 @@ public class AuthServiceTests
         var dto = fixture.CriarRegistroUsuarioDto("bruna");
         dto.Enderecos.Clear();
 
-        var usuario = await fixture.AuthService.RegistrarUsuario(dto);
+        var usuario = await fixture.AuthService.RegistrarUsuario(dto, "https://api.test");
 
         fixture.Context.ChangeTracker.Clear();
 
@@ -58,17 +60,39 @@ public class AuthServiceTests
         var dto = fixture.CriarRegistroUsuarioDto("email-bloqueado");
         dto.Email = "lschanhi@test.com.br";
 
-        var excecao = await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.AuthService.RegistrarUsuario(dto));
+        var excecao = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            fixture.AuthService.RegistrarUsuario(dto, "https://api.test"));
 
         Assert.Equal(ValidadorEmail.MensagemEmailNaoPermitido, excecao.Message);
     }
 
     [Fact]
-    public async Task Login_DeveRetornarTokenComClaimsBasicasDoUsuario()
+    public async Task Login_DeveBloquearUsuarioComEmailNaoConfirmado()
     {
         using var fixture = new ServiceTestFixture();
         var dto = fixture.CriarRegistroUsuarioDto("bruno");
-        await fixture.AuthService.RegistrarUsuario(dto);
+        await fixture.AuthService.RegistrarUsuario(dto, "https://api.test");
+
+        var excecao = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            fixture.AuthService.Login(new LoginDto
+            {
+                Email = dto.Email.ToUpperInvariant(),
+                Password = ServiceTestFixture.SenhaPadrao
+            }));
+
+        Assert.Equal(
+            "Confirme seu email antes de entrar. Use o link enviado para o endereco cadastrado.",
+            excecao.Message);
+    }
+
+    [Fact]
+    public async Task Login_DeveRetornarTokenComClaimsBasicasDoUsuarioAposConfirmarEmail()
+    {
+        using var fixture = new ServiceTestFixture();
+        var dto = fixture.CriarRegistroUsuarioDto("bruno");
+        await fixture.AuthService.RegistrarUsuario(dto, "https://api.test");
+        var tokenConfirmacao = fixture.ObterUltimoTokenConfirmacao();
+        await fixture.EmailConfirmationService.ConfirmarEmailAsync(tokenConfirmacao);
 
         var resposta = await fixture.AuthService.Login(new LoginDto
         {
@@ -105,7 +129,9 @@ public class AuthServiceTests
     {
         using var fixture = new ServiceTestFixture();
         var dto = fixture.CriarRegistroUsuarioDto("clara");
-        await fixture.AuthService.RegistrarUsuario(dto);
+        await fixture.AuthService.RegistrarUsuario(dto, "https://api.test");
+        var tokenConfirmacao = fixture.ObterUltimoTokenConfirmacao();
+        await fixture.EmailConfirmationService.ConfirmarEmailAsync(tokenConfirmacao);
 
         var resposta = await fixture.AuthService.Login(new LoginDto
         {
@@ -121,7 +147,9 @@ public class AuthServiceTests
     {
         using var fixture = new ServiceTestFixture(jwtExpireMinutes: "60");
         var dto = fixture.CriarRegistroUsuarioDto("daniel");
-        await fixture.AuthService.RegistrarUsuario(dto);
+        await fixture.AuthService.RegistrarUsuario(dto, "https://api.test");
+        var tokenConfirmacao = fixture.ObterUltimoTokenConfirmacao();
+        await fixture.EmailConfirmationService.ConfirmarEmailAsync(tokenConfirmacao);
 
         var resposta = await fixture.AuthService.Login(new LoginDto
         {
@@ -141,7 +169,9 @@ public class AuthServiceTests
     {
         using var fixture = new ServiceTestFixture();
         var dto = fixture.CriarRegistroUsuarioDto("eduardo");
-        var usuario = await fixture.AuthService.RegistrarUsuario(dto);
+        var usuario = await fixture.AuthService.RegistrarUsuario(dto, "https://api.test");
+        var tokenConfirmacao = fixture.ObterUltimoTokenConfirmacao();
+        await fixture.EmailConfirmationService.ConfirmarEmailAsync(tokenConfirmacao);
 
         var primeiroLogin = await fixture.AuthService.Login(new LoginDto
         {
@@ -180,5 +210,23 @@ public class AuthServiceTests
             claim.Type == TokenService.SessionVersionClaim &&
             claim.Value == "1");
         Assert.True(await fixture.AuthService.SessaoEstaAtivaAsync(usuario.Id, 1));
+    }
+
+    [Fact]
+    public async Task ConfirmarEmail_DeveAtivarContaELimparToken()
+    {
+        using var fixture = new ServiceTestFixture();
+        var dto = fixture.CriarRegistroUsuarioDto("franca");
+        var usuario = await fixture.AuthService.RegistrarUsuario(dto, "https://api.test");
+        var tokenConfirmacao = fixture.ObterUltimoTokenConfirmacao();
+
+        await fixture.EmailConfirmationService.ConfirmarEmailAsync(tokenConfirmacao);
+        fixture.Context.ChangeTracker.Clear();
+
+        var usuarioSalvo = await fixture.Context.TBL_USUARIO.SingleAsync(u => u.Id == usuario.Id);
+        Assert.True(usuarioSalvo.EmailConfirmado);
+        Assert.NotNull(usuarioSalvo.DataConfirmacaoEmail);
+        Assert.Null(usuarioSalvo.EmailConfirmacaoTokenHash);
+        Assert.Null(usuarioSalvo.EmailConfirmacaoTokenExpiraEm);
     }
 }

@@ -16,18 +16,12 @@ import {
   Minus,
   Phone,
   Plus,
-  Store,
   User,
 } from "lucide-react";
 import { Botao } from "../../Components/Botao";
 import { PageLayout } from "../../Components/PageLayout";
 import { ApiError } from "../../Services/http/apiClient";
-import { loginUsuario, registrarUsuario } from "../../Services/auth/authService";
-import { obterPerfilUsuario } from "../../Services/user/usuarioService";
-import {
-  criarMinhaLoja,
-  type TipoDocumentoFiscalLoja,
-} from "../../Services/user/lojaService";
+import { registrarUsuario } from "../../Services/auth/authService";
 import {
   TIPOS_LOGRADOURO_FALLBACK,
 } from "../../Services/user/enderecoService";
@@ -36,17 +30,13 @@ import type {
   CadastroFormData,
   FormErrors,
   TipoCadastro,
-  TipoDocumentoFiscalCadastro,
 } from "../../types/cadastroFormData";
 import {
   formatarCep,
   formatarCpf,
-  formatarDocumentoFiscal,
   formatarTelefone,
 } from "../../utils/masks";
 import {
-  TERMO_FISCAL_VENDEDOR_CHECKBOX_LABEL,
-  TERMO_FISCAL_VENDEDOR_ITENS,
   TERMO_USO_CONTA_CHECKBOX_LABEL,
   TERMO_USO_CONTA_ITENS,
 } from "../../utils/termosResponsabilidade";
@@ -394,16 +384,6 @@ function temErroNoEnderecoCadastro(errors: FormErrors) {
   return CAMPOS_ENDERECO_CADASTRO.some((campo) => Boolean(errors[campo]));
 }
 
-function limparErrosVendedor(errors: FormErrors) {
-  return {
-    ...errors,
-    nomeFantasia: "",
-    tipoDocumentoFiscalLoja: "",
-    documentoFiscalLoja: "",
-    aceitouTermoFiscalResponsabilidade: "",
-  };
-}
-
 function limparErrosEndereco(errors: FormErrors) {
   return CAMPOS_ENDERECO_CADASTRO.reduce<FormErrors>(
     (currentErrors, campo) => ({
@@ -530,9 +510,7 @@ export function CadastroPage() {
       tipoCadastro,
     }));
 
-    setErrors((currentErrors) =>
-      tipoCadastro === "vendedor" ? { ...currentErrors } : limparErrosVendedor(currentErrors),
-    );
+    setErrors((currentErrors) => ({ ...currentErrors }));
 
     if (temConteudoNoEnderecoCadastro(formData)) {
       setMostrarCamposEndereco(true);
@@ -571,39 +549,16 @@ export function CadastroPage() {
 
     const { name, value } = target;
 
-    if (name === "tipoDocumentoFiscalLoja") {
-      const tipoDocumentoFiscalLoja = value as TipoDocumentoFiscalCadastro;
-
-      setFormData((currentData) => ({
-        ...currentData,
-        tipoDocumentoFiscalLoja,
-        documentoFiscalLoja: formatarDocumentoFiscal(
-          currentData.documentoFiscalLoja,
-          tipoDocumentoFiscalLoja,
-        ),
-      }));
-
-      setErrors((currentErrors) => ({
-        ...currentErrors,
-        tipoDocumentoFiscalLoja: "",
-        documentoFiscalLoja: "",
-      }));
-
-      return;
-    }
-
     const valorMascarado =
       name === "cpf"
         ? formatarCpf(value)
         : name === "telefone"
           ? formatarTelefone(value)
-          : name === "documentoFiscalLoja"
-            ? formatarDocumentoFiscal(value, formData.tipoDocumentoFiscalLoja)
-            : name === "enderecoCep"
-              ? formatarCep(value)
-              : name === "enderecoUf"
-                ? value.toUpperCase().slice(0, 2)
-                : value;
+          : name === "enderecoCep"
+            ? formatarCep(value)
+            : name === "enderecoUf"
+              ? value.toUpperCase().slice(0, 2)
+              : value;
 
     setFormData((currentData) => ({
       ...currentData,
@@ -666,71 +621,13 @@ export function CadastroPage() {
           : undefined,
       };
 
-      await registrarUsuario(payloadRegistro);
+      const resposta = await registrarUsuario(payloadRegistro);
+      const mensagemSucesso = isCadastroVendedor
+        ? `${resposta.mensagem} Depois de confirmar o email, entre na plataforma e abra a loja pelo seu perfil.`
+        : resposta.mensagem;
 
-      if (!isCadastroVendedor) {
-        alert("Cadastro realizado com sucesso!");
-        navigate({ to: "/login" });
-        return;
-      }
-
-      let autenticadoAutomaticamente = false;
-
-      try {
-        await loginUsuario(formData.email.trim(), formData.senha);
-        autenticadoAutomaticamente = true;
-
-        if (!incluirEnderecoNoCadastro) {
-          alert(
-            "Sua conta foi criada com sucesso! Quando quiser abrir a loja, adicione um endereco principal no perfil para concluir essa etapa.",
-          );
-          navigate({ to: "/perfilUsuario" });
-          return;
-        }
-
-        const perfil = await obterPerfilUsuario();
-        const enderecoPrincipal =
-          perfil.enderecos.find((endereco) => endereco.isPrincipal && endereco.ativo) ??
-          perfil.enderecos.find((endereco) => endereco.ativo);
-        const telefonePrincipal =
-          perfil.telefones.find((telefone) => telefone.isPrincipal) ?? perfil.telefones[0];
-
-        if (!enderecoPrincipal || !telefonePrincipal) {
-          throw new Error(
-            "Sua conta foi criada, mas faltou localizar o endereco ou o telefone principal para abrir a loja.",
-          );
-        }
-
-        await criarMinhaLoja({
-          nomeFantasia: formData.nomeFantasia.trim(),
-          tipoDocumentoFiscal: Number(
-            formData.tipoDocumentoFiscalLoja,
-          ) as TipoDocumentoFiscalLoja,
-          documentoFiscal: formData.documentoFiscalLoja.trim(),
-          emailContato: formData.email.trim(),
-          usarEnderecoUsuario: true,
-          enderecoUsuarioId: enderecoPrincipal.id,
-          usarTelefoneUsuario: true,
-          telefoneUsuarioId: telefonePrincipal.id,
-          ativa: true,
-        });
-
-        alert("Conta e loja criadas com sucesso!");
-        navigate({ to: "/perfilUsuario" });
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Nao foi possivel concluir o cadastro da loja.";
-
-        alert(
-          autenticadoAutomaticamente
-            ? `Sua conta foi criada, mas a loja nao foi concluida agora. ${message}`
-            : `Sua conta foi criada, mas nao conseguimos entrar automaticamente para finalizar a loja. ${message}`,
-        );
-
-        navigate({ to: autenticadoAutomaticamente ? "/perfilUsuario" : "/login" });
-      }
+      alert(mensagemSucesso);
+      navigate({ to: "/login" });
     } catch (error) {
       const apiErrors = mapearErrosApiCadastro(error);
 
@@ -768,7 +665,7 @@ export function CadastroPage() {
                 </h1>
                 <p className="max-w-xl text-sm leading-6 text-neutral-300 sm:text-base">
                   Cadastre seus dados para comprar, vender e acompanhar seus pedidos
-                  em um ambiente moderno, seguro e responsivo.
+                  com confirmacao obrigatoria de email antes do primeiro acesso.
                 </p>
               </div>
             </div>
@@ -782,9 +679,9 @@ export function CadastroPage() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-sm font-semibold text-white">Loja desde o inicio</p>
+                <p className="text-sm font-semibold text-white">Ativacao segura</p>
                 <p className="mt-1 text-sm text-neutral-400">
-                  Quem vender ja pode sair com a loja preparada e o endereco inicial.
+                  A conta so e liberada depois da confirmacao enviada para o seu email.
                 </p>
               </div>
             </div>
@@ -797,7 +694,7 @@ export function CadastroPage() {
                   Finalize seu cadastro
                 </h2>
                 <p className="text-sm text-neutral-400">
-                  Preencha os campos obrigatorios para criar sua conta.
+                  Preencha os campos obrigatorios para criar sua conta e ativar o acesso pelo email.
                 </p>
               </div>
 
@@ -819,7 +716,7 @@ export function CadastroPage() {
                     {
                       tipo: "vendedor" as const,
                       titulo: "Vendedor",
-                      descricao: "Conta com preparo inicial para abrir a loja.",
+                      descricao: "Conta para confirmar o email e abrir a loja pelo perfil.",
                     },
                   ].map((opcao) => {
                     const selecionado = formData.tipoCadastro === opcao.tipo;
@@ -944,125 +841,41 @@ export function CadastroPage() {
                 />
               </div>
 
-              {!isCadastroVendedor ? (
-                <section className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <h3 className="text-base font-semibold text-white">Endereco</h3>
-                      <p className="text-sm text-neutral-400">
-                        Se quiser, voce ja pode adicionar um endereco no cadastro de comprador.
-                      </p>
-                    </div>
-
-                    <BotaoAlternarEndereco
-                      aberto={enderecoExpandido}
-                      onClick={handleToggleEndereco}
-                    />
+              <section className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <h3 className="text-base font-semibold text-white">Endereco</h3>
+                    <p className="text-sm text-neutral-400">
+                      {isCadastroVendedor
+                        ? "Se quiser adiantar a abertura da loja depois da confirmacao, cadastre agora um endereco principal no perfil."
+                        : "Se quiser, voce ja pode adicionar um endereco no cadastro de comprador."}
+                    </p>
                   </div>
 
-                  <BlocoEnderecoCadastro
-                    errors={errors}
-                    formData={formData}
-                    isVisible={mostrarCamposEndereco}
-                    onChange={handleInputChange}
+                  <BotaoAlternarEndereco
+                    aberto={enderecoExpandido}
+                    onClick={handleToggleEndereco}
                   />
-                </section>
-              ) : null}
+                </div>
+
+                <BlocoEnderecoCadastro
+                  errors={errors}
+                  formData={formData}
+                  isVisible={mostrarCamposEndereco}
+                  onChange={handleInputChange}
+                />
+              </section>
 
               {isCadastroVendedor ? (
-                <>
-                  <section className="space-y-4 rounded-3xl border border-yellow-400/15 bg-yellow-400/5 p-4">
-                    <div className="space-y-1">
-                      <h3 className="text-base font-semibold text-white">Dados da loja</h3>
-                      <p className="text-sm text-neutral-400">
-                        Esses dados serao usados para criar sua loja logo apos o cadastro.
-                      </p>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="md:col-span-2">
-                        <CampoCadastro
-                          label="Nome fantasia"
-                          id="nomeFantasia"
-                          name="nomeFantasia"
-                          value={formData.nomeFantasia}
-                          onChange={handleInputChange}
-                          placeholder="Nome da sua loja"
-                          error={errors.nomeFantasia}
-                          icon={<Store className="h-5 w-5" />}
-                        />
-                      </div>
-
-                      <CampoSelect
-                        label="Tipo de documento fiscal"
-                        id="tipoDocumentoFiscalLoja"
-                        name="tipoDocumentoFiscalLoja"
-                        value={formData.tipoDocumentoFiscalLoja}
-                        onChange={handleInputChange}
-                        error={errors.tipoDocumentoFiscalLoja}
-                        icon={<IdCard className="h-5 w-5" />}
-                      >
-                        <option value="1">CPF</option>
-                        <option value="2">CNPJ</option>
-                      </CampoSelect>
-
-                      <CampoCadastro
-                        label="Documento fiscal da loja"
-                        id="documentoFiscalLoja"
-                        name="documentoFiscalLoja"
-                        inputMode="numeric"
-                        maxLength={formData.tipoDocumentoFiscalLoja === "2" ? 18 : 14}
-                        value={formData.documentoFiscalLoja}
-                        onChange={handleInputChange}
-                        placeholder={
-                          formData.tipoDocumentoFiscalLoja === "2"
-                            ? "00.000.000/0000-00"
-                            : "000.000.000-00"
-                        }
-                        error={errors.documentoFiscalLoja}
-                        icon={<IdCard className="h-5 w-5" />}
-                      />
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1">
-                          <h4 className="text-sm font-semibold text-white">Endereco inicial</h4>
-                          <p className="text-sm text-neutral-400">
-                            Se quiser abrir a loja agora, clique no botao de mais para preencher o
-                            endereco inicial. Se preferir, voce pode concluir essa etapa depois no
-                            perfil.
-                          </p>
-                        </div>
-
-                        <BotaoAlternarEndereco
-                          aberto={enderecoExpandido}
-                          onClick={handleToggleEndereco}
-                        />
-                      </div>
-
-                      <BlocoEnderecoCadastro
-                        errors={errors}
-                        formData={formData}
-                        isVisible={mostrarCamposEndereco}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                  </section>
-
-                  <BlocoTermoCheckbox
-                    titulo="Termo fiscal para vendedores"
-                    descricao="Antes de abrir a loja, confirme que voce entendeu os cuidados fiscais basicos da atividade de venda."
-                    id="aceitouTermoFiscalResponsabilidade"
-                    name="aceitouTermoFiscalResponsabilidade"
-                    checked={formData.aceitouTermoFiscalResponsabilidade}
-                    onChange={handleInputChange}
-                    itens={TERMO_FISCAL_VENDEDOR_ITENS}
-                    checkboxLabel={TERMO_FISCAL_VENDEDOR_CHECKBOX_LABEL}
-                    error={errors.aceitouTermoFiscalResponsabilidade}
-                    tone="warning"
-                  />
-                </>
+                <section className="space-y-3 rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-4">
+                  <h3 className="text-base font-semibold text-white">Proximo passo para vender</h3>
+                  <p className="text-sm leading-6 text-neutral-300">
+                    Depois de confirmar o email e entrar na plataforma, abra a opcao
+                    <span className="font-semibold text-white"> Criar loja </span>
+                    no seu perfil para informar nome fantasia, documento fiscal, entrega e dados da
+                    vitrine.
+                  </p>
+                </section>
               ) : null}
 
               <BlocoTermoCheckbox
@@ -1081,13 +894,7 @@ export function CadastroPage() {
                 type="submit"
                 className="h-12 text-sm font-semibold sm:text-base disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isLoading
-                  ? "Cadastrando..."
-                  : isCadastroVendedor
-                    ? temConteudoNoEnderecoCadastro(formData)
-                      ? "Criar conta e loja"
-                      : "Criar conta"
-                    : "Criar conta"}
+                {isLoading ? "Cadastrando..." : "Criar conta"}
               </Botao>
 
               <p className="text-center text-sm text-neutral-400">

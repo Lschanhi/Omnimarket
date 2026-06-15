@@ -7,6 +7,7 @@ namespace Omnimarket.Api.Models.Dtos.Usuarios
         public string Nome { get; set; } = string.Empty;
         public string Sobrenome { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        public bool EmailConfirmado { get; set; }
         public string Role { get; set; } = string.Empty;
         public string? AvatarUrl { get; set; }
         public List<UsuarioPerfilTelefoneLeituraDto> Telefones { get; set; } = new();

@@ -11,14 +11,22 @@ namespace Omnimarket.Api.Services
     {
         private readonly DataContext _context;
         private readonly TokenService _tokenService;
+        private readonly EmailConfirmationService _emailConfirmationService;
 
-        public AuthService(DataContext context, TokenService tokenService)
+        public AuthService(
+            DataContext context,
+            TokenService tokenService,
+            EmailConfirmationService emailConfirmationService)
         {
             _context = context;
             _tokenService = tokenService;
+            _emailConfirmationService = emailConfirmationService;
         }
 
-        public async Task<Usuario> RegistrarUsuario(UsuarioRegistroComContatoDto userDto)
+        public async Task<Usuario> RegistrarUsuario(
+            UsuarioRegistroComContatoDto userDto,
+            string apiBaseUrl,
+            CancellationToken cancellationToken = default)
         {
             if (!CpfValidador.ValidarCpf(userDto.Cpf))
                 throw new Exception("CPF invalido.");
@@ -48,6 +56,8 @@ namespace Omnimarket.Api.Services
                 DataAceiteTermos = userDto.AceitouTermos ? DateTime.UtcNow : null,
                 Role = "User"
             };
+
+            var tokenConfirmacao = _emailConfirmationService.GerarNovaConfirmacao(novoUsuario);
 
             if (userDto.Telefones == null || userDto.Telefones.Count == 0)
                 throw new Exception("Pelo menos um telefone e obrigatorio.");
@@ -96,8 +106,23 @@ namespace Omnimarket.Api.Services
                 }
             }
 
-            await _context.TBL_USUARIO.AddAsync(novoUsuario);
-            await _context.SaveChangesAsync();
+            await _context.TBL_USUARIO.AddAsync(novoUsuario, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            try
+            {
+                await _emailConfirmationService.EnviarEmailConfirmacaoAsync(
+                    novoUsuario,
+                    apiBaseUrl,
+                    tokenConfirmacao,
+                    cancellationToken);
+            }
+            catch
+            {
+                _context.TBL_USUARIO.Remove(novoUsuario);
+                await _context.SaveChangesAsync(cancellationToken);
+                throw;
+            }
 
             return novoUsuario;
         }
@@ -113,6 +138,12 @@ namespace Omnimarket.Api.Services
                 !Criptografia.VerificarPasswordHash(login.Password, usuario.PasswordHash, usuario.PasswordSalt))
             {
                 return null;
+            }
+
+            if (!usuario.EmailConfirmado)
+            {
+                throw new InvalidOperationException(
+                    "Confirme seu email antes de entrar. Use o link enviado para o endereco cadastrado.");
             }
 
             var (token, tokenExpiraEm) = _tokenService.GerarToken(usuario);
