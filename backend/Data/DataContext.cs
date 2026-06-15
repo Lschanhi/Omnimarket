@@ -111,6 +111,7 @@ namespace Omnimarket.Api.Data
             modelBuilder.Entity<FormaPagamento>().HasIndex(f => f.Nome).IsUnique();
             modelBuilder.Entity<PlanoPagamento>().HasIndex(p => p.PedidoId).IsUnique();
             modelBuilder.Entity<UsuarioFotoPerfil>().HasIndex(f => f.UsuarioId).IsUnique();
+            modelBuilder.Entity<Pedido>().HasIndex(p => p.ConfiguracaoMarketplaceId);
 
             modelBuilder.Entity<Endereco>()
                 .Property(e => e.TipoLogradouro)
@@ -267,6 +268,12 @@ namespace Omnimarket.Api.Data
                 .WithOne(i => i.Pedido)
                 .HasForeignKey(i => i.PedidoId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Pedido>()
+                .HasOne(p => p.ConfiguracaoMarketplace)
+                .WithMany()
+                .HasForeignKey(p => p.ConfiguracaoMarketplaceId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<ItensPedido>()
                 .Property(i => i.NomeProdutoSnapshot)

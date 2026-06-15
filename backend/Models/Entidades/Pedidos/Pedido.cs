@@ -59,6 +59,11 @@ namespace Omnimarket.Api.Models.Entidades
         [Range(0, double.MaxValue, ErrorMessage = "Valor total invalido.")]
         public decimal ValorTotalPedido { get; set; }
 
+        public int? ConfiguracaoMarketplaceId { get; set; }
+
+        [ForeignKey(nameof(ConfiguracaoMarketplaceId))]
+        public ConfiguracaoMarketplace? ConfiguracaoMarketplace { get; set; }
+
         [Required]
         [Range(0, double.MaxValue, ErrorMessage = "Taxa fixa de comissao invalida.")]
         public decimal TaxaFixaComissao { get; set; }

@@ -1,0 +1,928 @@
+CENTRO PAULA SOUZA
+ETEC PROF. HORÁCIO AUGUSTO DA SILVEIRA
+Técnico em Desenvolvimento de Sistemas
+Felipe Sardinha Miguel – 251165
+Gustavo Henrique da Silva – 251380
+Icaro Dias Camargo – 190585
+Lucas Soler Chanhi – 251400
+Mauro Alexandre da Silva Roque - 251637
+Trabalho de Conclusão de Curso: OmniMarket
+São Paulo - SP
+2025
+FOLHA DE APROVAÇÃO
+Miguel, Felipe; Silva, Gustavo; Camargo, Icaro; Channi, Lucas; Roque, Mauro. Trabalho de Conclusão de Curso. 21f. Monografia. Desenvolvimento de Sistemas – Centro Paula Souza. Orientador: Quiteria Aparecida de Paula Danno, Valter Costa Junior. Etec Prof. Horácio Augusto da Silveira, 2025.
+Monografia apresentada no componente curricular de (Planejamento e) Desenvolvimento do Trabalho de Conclusão de Curso para o curso de Desenvolvimento de Sistemas da Etec Prof. Horácio Augusto da Silveira.
+Orientador: Prof. (Quiteria Aparecida de Paula Danno, Valter Costa Junior)
+Aprovado em: ____/_____/_________
+BANCA EXAMINADORA:
+__________________________________________________
+[Nome do professor orientador] (orientador)
+__________________________________________________
+[Nome do professor] (titular)
+__________________________________________________
+[Nome do professor] (titular)
+SOBRENOME, Prenomes; SOBRENOME, Prenomes; SOBRENOME, Prenomes; SOBRENOME, Prenomes; SOBRENOME, Prenomes; SOBRENOME, Prenomes. Título do trabalho. 00f (00 = quantidade de páginas). Monografia. Nome do curso – Centro Paula Souza. Orientador: (Nome do Orientador). Etec Prof. Horácio Augusto da Silveira, ano.
+RESUMO
+O presente documento aborda o desenvolvimento do OmniMarket, um marketplace digital concebido para fortalecer microempreendedores e ampliar sua capacidade de competir no ambiente online, apresentando-se como um estudo aplicado que analisa a criação, implementação e validação de uma solução tecnológica de apoio ao pequeno negócio. O trabalho descreve, de forma objetiva, como o projeto identifica as principais dificuldades enfrentadas por microempreendedores — como baixa visibilidade, limitações na gestão de vendas e falta de ferramentas acessíveis para operações digitais — e propõe uma plataforma centralizada que simplifica a comercialização de produtos e serviços. Utiliza-se um método estruturado que inclui pesquisa exploratória, levantamento de requisitos com potenciais usuários, modelagem de funcionalidades, desenvolvimento com práticas de design centrado no usuário e testes funcionais para verificar o desempenho do sistema. Os resultados demonstram que o OmniMarket oferece navegação intuitiva, cadastro simplificado, controle de estoque, processamento de pedidos e análise básica de desempenho, permitindo que microempreendedores ampliem sua presença digital sem necessidade de conhecimentos técnicos avançados. A análise dos testes indica que a plataforma reduz a complexidade operacional e melhora a visibilidade dos negócios, além de promover maior integração entre vendedor e cliente por meio de recursos de comunicação e personalização. Conclui-se que o OmniMarket cumpre seu objetivo principal ao apresentar uma solução viável, acessível e escalável para apoiar microempreendedores no ambiente digital, contribuindo para a inclusão tecnológica e o fortalecimento econômico desse público. O estudo evidencia ainda a importância de plataformas especializadas como ferramenta de democratização do comércio eletrônico e recomenda a continuidade do projeto com expansões voltadas à automação de marketing, meios de pagamento ampliados e módulos de capacitação empreendedora.
+Sumário
+1. INTRODUÇÃO6
+1.1 Objetivos6
+1.2. Justificativa e delimitação do problema6
+1.3. Contribuição dos componentes técnicos7
+2. FUNDAMENTAÇÃO TEÓRICA8
+3. METODOLOGIA9
+3.1 Cenário da Pesquisa9
+3.2. Participantes10
+3.3. Procedimentos de coleta de dados e análise de dados11
+4. DESENVOLVIMENTO PRÁTICO DO PROJETO12
+4.1. Empresa12
+4.1.1 MISSÃO ; VISÃO ; VALORES13
+4.1.2 Organograma13
+4.1.3 Site14
+4.2 Levantamento de requisitos15
+4.3 Situação atual15
+4.4 Estudo de viabilidade16
+4.4.1 Solução de negócio17
+4.4.2 Solução técnica18
+4.4.3 Diferenciais de softwares18
+4.5 Levantamento de Requisitos19
+4.5.1 Requisitos Funcionais24
+4.5.1 Requisitos Não Funcionais29
+4.6 Especificação de Tecnologias e Ferramentas30
+4.7 Modelagem UML30
+4.7.1 Caso de Uso31
+4.7.2 Narrativas de Caso de Uso32
+4.7.3 Diagrama de Classe54
+4.8 Modelagem de Dados56
+4.8.1 Diagrama Entidade e Relacionamento57
+4.8.2 Modelo Lógico do Banco de Dados58
+4.9 Principais telas59
+5. CONSIDERAÇÕES FINAIS62
+REFERÊNCIAS62
+ANEXOS63
+1. INTRODUÇÃO
+1.1 Objetivos
+O projeto OmniMarket tem como objetivo geral desenvolver uma plataforma de marketplace acessível e intuitiva para apoiar microempreendedores na divulgação e comercialização de seus produtos, facilitando a gestão e ampliando a visibilidade de seus negócios no ambiente digital. Para alcançar esse objetivo, o estudo busca identificar as principais dificuldades enfrentadas por microempreendedores no uso de ferramentas online, levantar suas necessidades e expectativas em relação a plataformas de venda e descrever o perfil desse público, considerando seus hábitos de comercialização e limitações tecnológicas. Além disso, procura determinar os requisitos essenciais para a construção do sistema e analisar como a solução pode facilitar a organização das vendas e melhorar a experiência do usuário. Por fim, avalia a eficiência e a usabilidade do protótipo desenvolvido, verificando sua capacidade de atender às demandas observadas e contribuir para o crescimento e autonomia dos microempreendedores.
+1.2. Justificativa e delimitação do problema
+O desenvolvimento do projeto OmniMarket é importante porque responde a uma demanda crescente de microempreendedores que enfrentam dificuldades para ingressar e se manter no ambiente digital. Muitos pequenos negócios ainda dependem de meios informais de divulgação e possuem pouco conhecimento técnico para utilizar plataformas de venda mais complexas, o que limita sua visibilidade e reduz suas oportunidades de crescimento. Além disso, a competitividade atual exige que até os menores empreendedores tenham presença online estruturada, algo que nem sempre é acessível devido ao custo e à falta de suporte adequado. O projeto busca resolver esse problema ao oferecer uma plataforma intuitiva, organizada e funcional, que permita aos microempreendedores divulgar seus produtos, gerenciar suas vendas e alcançar novos clientes de forma prática e acessível. Desenvolver essa solução é relevante não apenas por apoiar o fortalecimento econômico desses empreendedores, mas também por promover inclusão digital, autonomia e maior profissionalização dos pequenos negócios. Dessa forma, o projeto se justifica pela sua relevância social, pela contribuição à comunidade e pelo potencial de transformar a realidade de diversos empreendedores que precisam de ferramentas adequadas para prosperar no mercado digital.
+
+1.3. Contribuição dos componentes técnicos
+O desenvolvimento do projeto OmniMarket contou com a aplicação de diversos conteúdos técnicos fundamentais para a construção de uma solução funcional e alinhada às necessidades dos microempreendedores. Foram utilizados conhecimentos de programação para estruturar as funcionalidades básicas do sistema, permitindo o cadastro de usuários, produtos e a organização das informações dentro da plataforma. Os conceitos de desenvolvimento web foram essenciais para criar as interfaces, determinar a navegação entre as páginas e garantir uma experiência visual agradável e intuitiva para o usuário. A análise de sistemas contribuiu para a definição dos requisitos funcionais e não funcionais, além da modelagem dos fluxos e das interações por meio de diagramas, assegurando que o sistema fosse coerente e bem estruturado. O uso de banco de dados permitiu organizar, armazenar e gerenciar informações de forma segura e eficiente, garantindo a integridade dos dados cadastrados pelos microempreendedores. Em conjunto, todos esses conteúdos técnicos permitiram transformar a ideia inicial do marketplace em uma solução prática, moderna e acessível ao público-alvo.
+2. FUNDAMENTAÇÃO TEÓRICA
+3. METODOLOGIA
+3.1 Cenário da Pesquisa
+O projeto OmniMarket se desenvolve no contexto dos microempreendedores, um grupo que enfrenta desafios constantes para se inserir no ambiente digital e competir em um mercado cada vez mais tecnológico. Esses empreendedores, em sua maioria, dependem de recursos limitados e possuem pouca familiaridade com ferramentas digitais mais avançadas, o que dificulta a divulgação de seus produtos, o alcance de novos clientes e a organização de suas vendas. O cenário analisado revela que muitos utilizam apenas redes sociais de forma informal, sem acesso a plataformas estruturadas que ofereçam gestão, visibilidade e suporte adequado. Diante disso, o problema investigado consiste na dificuldade desses microempreendedores em acessar soluções digitais acessíveis, intuitivas e eficazes, capazes de facilitar a comercialização de seus produtos e fortalecer sua presença online. O projeto busca compreender esse cenário para propor uma plataforma que atenda diretamente essas necessidades.
+3.2. Participantes
+A pesquisa realizada para o desenvolvimento do projeto OmniMarket contou com a participação de estudantes e colegas da própria unidade de estudo, que contribuíram como respondentes por meio de questionários e feedbacks sobre o uso de ferramentas digitais. Esses participantes foram selecionados por representarem perfis variados de usuários, permitindo identificar diferentes níveis de familiaridade com tecnologia, além de levantar percepções sobre usabilidade, dificuldades e expectativas relacionadas a plataformas digitais. Embora não sejam microempreendedores formais, os participantes auxiliaram na compreensão geral das necessidades de usuários iniciantes no ambiente digital, fornecendo informações importantes para a construção de uma solução acessível e coerente com o público-alvo do projeto.e na manutenção de pequenos comércios, que representam uma parcela significativa dos negócios formais no país. Ao oferecer uma ferramenta voltada especificamente para esse público, o projeto contribui para reduzir desigualdades tecnológicas e promover inclusão digital. Do ponto de vista acadêmico, o estudo amplia discussões sobre inovação, empreendedorismo e plataformas digitais, fortalecendo o campo de pesquisas aplicadas. Além disso, o desenvolvimento do OmniMarket beneficia diretamente o contexto local onde o projeto é aplicado, pois fornece aos microempreendedores participantes uma solução prática que pode melhorar seus processos de venda, divulgação e relacionamento com clientes.
+3.3. Procedimentos de coleta de dados e análise de dados
+A coleta de dados para o desenvolvimento do projeto OmniMarket foi realizada por meio de questionários elaborados e distribuídos utilizando a ferramenta Google Forms, o que permitiu alcançar os participantes de maneira prática e organizada. O formulário continha perguntas objetivas e subjetivas que buscavam identificar o nível de familiaridade dos usuários com plataformas digitais, suas dificuldades mais frequentes e suas expectativas em relação a sistemas de venda online. Após a coleta, as respostas foram analisadas por meio da própria ferramenta, que permitiu visualizar gráficos, porcentagens e padrões de comportamento dos participantes. Além disso, as respostas discursivas foram examinadas de forma qualitativa, permitindo identificar tendências, opiniões recorrentes e pontos que necessitavam de maior atenção no desenvolvimento da plataforma. Esse processo possibilitou transformar os dados obtidos em informações úteis, que serviram de base para definir requisitos, ajustar funcionalidades e orientar a construção da solução.
+4. DESENVOLVIMENTO PRÁTICO DO PROJETO
+4.1. Empresa
+A OmniMarket é uma plataforma digital criada com o objetivo de oferecer suporte e oportunidades para microempreendedores que enfrentam dificuldades para divulgar e vender seus produtos no ambiente online. A empresa surge como uma resposta à crescente necessidade de inclusão tecnológica, especialmente entre pequenos negócios que não possuem recursos, conhecimento técnico ou acesso a ferramentas profissionais de vendas. A OmniMarket foi idealizada para ser um marketplace acessível, intuitivo e funcional, permitindo que empreendedores cadastrem seus produtos, organizem suas vendas e ampliem sua visibilidade de forma rápida e simplificada. Além disso, a plataforma busca reduzir as barreiras encontradas pelos microempreendedores ao oferecer uma experiência de uso clara, amigável e adaptada a diferentes perfis de usuários, incluindo aqueles com pouca familiaridade com tecnologia. Seu propósito também está alinhado ao fortalecimento econômico e social, pois incentiva o crescimento de pequenos negócios e promove maior participação no mercado digital, contribuindo para o desenvolvimento local e o aumento da autonomia financeira dos vendedores. Assim, a OmniMarket se destaca como uma solução moderna, relevante e socialmente impactante, criada especialmente para transformar a realidade de empreendedores que necessitam de suporte acessível para expandir seus negócios no mundo digital.
+4.1.1 MISSÃO ; VISÃO ; VALORES
+A identidade da OmniMarket é definida por sua missão de oferecer uma plataforma digital acessível e intuitiva que possibilite aos microempreendedores ampliar sua presença no mercado online, facilitando a divulgação de seus produtos e promovendo autonomia na gestão de seus negócios. Sua visão é tornar-se uma das principais referências no apoio tecnológico a pequenos empreendedores, reconhecida pela capacidade de transformar desafios em oportunidades e impulsionar a inclusão digital. Os valores que orientam a empresa incluem acessibilidade, garantindo que qualquer usuário consiga utilizar a plataforma; transparência, mantendo relações claras e éticas; inovação, buscando constantemente melhorias e novas soluções; inclusão, ao promover oportunidades para todos os empreendedores; qualidade, oferecendo um ambiente seguro e funcional; e incentivo ao empreendedorismo, valorizando o esforço e o crescimento dos pequenos negócios.
+4.1.2 Organograma
+O organograma da OmniMarket representa de forma simples e visual a estrutura organizacional definida para o projeto, destacando as funções essenciais envolvidas no desenvolvimento da plataforma. Ele mostra a divisão das responsabilidades entre as áreas, como gestão, desenvolvimento, design e documentação, permitindo compreender rapidamente como o trabalho foi distribuído dentro da equipe. Essa representação facilita a organização interna, deixa claras as atribuições de cada integrante e garante uma visão geral do funcionamento do projeto durante sua execução.
+4.1.3 Site
+A seguir, são apresentadas algumas codificações desenvolvidas para o projeto OmniMarket, envolvendo tanto o front-end quanto o back-end da plataforma. Esses trechos ilustram parte da estrutura do sistema, demonstrando como foram implementadas funcionalidades essenciais, a organização do código e a integração entre as camadas da aplicação para garantir o funcionamento completo do site.
+4.2 Levantamento de requisitos
+Os requisitos foram levantados com o objetivo de compreender de forma precisa o que a plataforma OmniMarket deve oferecer e como ela deve funcionar para atender às necessidades dos microempreendedores. A definição desses requisitos é essencial porque permite transformar o problema identificado em soluções concretas, garantindo que cada funcionalidade do sistema esteja alinhada às expectativas dos usuários e ao propósito do projeto. Além disso, o levantamento de requisitos orienta todas as etapas do desenvolvimento, desde a modelagem das telas e a organização do banco de dados até a programação e a realização dos testes. Ele também reduz ambiguidades, evita retrabalhos e assegura que o produto final seja coerente, funcional e eficiente. Assim, os requisitos são fundamentais para dar clareza ao projeto, estabelecer prioridades e garantir que a plataforma realmente resolva os problemas enfrentados pelo público-alvo.
+4.3 Situação atual
+Atualmente, muitos microempreendedores realizam seu trabalho de forma informal e limitada, utilizando principalmente redes sociais e aplicativos de mensagens para divulgar seus produtos e realizar vendas. Embora esses meios ofereçam alguma visibilidade, eles não garantem organização adequada, controle eficiente de pedidos ou um espaço profissional dedicado às vendas. Na maioria dos casos, o microempreendedor registra informações manualmente, administra estoques de forma improvisada e depende da disponibilidade de clientes para responder mensagens e confirmar pedidos, o que torna todo o processo lento e propenso a erros. Além disso, a falta de uma plataforma estruturada dificulta o acesso a novos clientes, reduz a credibilidade do negócio e impede que os produtos sejam exibidos de forma atrativa. Como consequência, muitos empreendedores enfrentam baixa visibilidade, dificuldade em gerenciar suas vendas e falta de ferramentas que facilitem seu crescimento no ambiente digital. Esses problemas evidenciam a necessidade de uma solução prática e acessível, como a OmniMarket, que ofereça organização, profissionalismo e melhores oportunidades de venda.
+4.4 Estudo de viabilidade
+O estudo de viabilidade do projeto OmniMarket demonstra que a solução é tecnicamente, economicamente e operacionalmente viável, considerando o contexto dos microempreendedores e os recursos necessários para a implementação da plataforma. Do ponto de vista técnico, o desenvolvimento do sistema pode ser realizado com tecnologias acessíveis, amplamente utilizadas e compatíveis com os conhecimentos adquiridos durante o curso, o que reduz custos e facilita a manutenção. Em termos econômicos, a plataforma apresenta baixo custo de implementação inicial, já que grande parte das ferramentas utilizadas, como editores de interface e modelagem, são gratuitas. Além disso, o modelo de negócio do marketplace pode gerar retorno futuro com possíveis planos de assinatura ou taxas simbólicas, tornando sua continuidade sustentável. No aspecto operacional, a solução é simples de usar e atende diretamente às necessidades identificadas na pesquisa, oferecendo suporte aos microempreendedores que têm dificuldade de acessar ferramentas digitais mais complexas. Dessa forma, o projeto mostra-se viável, relevante e com potencial de gerar impacto positivo na comunidade-alvo.
+4.4.1 Solução de negócio
+4.4.2 Solução técnica
+A solução técnica da plataforma OmniMarket foi planejada para garantir estabilidade, organização e facilidade de uso, considerando tecnologias acessíveis e compatíveis com o desenvolvimento do projeto. A infraestrutura proposta inclui a utilização de um servidor de hospedagem simples, capaz de suportar o tráfego inicial do marketplace e permitir futuras expansões conforme a demanda cresça. O banco de dados foi estruturado de forma relacional, permitindo armazenar informações de usuários, produtos, categorias, pedidos e avaliações de maneira organizada e segura. Para o desenvolvimento da aplicação, foram utilizadas linguagens adequadas ao ambiente web, como HTML e CSS no front-end, responsáveis pela interface visual e experiência do usuário. No back-end, são empregadas tecnologias que possibilitam a comunicação entre o sistema e o banco de dados, garantindo o funcionamento das funcionalidades internas. Ferramentas como Figma, Visual Paradigm e Draw.io complementam essa estrutura, auxiliando no design das telas, na modelagem UML e na representação dos fluxos internos do sistema. Essa combinação de elementos técnicos oferece uma base sólida para o funcionamento do OmniMarket e assegura que a plataforma seja eficiente, responsiva e segura para seus usuários.
+4.4.3 Diferenciais de softwares
+O OmniMarket se diferencia dos sistemas já existentes por oferecer uma plataforma simples, acessível e totalmente voltada para microempreendedores iniciantes. Enquanto muitos marketplaces são complexos ou exigem alto nível técnico, o OmniMarket prioriza uma navegação intuitiva, permitindo que qualquer usuário gerencie produtos, pedidos e vendas com facilidade. Outro diferencial importante é a possibilidade de realizar login usando apenas o CPF, tornando o acesso mais rápido e prático. Além disso, a plataforma reúne em um único ambiente todas as ferramentas essenciais para o pequeno empreendedor, trazendo uma experiência mais clara, organizada e adaptada às suas necessidades reais.
+4.5 Levantamento de Requisitos
+4.5.1 Requisitos Funcionais
+Os requisitos funcionais representam todas as ações, comportamentos e funcionalidades que o sistema deve realizar para atender às necessidades do usuário. Eles descrevem o que o software deve fazer, especificando de maneira objetiva cada função essencial para o funcionamento da plataforma. No caso da OmniMarket, os requisitos funcionais envolvem, por exemplo, permitir o cadastro de usuários, disponibilizar o registro de produtos, exibir os itens à venda, realizar buscas, organizar informações e possibilitar a interação entre o microempreendedor e o sistema.
+4.5.1 Requisitos Não Funcionais
+Os requisitos não funcionais descrevem as características de qualidade que o sistema deve apresentar, determinando como as funções serão executadas e garantindo que a plataforma ofereça uma experiência adequada ao usuário.
+4.6 Especificação de Tecnologias e Ferramentas
+A especificação de tecnologias e ferramentas utilizadas no desenvolvimento do projeto OmniMarket inclui recursos essenciais para a organização, modelagem e criação das interfaces do sistema. O Figma foi empregado para o desenvolvimento dos protótipos e layouts das telas, permitindo a construção de uma interface visual clara, moderna e alinhada às necessidades dos usuários. O Visual Paradigm foi utilizado para a elaboração dos diagramas UML, como casos de uso e diagramas de classe, garantindo uma modelagem estruturada e facilitando a compreensão da lógica do sistema. O pacote Office contribuiu para a criação de documentos, textos, planilhas e apresentações, organizando as informações do projeto de forma profissional e acessível. Além disso, o Draw.io foi utilizado para gerar diagramas de fluxo, mapas visuais e outros elementos gráficos que ajudaram a representar os processos internos da plataforma. Em conjunto, essas ferramentas permitiram um desenvolvimento mais organizado, visual e eficiente, garantindo que cada etapa do projeto fosse bem planejada e documentada.
+4.7 Modelagem UML
+A modelagem UML é fundamental para o desenvolvimento do projeto OmniMarket, pois permite representar de forma visual e organizada a estrutura e o funcionamento do sistema antes mesmo de sua implementação. Os diagramas facilitam o entendimento das funcionalidades, dos fluxos de interação e da relação entre os componentes, garantindo que todos os envolvidos compreendam claramente como o sistema deve operar. Além disso, a UML ajuda a identificar problemas, ajustar processos e planejar a lógica da aplicação com mais precisão, evitando erros durante o desenvolvimento. Dessa forma, os diagramas se tornam uma etapa essencial para orientar a construção da plataforma e assegurar que ela atenda aos requisitos definidos.
+4.7.1 Caso de Uso
+O diagrama de caso de uso representa as principais interações entre os diferentes tipos de usuários e as funcionalidades disponíveis na plataforma OmniMarket. À esquerda, o Usuário Não Logado possui apenas duas ações possíveis: criar uma conta e realizar login, pois ainda não tem acesso às funções internas do sistema. No centro, o Utilizador (usuário autenticado) pode executar ações gerais como adicionar endereço, solicitar cancelamento, editar ou desativar a conta, consultar produtos e visualizar pedidos. Já o Vendedor, representado acima do utilizador, possui funções específicas relacionadas à gestão da loja, como incluir, editar, desativar e consultar produtos e categorias, além de verificar suas vendas. Por fim, o Comprador, localizado abaixo, tem acesso às funcionalidades relacionadas ao processo de compra, como adicionar itens ao carrinho, alterar ou remover produtos, finalizar a compra e avaliar produtos.
+4.7.2 Narrativas de Caso de Uso
+A narrativa de caso de uso é a descrição detalhada e sequencial de como um ator (seja um usuário humano ou um sistema externo) interage com o sistema para atingir um objetivo de valor. Ela é fundamental para especificar os requisitos de um sistema, transformando a intenção de um caso de uso em um roteiro preciso e sem ambiguidades. Uma narrativa completa começa com o Nome e o Ator Principal, define o Objetivo e estabelece as Pré-condições (o estado inicial necessário) e as Pós-condições (o estado final após o sucesso). Seu cerne está nos Fluxos de Eventos, que são listados em passos: o Fluxo Principal descreve a jornada ideal e sem erros ("caminho feliz"); os Fluxos Alternativos detalham variações que ainda levam ao sucesso; e os Fluxos de Exceção abordam erros e falhas que impedem o objetivo. Em suma, este documento serve como a principal fonte de verdade para desenvolvedores implementarem a funcionalidade e para testadores validarem a cobertura de todos os caminhos possíveis.
+Use Case ID
+Adicionar Produto ao Carrinho
+Primary Actor
+Comprador
+Brief Description
+Processo para adicionar um ou mais produtos ao carrinho
+Pre-conditions
+Utilizador Já realizou o login no sistema
+Flow of Events
+
+Actor Input
+System Response
+1
+Escolhe o produto na qual quer adicionar
+
+2
+Consulta se as informações do produto estão corretas no sistema.
+3
+
+Exibe as informações como: (Nome do Produto, Valor unitário e quantidade).
+4
+Utilizador Escolhe a quantidade que quer adicionar.
+
+5
+
+O Sistema Consulta se há disponibilidade do Produto.
+Post-conditions
+Adiciona a Quantidade do produto selecionado ao carrinho.
+Alternative flows and exceptions
+Caso alguma das informações do Produto estiver divergente impossibilitar de adicionar qualquer valor no campo quantidade.Caso o sistema verificar que a quantidade adicionada for maior que a disponível, deixar a quantidade máxima disponível na quantidade.
+Non-behavior requirements
+[Adicionar]: Botão que envia as informações da escolha do produto para o sistema.[Mais(+)]:Botão para adicionar quantidade em unidade (1 a 1) do produto selecionado.[Menos(-)]:Botão para remover a quantidade em unidade (1 a 1) do produto selecionado
+[Quantidade]:Campo multivalorado na qual ao clicar o Utilizados poderá adicionar a quantidade que queira a partir de um teclado numérico.[Cancelar]:Botão que limpa o Formulário e volta para tela inicial do sistema.
+Assumptions
+
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+17/10/2025
+
+Use Case ID
+Finalizar Compras
+Primary Actor
+Comprador
+Brief Description
+Processo para a finalização de compra dos produtos contidos no carrinho.
+Pre-conditions
+Comprador já logado no sistema, adicionado 1 ou mais produto ao carrinho e clicado no botão pagamento.
+Flow of Events
+
+Actor Input
+System Response
+1
+Exibe todas as informações contidas no carrinho como: (Nome do Produto, Valor unitário, quantidade, Valor total do produto e valor total Compra).
+2
+Comprador clica em prosseguir
+3
+
+Consulta o endereço do Comprador
+4
+Exibe as opções de envio disponibilizada pelo Vendedor junto com os valores e prazo de envio.
+5
+Comprador selecionar um opção
+6
+Atualiza o Valor total da Compra.
+7
+
+Exibe as novas informações para confirmações do Comprador
+8
+Comprador confirma as informações.
+9
+Exibe as forma de pagamento existente no sistema.
+10
+Comprador Seleciona a Opção na qual deseja utilizar.
+11
+Sistema Espera a Confirmação de pagamento do sistema Vinda da Instituição Financeira parceira.
+Post-conditions
+Após a confirmação as informações contida no pedido será(o) enviada(s) para o(s) vendedores selecionado(s).
+Alternative flows and exceptions
+Caso Alguma informação errada no pedido o Comprador poderá voltar para a página anterior para alteração do pedido.
+Caso o Endereço selecionado estiver errado mostrar uma mensagem de erro.Caso tiver alguma restrição no método de envio disponibilizado pelo vendedor para o endereço do Comprador não exibir esse método.Caso Alguma informação inserida no Método de pagamento estiver divergente retornar uma mensagem de erro.
+Caso a instituição encontrar alguma divergência nos dados enviado pelo sistema informar para o Comprador e não realizar o pagamento, possibilitando quando for necessário a alteração dos dados.
+Non-behavior requirements
+[Enviar]:Envia as informações para realização do processo de pagamento.
+[Cancelar]:Limpa o Formulário e Cancela o processo de pagamento, retornando a página inicial sem remover os produtos selecionados[Adicionar Cartão]: Botão para Adicionar um Cartão podendo ser de Crédito ou de Débito ao pedido para confirmação da instituição financeira parceira.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+18/10/2025
+Use Case ID
+Avaliar Produto
+Primary Actor
+Comprador
+Brief Description
+Processo para realizar uma avaliação do(s) produto(s) contido dentro de um pedido.
+Pre-conditions
+Comprador já logado no sistema, e realizado a confirmação de recebimento de um pedido dentro do prazo estimado.
+Flow of Events
+
+Actor Input
+System Response
+1
+Consulta as informações do pedido.
+2
+
+Exibe as informações do pedido junto com um sistema de avaliação ao final da lista.
+3
+Comprador Seleciona a nota de sua escolha
+
+4
+
+Sistema exibe uma caixa para adicionar alguma informação ou reclamação.
+5
+Comprador insere sua observação caso queira
+
+Post-conditions
+Sistema adiciona essa avaliação e observação ao pedido para consulta posterior.
+Alternative flows and exceptions
+Não será possível adicionar uma avaliação depois do prazo estimado pelo sistema.
+Não será possível adicionar uma nota negativa na avalição
+Non-behavior requirements
+[Caixa de Diálogo]: Caixa na qual o comprador poderá adicionar alguma observação referente ao pedido entregue.
+[Enviar]:Botão que envia as informações da avaliação para o sistema armazenar ao pedido.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+18/10/2025
+Use Case ID
+Incluir Conta.
+Primary Actor
+Usuario.
+Brief Description
+Processo onde será feito a inclusão da conta
+Pre-conditions
+Utilizador já contendo o aplicativo e já entrou na página para cadastro.
+Flow of Events
+
+Actor Input
+System Response
+1
+Exibe as informações para realização do cadastro
+2
+Insere os dados
+3
+Consulta se as informações obrigatórias foram preenchidas
+4
+Realiza as validações dos dados.
+5
+Consulta se algum dado opcional foi preenchido.
+6
+Realiza a verificação do(s) dado(s).
+Post-conditions
+Após as validações o sistema informa a criação da conta bem sucedida e exibe a página inicial do sistema.
+Alternative flows and exceptions
+Caso o sistema identificar algum erro na hora do preenchimento das informações exibira uma mensagem de erro e voltara para fazer o cadastro novamente.
+Non-behavior requirements
+[Enviar]: Botão que ao ser clicado ira enviar as informações para que sejam analisadas.
+[Voltar]: Botão onde poderá voltar para a tela anterior caso necessário
+[Excluir]: Botão que seja possível excluir todas as informações caso o usuário queira reescrever as informações.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+18/10/2025
+Use Case ID
+Fazer Login
+Primary Actor
+Usuario.
+Brief Description
+Processo no qual é responsável pra fazer login na conta já criada
+Pre-conditions
+Usuario precisa já ter a conta criada
+Flow of Events
+
+Actor Input
+System Response
+1
+Exibe os campos aonde serão informados os dados necessários para que possa encontrar a conta
+2
+Informar os dados que são necessários para fazer o login
+3
+Consulta os dados inseridos.
+Post-conditions
+Caso todas as informações estarem corretas entrara na conta
+Alternative flows and exceptions
+Caso as informações inseridas não estiverem certas o sistema devera exibir uma mensagem falando que os dados não estão corretos
+Non-behavior requirements
+[Entre]: Botão que servira para entrar na conta depois que as informações forem informadas de forma correta
+[Voltar]:Botão que cancela o processo de login e retorna a página inicial do sistema
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+18/10/2025
+Use Case ID
+Adicionar endereço
+Primary Actor
+Utilizador
+Seconde Actor
+Comprador
+Brief Description
+Processo aonde será incluído o endereço na conta já incluída
+Pre-conditions
+Usuário necessita ter a conta já criada e acessado o seu perfil
+Flow of Events
+
+Actor Input
+System Response
+1
+Seleciona a opção de Editar
+
+2
+
+Exibe os dados na qual poderá editar.
+3
+Seleciona a opção adicionar endereço
+
+Habilita o campo de endereço.
+Insere os dados do Endereço
+Valida os dados inseridos.
+Post-conditions
+Após a validação adiciona o endereço ao perfil do Utilizador para seleção na hora da compra
+Alternative flows and exceptions
+Caso o endereço não exista ou não seja compatível com o CEP irá mostrar a mensagem de erro e terá que refazer a adição do endereço
+Non-behavior requirements
+[Adicionar endereço]: Botão que ao ser clicado irá disponibilizar para que seja adicionado o endereço desejado
+[Confirmar]: Botão aonde vai ser confirmado se será aquele endereço mesmo que será o adicionado
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+20/10/2025
+Use Case ID
+Solicitar cancelamento
+Primary Actor
+Utilizador
+Seconde Actor
+Comprador
+Brief Description
+Processo aonde será selecionado o cancelamento de um produto
+Pre-conditions
+Utilizador necessita ter comprado o produto
+Flow of Events
+
+Actor Input
+System Response
+1
+Informar que deseja solicitar o cancelamento
+
+2
+
+Consulta as informações do pedido.
+Exibe as informações para a realização do Cancelamento como(Motivo,Detalhes e Fot/Vídeo do produto.).
+3
+Informar o motivo do cancelamento
+
+Post-conditions
+Caso passe por todos os processos exibir uma mensagem para o comprador alertando que o processo de cancelamento foi realizado com sucesso e segue para analise do responsável
+Alternative flows and exceptions
+Caso o cancelamento não seja aprovado Avisar para  o comprador
+Non-behavior requirements
+[Enviar informações]: Botão aonde será enviado as informações de cancelamento
+[Cancelar Compra]:Botao que inicia o processo de cancelamento da compra.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+20/10/2025
+Use Case ID
+Editar conta
+Primary Actor
+Utilizador
+Seconde Actor
+Comprador
+Brief Description
+Processo aonde será feito a edição dos dados da conta
+Pre-conditions
+Utilizador necessita ter a conta já criada
+Flow of Events
+
+Actor Input
+System Response
+1
+Ir até a aba Editar Conta
+
+2
+
+Mostrar os dados que podem ser alterados
+3
+Editar os dados desejados
+
+Verifica as alterações realizadas
+Post-conditions
+Se estiver tudo certo com os novos dados inserido ira exibir uma mensagem de concluído
+Alternative flows and exceptions
+Se os dados estiverem com algum erro não irá concluir e pedira para que coloque os dados novamente
+Non-behavior requirements
+[Editar Dados]: Botão que ao ser clicado será possível editar os dados desejados
+[Concluir]: Botão que ao ser clicado confirmara qualquer alteração feita
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+20/10/2025
+Use Case ID
+Desativar Conta
+Primary Actor
+Utilizador
+Seconde Actor
+Comprador
+Brief Description
+Processo aonde será feita a desativação da conta
+Pre-conditions
+Utilizador precisa ter a conta criada
+Flow of Events
+
+Actor Input
+System Response
+1
+Deverá ir até a aba Desativar Conta
+
+2
+
+Ira mostrar o botão de desativar a conta
+3
+Seleciona a opção desativar conta
+
+4
+Exibe uma mensagem de  confirmação do cancelamento.
+5
+Confirma a ação
+Post-conditions
+Assim que o utilizador apertar que confirma a desativação irá mostrar uma mensagem que a conta foi desativada com sucesso
+Alternative flows and exceptions
+Caso o utilizador não confirme a desativação voltara para a tela anterior
+Non-behavior requirements
+[Desativar Conta]: Botão aonde será desativado a conta
+[Confirmar]: Botão que ao ser clicado confirmará a desativação da conta
+[Não confirmar]: Botão que ao ser clicado voltara a tela anterior
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+20/10/2025
+Use Case ID
+Consultar Produto
+Primary Actor
+Utilizador
+Seconde Actor
+Comprador
+Brief Description
+Processo que o utilizador ira poder consultar o produto
+Pre-conditions
+Utilizador precisa ter a conta criada
+Flow of Events
+
+Actor Input
+System Response
+1
+Insere o nome do produto ou Vendedor na qual queira procurar
+
+2
+
+Consulta o nome inserido na base de dados do sistema.
+Exibe os Resultados
+3
+Seleciona o produto/Vendedor
+
+Exibe as informações detalhadas da seleção.
+Post-conditions
+Se  sistema não achar nada relacionado a aquela pesquisa ira avisar o utilizador para que refaça a pesquisa de uma outra forma
+Non-behavior requirements
+[Barra de pesquisa]: Aonde será possível pesquisar sobre os produtos desejados
+[Pesquisar]:Botão que envia o nome digitado na barra de pesquisa para a consulta do sistema.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+20/10/2025
+Use Case ID
+Consultar pedidos
+Primary Actor
+Utilizador
+Seconde Actor
+Comprador
+Brief Description
+Processo aonde será possível ver todos os pedidos feitos pelo utilizador
+Pre-conditions
+Utilizador precisa ter feito o pedido
+Flow of Events
+
+Actor Input
+System Response
+1
+Ir até a aba de pedidos
+
+2
+
+Exibe todos os pedidos que tem realizados
+3
+Consultar os pedidos desejados
+
+Exibe de forma detalhada toda a informação daquele pedido.
+Post-conditions
+Após o usuário confirmar todos os pedidos necessários voltara a fazer oque precisa
+Alternative flows and exceptions
+Caso o usuário não tenha pedidos ira exibir uma mensagem falando que não tem pedidos disponíveis
+Non-behavior requirements
+[Ver meus pedidos]: Botão aonde será possível verificar pedidos disponíveis
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+18/10/2025
+Use Case ID
+Incluir Produto
+Primary Actor
+Vendedor
+Brief Description
+Processo para adicionar um produto ao perfil.
+Pre-conditions
+Vendedor já realizou o login no sistema e foi para a página de perfil do Utilizador.
+Flow of Events
+
+Actor Input
+System Response
+1
+Seleciona a opção de Adicionar Produto
+
+2
+Exibe as informações para inclusão de um produto no sistema.
+3
+Insere as informações.
+4
+
+Sistema Confirma as informações inseridas pelo Utilizador.
+5
+
+Exibe as informações inseridas para a confirmação do Vendedor.
+6
+Confirma as informações no botão de adicionar.
+
+Post-conditions
+Adiciona o produto ao perfil do Vendedor exibindo por categoria.
+Alternative flows and exceptions
+O produto não será adicionado na loja caso não seja informado a quantidade dele no estoque.
+O produto não será adicionado à loja caso não seja incluído em uma categoria.Caso alguma divergência na inclusão das informações não será possibilitada a inclusão do produto ao perfil.
+Non-behavior requirements
+[Adicionar Produto]:Botão que envia o Vendedor para a página de inclusão do produto.
+[Adicionar]: Botão que envia as informações do produto inserido para o sistema para validação e inclusão no perfil do Vendedor.
+[Cancelar]:Botão que limpa o formulário e retorna a página de perfil do Utilizador.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+18/10/2025
+Use Case ID
+Editar Produto
+Primary Actor
+Vendedor
+Brief Description
+Processo para Editar as informações dos produtos.
+Pre-conditions
+Vendedor já realizou o login no sistema, foi para a página de perfil do Utilizador e já ter cadastrado pelo menos 1 produto
+Flow of Events
+
+Actor Input
+System Response
+1
+Exibe todos os produtos cadastrados pelo Vendedor
+2
+Seleciona o produto a qual quer alterar
+3
+Exibe todas as informações pertinente do produto
+4
+Clica no Botão editar
+5
+Exibe a(s) informação(ões) na qual o Vendedor pode alterar
+6
+Realiza a alteração
+7
+Verifica se a alteração é válida.
+8
+Realiza a alteração.
+Post-conditions
+Exibe a nova alteração para o Vendedor e para outros utilizadores para compra
+Alternative flows and exceptions
+Caso o formato do campo não estiver de acordo informa uma mensagem informando o tipo do campo.
+Caso o Vendedor tentar alterar um campo indisponível informa que alteração não é possível.
+Non-behavior requirements
+[Alterar]:Botão que exibe as informações para alteração dos dados no sistema.
+[Enviar]:Botão que envia a alteração para validação do sistema e após realiza a alteração.
+[Cancelar]:Botão que cancela o processo de alteração dos dados do produto e limpa o formulário.
+Assumptions
+Ter um produto à venda.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+18/10/2025
+Use Case ID
+Desativar Produto
+Primary Actor
+Vendedor
+Brief Description
+Processo para desativação de um produto no sistema
+Pre-conditions
+Vendedor já realizou o login no sistema, foi para a página de perfil do Utilizador e já ter cadastrado pelo menos 1 produto
+Flow of Events
+
+Actor Input
+System Response
+1
+Seleciona um produto que está disponível.
+
+2
+Exibe as informações do produto selecionado
+3
+Seleciona a opção de Excluir
+4
+Verifica se é possível a remoção do produto.
+5
+
+Exibe uma mensagem de Confirmação para o Vendedor.
+6
+Confirma a ação.
+7
+
+Desativa o produto para consulta de outros Utilizadores.
+Post-conditions
+Após a confirmação  status do produto é alterado para INATIVO e ele deixa de aparecer em consultas públicas.
+Alternative flows and exceptions
+Caso não for possível a desativação informar o erro.
+Não será possível desfazer um exclusão de produto o Vendedor deverá realizar uma nova inclusão do mesmo produto porem com código diferente.
+Non-behavior requirements
+[Excluir]:Botão para realizar o processo de exclusão do produto.
+[Sim]:Botão que confirma a mensagem do sistema.
+[Não]:Botão que cancela a ação de Exclusão.
+Assumptions
+Tem um produto cadastrado na loja.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+18/10/2025
+Use Case ID
+Entrar com Produto
+Primary Actor
+Vendedor
+Brief Description
+Adicionar produtos no estoque.
+Pre-conditions
+Vendedor já realizou o login no sistema, foi para a página de perfil do Utilizador e já ter cadastrado pelo menos 1 produto
+Flow of Events
+
+Actor Input
+System Response
+1
+Seleciona um produto.
+
+2
+
+Exibe as informações daquele produto.
+3
+Clica no botão “Estoque”.
+
+4
+
+Consulta a quantidade disponível do produto.
+5
+Exibe a quantidade disponível do produto.
+6
+
+Exibe um Caixa multivalorada para o cliente alterar o estoque.
+7
+Insere a quantidade atualizado do produto.
+
+8
+
+Verifica se o campo foi preenchido corretamente.
+9
+Exibe uma mensagem de confirmação de alteração do Estoque.
+10
+Confirma a alteração
+11
+Atualiza a Quantidade do produto no sistema.
+Post-conditions
+Quantidade do produto no estoque é alterada.
+Alternative flows and exceptions
+Caso o cliente queira subtrair valores, será pedido o envio de uma NF(Venda), para realização do processo de remoção.
+Non-behavior requirements
+[Estoque]:Botão que habilita uma caixa de texto na qual o Vendedor poderá subtrair ou adicionar valores.
+[Cancelar]:Botão que para o processo de alteração do estoque do produto e limpa o formulário.
+Assumptions
+Tem um produto cadastrado na loja.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+19/10/2025
+Use Case ID
+Incluir Categoria
+Primary Actor
+Vendedor
+Brief Description
+Processo para Criação de uma ou mais categoria para agrupar os produtos.
+Pre-conditions
+Vendedor já realizou o login no sistema, foi para a página de perfil do Utilizador.
+Flow of Events
+
+Actor Input
+System Response
+1
+Ao abrir o seu perfil, poderá clicar em “Adicionar Categoria”
+
+2
+
+Exibe as informações para a criação de uma categoria.
+3
+Insere os dados
+
+4
+
+Verifica os dados inseridos
+Exibe a categoria criada
+Post-conditions
+Após a criação categoria será possível adicionar produtos nela e será exibida para os demais Utilizadores ao consultar o Vendedor.
+Alternative flows and exceptions
+Caso algumas das informações for divergente informar com uma mensagem do erro específico.
+Non-behavior requirements
+[Adicionar Categoria]:Botão que exibe a página para a criação das categorias.
+[Enviar]:Botão que envia os dados inseridos para a validação e criação para o sistema.
+[Cancelar]:Botão que para o processo de criação da categoria e retorna para a página do perfil do Utilizador.
+Assumptions
+Para a Exibição da categoria criada será necessária a inclusão de 1 ou mais produtos nela.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+19/10/2025
+Use Case ID
+Consultar Categoria
+Primary Actor
+Vendedor
+Brief Description
+Processo para consultar as informações de uma categoria criada.
+Pre-conditions
+Vendedor já realizou o login no sistema, foi para a página de perfil do Utilizador e já ter cadastrado pelo menos 1 produto
+Flow of Events
+
+Actor Input
+System Response
+1
+Abre o perfil para consultas.
+
+2
+
+O sistema exibe todas as categorias criadas pelo Vendedor.
+3
+Seleciona uma categoria.
+
+4
+
+O sistema exibe as informações detalhadas da categoria: nome, descrição, produtos vinculados e data/hora de criação.
+Post-conditions
+O Vendedor visualiza as informações completas da categoria selecionada.
+Alternative flows and exceptions
+
+Non-behavior requirements
+Assumptions
+Já tem uma categoria criada.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+19/10/2025
+Use Case ID
+Editar Categoria
+Primary Actor
+Vendedor
+Brief Description
+Processo para editar dados de uma categoria.
+Pre-conditions
+Vendedor já realizou o login no sistema, foi para a página de perfil do Utilizador e já ter cadastrado pelo menos 1 categoria.
+Flow of Events
+
+Actor Input
+System Response
+1
+Seleciona uma categoria do perfil.
+
+2
+
+Exibe as informações da categoria.
+3
+Clica no botão “Editar”.
+
+4
+
+Permita a edição do nome, da descrição e adicionar ou remover produtos desta categoria.
+5
+Realiza as alterações desejadas na categoria.
+
+6
+
+Exibe uma mensagem de confirmação das alterações.
+7
+Confirma a(s) Alterações.
+
+8
+
+O Sistema validas as alterações
+Post-conditions
+As informações da categoria são atualizadas e exibidas no perfil do Vendedor para os demais utilizadores.
+Alternative flows and exceptions
+Caso algumas das alterações for inválida informar o erro específico e solicitar a arrumação do mesmo.
+Non-behavior requirements
+[Editar]:Botão que possibilita o Vendedor visualizar e Alterar as informações da categoria.
+[Adicionar]:Botão que adiciona um produto à categoria.
+[Remover]:Botão que remove um produto a categoria.
+[Cancelar]:Botão que para o processo de alteração e limpa o formulário.
+Assumptions
+Ter uma categoria criada.
+Ter um produto salva nessa categoria.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+19/10/2025
+Use Case ID
+Desativar Categoria
+Primary Actor
+Vendedor
+Brief Description
+Processo para Desativar uma categoria do perfil.
+Pre-conditions
+Vendedor já realizou o login no sistema, foi para a página de perfil do Utilizador e já ter cadastrado pelo menos 1 categoria.
+Flow of Events
+
+Actor Input
+System Response
+1
+Seleciona a categoria.
+
+2
+
+Exibe as informações da categoria.
+3
+Clica no botão “Desativar”.
+
+4
+
+Exibe uma mensagem de confirmação.
+5
+Confirma a desativação da categoria.
+6
+Desativa a categoria e remove ela da exibição no perfil.
+Post-conditions
+Desativa a categoria para a exibição para os demais Utilizadores.
+Alternative flows and exceptions
+Caso o usuário remova todos os produtos de uma categoria em exibição, ela será automaticamente desativada.
+Non-behavior requirements
+O sistema deve exibir mensagem de confirmação: “Categoria desativada com sucesso.
+[Desativar]:Botão que envia a ação.
+[Sim]:Botão para a confirmação da desativação.
+[Não]:Botão que cancelar o processo.
+Source
+Remover aquela categoria e os produtos nela contidos de exibição.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+19/10/2025
+Use Case ID
+Consultar Vendas
+Primary Actor
+Vendedor
+Brief Description
+Processo para a realização de uma Consultar ao histórico de vendas e suas situações.
+Pre-conditions
+Vendedor já realizou o login no sistema, foi para a página de perfil do Utilizador
+Flow of Events
+
+Actor Input
+System Response
+1
+Seleciona a opção “Vendas”
+
+2
+
+Exibe as vendas em ordem cronológica e disponibiliza filtros de tempo para a pesquisa.
+3
+
+As vendas são exibidas com o status atual (em andamento, canceladas ou finalizadas).
+4
+Seleciona uma venda para analisá-la.
+
+5
+
+Exibe as informações daquelas vendas.
+Post-conditions
+O usuário saberá a situação de cada venda.
+Alternative flows and exceptions
+
+Non-behavior requirements
+Para cada status de pedido o sistema exibe: Nome do cliente, produtos, valor unitário, quantidade de produtos, valor total da compra, endereço do cliente, forma de pagamento. As vendas finalizadas terão também: Confirmação de Recebimento e caso tenha a Avaliação do pedido.
+As vendas em andamento terão também: status do pagamento.
+As vendas canceladas terão também: Confirmação de Recebimento, caso tenha a Avaliação do pedido, Motivo do Cancelamento, Foto do produto e as Tratativas tomadas pelas partes.
+Assumptions
+Tem um produto em uma categoria disponibilizada para compra. Tem uma venda realizada.
+Author
+Grupo Jesko de Tcc do OminiMarket.
+Date
+19/10/2025
+4.7.3 Diagrama de Classe
+O Diagrama de Classes é a peça central da Linguagem de Modelagem Unificada (UML), atuando como um projeto da estrutura estática de um sistema orientado a objetos. Seu objetivo é ilustrar as classes do sistema, os dados que elas contêm (os atributos) e os comportamentos que podem executar (as operações ou métodos), além de detalhar as conexões lógicas entre elas. Cada classe é representada por um retângulo dividido, que lista seu nome, atributos e operações. As interações entre essas classes são definidas pelos Relacionamentos, sendo os mais comuns a Associação (incluindo a Multiplicidade, que indica quantos objetos se conectam), a Generalização (que representa herança, o relacionamento "É um tipo de"), e as formas de relacionamento "todo-parte" conhecidas como Agregação e Composição. Em essência, o Diagrama de Classes serve como um mapa arquitetônico, crucial para a comunicação entre analistas e desenvolvedores, e como base direta para a codificação e o mapeamento de estruturas de banco de dados.
+4.8 Modelagem de Dados
+A Modelagem de Dados é o processo de criação de um projeto visual que estabelece a estrutura de um banco de dados, atuando como o plano central que define como as informações serão organizadas, armazenadas e relacionadas. Em sua essência, ela trabalha com três conceitos básicos: Entidades, que são os objetos de interesse (como "Cliente"); Atributos, que são as características dessas entidades (como o "Nome" do Cliente); e Relacionamentos, que definem as conexões lógicas entre as entidades (por exemplo, um Cliente faz um Pedido). Esse processo se desdobra em três níveis: o Conceitual, que foca nos requisitos de negócio; o Lógico, que detalha a estrutura de forma independente da tecnologia; e o Físico, que traduz o modelo para a implementação real no sistema de banco de dados escolhido. A modelagem é crucial porque garante a qualidade e consistência dos dados, elimina redundâncias, e é fundamental para otimizar o desempenho e a manutenção de qualquer sistema de informação.
+4.8.1 Diagrama Entidade e Relacionamento
+4.8.2 Modelo Lógico do Banco de Dados
+4.9 Principais telas
+A seguir, apresentamos o layout mobile desenvolvido para o site da OmniMarket. Esse design foi criado com o objetivo de garantir uma navegação simples, rápida e intuitiva em dispositivos móveis, considerando que grande parte dos microempreendedores e consumidores utiliza o celular como principal meio de acesso à internet. O layout foi planejado para oferecer uma visualização organizada dos produtos, botões de fácil identificação e menus compactos que facilitam o uso do sistema em telas menores.
+O layout desenvolvido para a versão desktop do site da OmniMarket foi planejado para oferecer uma experiência visual ampla, organizada e funcional, aproveitando melhor o espaço disponível em telas maiores. A estrutura apresenta menus bem distribuídos, áreas de navegação destacadas e seções que permitem ao usuário visualizar mais informações ao mesmo tempo, como listagens completas de produtos, detalhes da loja e opções de gerenciamento. A disposição dos elementos facilita o acesso rápido às principais funcionalidades, garantindo que vendedores e compradores consigam utilizar a plataforma de maneira eficiente e confortável.
+5. CONSIDERAÇÕES FINAIS
+REFERÊNCIAS
+LARMAN, Craig.Utilizando UML e Padrões. 3. ed. Porto Alegre: Bookman, 2004.
+PRESSMAN, Roger S.; MAXIM, Bruce R.Engenharia de Software: Uma Abordagem Profissional. 8. ed. Porto Alegre: AMGH, 2016.
+SOMMERVILLE, Ian.Engenharia de Software. 10. ed. São Paulo: Pearson, 2019.
+ELMASRI, Ramez; NAVATHE, Shamkant.Sistemas de Banco de Dados. 7. ed. São Paulo: Pearson, 2019.
+OBJECT MANAGEMENT GROUP (OMG).Unified Modeling Language (UML) Specification. Disponível em: https://www.uml.org/. Acesso em: 2 dez. 2025.
+WROBLEWSKI, Luke.Mobile First. Berkeley: A Book Apart, 2011.
+ANEXOS
+A pesquisa quantitativa realizada no projeto OmniMarket teve como objetivo identificar, por meio de dados numéricos, as principais necessidades dos usuários e as dificuldades enfrentadas pelos microempreendedores no ambiente digital. O questionário foi aplicado pelo Google Forms dentro da unidade de estudo, permitindo coletar respostas fechadas que facilitaram a análise estatística. Os resultados foram organizados em gráficos e tabelas, evidenciando padrões como o nível de familiaridade com tecnologia e o interesse em uma plataforma simples para divulgação de produtos. Essa abordagem quantitativa forneceu uma base objetiva e confiável para orientar o desenvolvimento das funcionalidades do sistema.

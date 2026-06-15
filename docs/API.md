@@ -53,6 +53,5 @@
 
 - A API usa JWT Bearer.
 - Parte das rotas exige autenticacao; o modulo admin exige role `Admin`.
-- Ainda nao existe endpoint de health check.
+- A API expoe `GET /health` e `GET /health/database` para monitoramento e diagnostico.
 - O Swagger permanece habilitado para exploracao e teste.
-

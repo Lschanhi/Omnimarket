@@ -2,38 +2,40 @@
 
 ## 1. Objetivo
 
-Planejar a validacao funcional do OmniMarket com foco nos fluxos de cadastro, criacao de loja, cadastro de produto, carrinho, checkout e pagamento com PIX demonstrativo.
+Planejar a validacao funcional do OmniMarket com foco no ciclo atual de onboarding:
+
+- cadastro de conta
+- confirmacao obrigatoria de e-mail
+- liberacao do primeiro acesso para comprador e vendedor
 
 ## 2. Escopo
 
-### Dentro do escopo
+### Dentro do escopo deste ciclo
 
-- cadastro de comprador
-- cadastro de vendedor
-- abertura de loja por usuario que ja era comprador
-- cadastro e manutencao basica de produto
-- adicao de um ou mais itens ao carrinho
-- conclusao do checkout
-- pagamento com PIX demonstrativo
+- cadastro de usuario como comprador
+- cadastro de usuario como vendedor
+- envio do e-mail de confirmacao apos o cadastro
+- confirmacao da conta pelo link recebido no e-mail
+- bloqueio de login antes da confirmacao
+- liberacao do login apos a confirmacao
+- rejeicao de cadastro com e-mail nao permitido
 
-### Fora do escopo
+### Fora do escopo deste ciclo
 
-- integracao com meios de pagamento reais
-- conciliacao financeira
-- validacoes fiscais externas
-- testes de carga e estresse
+- criacao de loja apos o login
+- cadastro e manutencao de produto
+- carrinho, checkout e pagamento
+- fluxos administrativos
+- upload de arquivos e imagens
 
 ## 3. Itens a testar
 
-- Tela de cadastro
-- Perfil do usuario
-- Modal de criacao de loja
-- Modal de cadastro de produto
-- Carrinho
-- Checkout
-- Tela de confirmacao do pedido
-- Modal de PIX demonstrativo
-- Tela de sucesso do pedido
+- tela de cadastro
+- tela de login
+- tela de confirmacao de e-mail
+- endpoint `POST /api/usuario/registrar`
+- endpoint `GET /api/auth/confirmar-email`
+- endpoint `POST /api/auth/login`
 
 ## 4. Estrategia de teste
 
@@ -46,33 +48,35 @@ Execucao guiada dos roteiros descritos em `docs/MANUAL_DE_TESTE.md`.
 Verificacao rapida de:
 
 - abertura do frontend
-- abertura do backend
-- login
-- navegação basica
-- criacao e conclusao de pedido
+- resposta do backend
+- acesso as rotas `/cadastro`, `/login` e `/confirmar-email`
+- envio do e-mail de confirmacao
 
 ### Testes de regressao focal
 
 Conferencia dos pontos mais sensiveis:
 
-- cadastro com campos opcionais recolhidos
-- persistencia de endereco principal
-- uso do mesmo usuario primeiro como comprador e depois como vendedor
-- revisao do checkout para qualquer forma de pagamento
-- fluxo demonstrativo de PIX
+- comprador e vendedor usam o mesmo formulario
+- login deve falhar antes da confirmacao do e-mail
+- login deve funcionar apos a confirmacao do e-mail
+- dominios temporarios ou de teste devem ser rejeitados
+- cadastro de vendedor nao deve criar loja automaticamente
 
 ## 5. Ambiente de teste
 
 ### Aplicacao
 
-- Frontend React/Tailwind em execucao local ou publicado
-- Backend .NET em execucao local ou publicado
+- frontend React/Tailwind em execucao local ou publicado
+- backend .NET em execucao local ou publicado
 
 ### Configuracao minima
 
-- Navegador atualizado
-- Banco de dados acessivel
-- Variaveis de ambiente configuradas
+- navegador atualizado
+- banco de dados acessivel e atualizado
+- `SmtpEmail:Enabled=true`
+- `SmtpEmail:Host`, `Port`, `Username`, `Password` e `FromEmail` configurados
+- `EmailConfirmation:FrontendBaseUrl` apontando para a URL do frontend em teste
+- pelo menos um e-mail real sob controle do testador para receber os links
 
 ### Comandos uteis
 
@@ -84,62 +88,63 @@ npm --prefix frontend run dev
 
 ## 6. Dados de teste
 
-| Massa | Descricao | Finalidade |
-| --- | --- | --- |
-| `MT-01` | Comprador sem endereco | Validar endereco no checkout |
-| `MT-02` | Comprador com endereco | Validar compra direta |
-| `MT-03` | Vendedor com loja | Validar catalogo e venda |
-| `MT-04` | Comprador que vai abrir loja | Validar migracao operacional |
-| `MT-05` | Produto simples com estoque | Validar carrinho e pedido |
-| `MT-06` | Dois produtos ativos | Validar carrinho com varios itens |
+Atencao: para os cenarios validos, substitua `SEUEMAIL` por uma caixa real do time ou por um alias real acessivel pelo testador.
+
+| Massa | Descricao | Dados principais | Finalidade |
+| --- | --- | --- | --- |
+| `MT-CAD-01` | Usuario/comprador valido | `SEUEMAIL+omni-comprador@gmail.com` | Validar cadastro, confirmacao por e-mail e primeiro login |
+| `MT-CAD-02` | Comprador invalido | `comprador@mailinator.com` | Validar bloqueio de dominio temporario |
+| `MT-CAD-03` | Usuario/vendedor valido | `SEUEMAIL+omni-vendedor@gmail.com` | Validar cadastro, confirmacao por e-mail e orientacao para criar loja depois |
+| `MT-CAD-04` | Vendedor invalido | `vendedor@test.com.br` | Validar bloqueio de dominio rotulado como teste |
 
 ## 7. Criterios de entrada
 
-- Backend compilando sem erro critico
-- Frontend compilando sem erro critico
-- Tela inicial acessivel
-- Banco de dados com estrutura atualizada
-- Massa de teste disponivel ou facilmente reproduzivel
+- backend compilando sem erro critico
+- frontend compilando sem erro critico
+- tela inicial acessivel
+- banco de dados com estrutura atualizada
+- SMTP configurado para envio real
+- massa de teste disponivel
 
 ## 8. Criterios de saida
 
-- Todos os casos prioritarios executados
-- Nenhum defeito bloqueador aberto nos fluxos principais
-- Defeitos medios registrados com evidencia e plano de correcao
-- Evidencias minimas coletadas para a apresentacao
+- todos os casos prioritarios executados
+- cadastro valido envia e-mail de confirmacao
+- login sem confirmacao permanece bloqueado
+- login apos confirmacao funciona
+- casos invalidos retornam mensagem de erro coerente
+- evidencias minimas coletadas para apresentacao
 
 ## 9. Priorizacao dos cenarios
 
 | ID | Cenario | Prioridade |
 | --- | --- | --- |
-| `P1` | Cadastro de comprador | Alta |
-| `P2` | Cadastro de vendedor | Alta |
-| `P3` | Comprador abrindo loja | Alta |
-| `P4` | Cadastro de produto | Alta |
-| `P5` | Adicao de item ao carrinho | Alta |
-| `P6` | Carrinho com mais de um produto | Alta |
-| `P7` | Checkout com endereco novo | Alta |
-| `P8` | Revisao do pedido | Alta |
-| `P9` | Pagamento PIX demonstrativo | Alta |
+| `P1` | Cadastro de usuario como comprador com e-mail valido | Alta |
+| `P2` | Tentativa de login antes da confirmacao do e-mail | Alta |
+| `P3` | Cadastro de usuario como vendedor com e-mail valido | Alta |
+| `P4` | Cadastro com e-mail temporario ou de teste | Alta |
 
 ## 10. Riscos
 
-- divergencia entre ambiente local e ambiente publicado
-- massa de dados manual criada com inconsistencias
-- dependencia de autenticacao para abrir alguns fluxos
-- alteracoes recentes em checkout, endereco e perfil podem causar regressao
+- SMTP desabilitado ou configurado com credenciais invalidas
+- `FrontendBaseUrl` incorreta e link de confirmacao apontando para URL errada
+- uso de e-mail sem acesso real pelo testador
+- divergencia entre mensagem exibida no frontend e erro retornado pelo backend
 
 ## 11. Entregaveis
 
-- `docs/MANUAL_OPERACAO_APLICATIVO.md`
-- `docs/MANUAL_DE_TESTE.md`
 - `docs/PLANO_DE_TESTE.md`
+- `docs/MANUAL_DE_TESTE.md`
 - evidencias capturadas durante a execucao
 - lista de defeitos encontrados, se houver
 
 ## 12. Referencias
 
-- `README.md`
-- `docs/QA_CHECKLIST.md`
-- `docs/API.md`
-- `docs/ARQUITETURA.md`
+- `backend/appsettings.Local.example.json`
+- `backend/Controllers/Usuarios/UsuarioController.cs`
+- `backend/Controllers/Usuarios/AuthController.cs`
+- `backend/Services/AuthService.cs`
+- `backend/Services/EmailConfirmationService.cs`
+- `backend/Utils/ValidadorEmail.cs`
+- `frontend/src/pages/Auth/CadastrePage.tsx`
+- `frontend/src/pages/Auth/ConfirmarEmailPage.tsx`

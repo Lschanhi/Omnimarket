@@ -252,6 +252,17 @@ if (app.Environment.IsDevelopment())
 
 app.Logger.LogInformation("Usando a connection string '{ConnectionStringName}' para o DataContext.", connectionStringName);
 
+var applyMigrationsOnStartup = builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup");
+if (applyMigrationsOnStartup)
+{
+    using var migrationScope = app.Services.CreateScope();
+    var dataContext = migrationScope.ServiceProvider.GetRequiredService<DataContext>();
+
+    app.Logger.LogInformation("Aplicando migrations pendentes do Entity Framework no startup.");
+    await dataContext.Database.MigrateAsync();
+    app.Logger.LogInformation("Migrations do Entity Framework aplicadas com sucesso.");
+}
+
 if (args.Any(arg => string.Equals(arg, "--migrate-legacy-images", StringComparison.OrdinalIgnoreCase)))
 {
     using var scope = app.Services.CreateScope();

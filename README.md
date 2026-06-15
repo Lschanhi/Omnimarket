@@ -1,6 +1,6 @@
-# OmniMarket Monorepo
+# OmniMarket
 
-Repositorio consolidado do OmniMarket com frontend, backend e documentacao no mesmo workspace.
+Repositorio principal do OmniMarket com frontend, backend e documentacao no mesmo workspace.
 
 ## Estrutura
 
@@ -93,8 +93,8 @@ npm run backend:run
 - O backend ainda usa `app.UseDeveloperExceptionPage()` sem condicao de ambiente.
 - O frontend nao possui suite de testes automatizados nem script `npm test`.
 - A protecao de rotas no frontend ainda nao esta centralizada por router/layout.
-- Ainda nao existe health check exposto pela API.
-- Os workflows de GitHub Actions dos repositorios originais ainda nao foram consolidados neste monorepo.
+- A API ja expoe health checks, mas a observabilidade ainda pode evoluir com monitoramento e alertas.
+- Os workflows de GitHub Actions dos repositorios originais ainda nao foram consolidados neste repositorio principal.
 
 ## Publicar em um unico repositorio GitHub
 
@@ -103,7 +103,7 @@ Se este workspace for o novo repositorio:
 ```powershell
 git init
 git add .
-git commit -m "chore: migrate omnimarket to monorepo"
+git commit -m "chore: estrutura inicial do omnimarket"
 git branch -M main
 git remote add origin https://github.com/SEU_USUARIO/SEU_REPOSITORIO.git
 git push -u origin main
@@ -113,7 +113,7 @@ Se quiser preservar historico dos repositorios antigos, a proxima etapa recomend
 
 ## Deploy automatico
 
-Este monorepo ja inclui workflows separados para deploy automatico no Azure App Service:
+Este repositorio ja inclui workflows separados para deploy automatico no Azure App Service:
 
 - backend: `.github/workflows/deploy-backend-appservice.yml`
 - frontend: `.github/workflows/deploy-frontend-appservice.yml`

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Omnimarket.Api.Models.Dtos.Usuarios;
 using Omnimarket.Api.Services;
 using Omnimarket.Api.Utils;
@@ -12,11 +13,16 @@ namespace Omnimarket.Api.Controllers
     {
         private readonly AuthService _authService;
         private readonly UsuarioPerfilService _usuarioPerfilService;
+        private readonly ILogger<UsuarioController> _logger;
 
-        public UsuarioController(AuthService authService, UsuarioPerfilService usuarioPerfilService)
+        public UsuarioController(
+            AuthService authService,
+            UsuarioPerfilService usuarioPerfilService,
+            ILogger<UsuarioController> logger)
         {
             _authService = authService;
             _usuarioPerfilService = usuarioPerfilService;
+            _logger = logger;
         }
 
         [Authorize]
@@ -67,6 +73,20 @@ namespace Omnimarket.Api.Controllers
                         email = usuario.Email,
                         emailConfirmado = usuario.EmailConfirmado
                     }
+                });
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Falha ao persistir cadastro de usuario para o email {Email}. TraceId: {TraceId}",
+                    userDto.Email,
+                    HttpContext.TraceIdentifier);
+
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    mensagem = "Nao foi possivel concluir o cadastro por uma falha ao salvar os dados. Se o problema continuar apos nova tentativa, verifique se as migrations do banco foram aplicadas.",
+                    traceId = HttpContext.TraceIdentifier
                 });
             }
             catch (Exception ex)
