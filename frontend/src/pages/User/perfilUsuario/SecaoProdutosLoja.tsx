@@ -3,6 +3,8 @@ import { Botao } from "../../../Components/Botao";
 import type { CategoriaLojaOption, LojaFeedbackState } from "./tipos";
 import { criarMensagemConfirmacaoExclusaoCategoria } from "./utilitarios";
 
+type FiltroDisponibilidadeProdutoLoja = "todos" | "disponiveis" | "indisponiveis";
+
 type SecaoProdutosLojaProps = {
   categoriaLojaAtiva: string;
   categoriaLojaModoExclusao: boolean;
@@ -10,11 +12,16 @@ type SecaoProdutosLojaProps = {
   categoriaLojaRemovendoId: string | null;
   categoriasDaLoja: CategoriaLojaOption[];
   lojaFeedback: LojaFeedbackState | null;
+  statusProdutoAtivo: FiltroDisponibilidadeProdutoLoja;
+  totalProdutosDisponiveis: number;
+  totalProdutosIndisponiveis: number;
+  totalProdutosLoja: number;
   onAlternarModoExclusaoCategorias: () => void;
   onCancelarModoExclusaoCategorias: () => void;
   onConfirmarRemocaoCategoria: () => void;
   onLimparCategoriaPendenteExclusao: () => void;
   onSelecionarCategoria: (categoriaId: string) => void;
+  onSelecionarStatusProduto: (status: FiltroDisponibilidadeProdutoLoja) => void;
   onSolicitarRemocaoCategoriaLoja: (categoria: CategoriaLojaOption) => void;
 };
 
@@ -25,11 +32,16 @@ export function SecaoProdutosLoja({
   categoriaLojaRemovendoId,
   categoriasDaLoja,
   lojaFeedback,
+  statusProdutoAtivo,
+  totalProdutosDisponiveis,
+  totalProdutosIndisponiveis,
+  totalProdutosLoja,
   onAlternarModoExclusaoCategorias,
   onCancelarModoExclusaoCategorias,
   onConfirmarRemocaoCategoria,
   onLimparCategoriaPendenteExclusao,
   onSelecionarCategoria,
+  onSelecionarStatusProduto,
   onSolicitarRemocaoCategoriaLoja,
 }: SecaoProdutosLojaProps) {
   return (
@@ -46,11 +58,45 @@ export function SecaoProdutosLoja({
         </div>
       ) : null}
 
+      <div>
+        <p className="text-sm font-medium text-white">Status dos produtos</p>
+        <p className="text-xs text-neutral-400">
+          Alterne entre os itens publicados e os pausados sem perder o acesso a edicao.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {[
+          { key: "todos", label: "Todos", total: totalProdutosLoja },
+          { key: "disponiveis", label: "Disponiveis", total: totalProdutosDisponiveis },
+          { key: "indisponiveis", label: "Pausados", total: totalProdutosIndisponiveis },
+        ].map((status) => {
+          const statusAtivo = statusProdutoAtivo === status.key;
+
+          return (
+            <button
+              key={status.key}
+              type="button"
+              onClick={() =>
+                onSelecionarStatusProduto(status.key as FiltroDisponibilidadeProdutoLoja)
+              }
+              className={`rounded-full border px-3 py-2 text-sm transition ${
+                statusAtivo
+                  ? "border-yellow-400/40 bg-yellow-400/10 text-yellow-300"
+                  : "border-white/10 bg-black text-neutral-400 hover:border-white/20 hover:text-white"
+              }`.trim()}
+            >
+              {status.label} <span className="text-xs text-neutral-500">({status.total})</span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-white">Categorias da loja</p>
           <p className="text-xs text-neutral-400">
-            Filtre os produtos pelas categorias já cadastradas na sua vitrine.
+            Filtre os produtos pelas categorias ja cadastradas na sua vitrine.
           </p>
         </div>
       </div>
@@ -64,7 +110,7 @@ export function SecaoProdutosLoja({
 
       {categoriaLojaPendenteExclusao ? (
         <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100">
-          <p className="font-medium text-red-200">Confirmar exclusão da categoria</p>
+          <p className="font-medium text-red-200">Confirmar exclusao da categoria</p>
           <p className="mt-2">
             {criarMensagemConfirmacaoExclusaoCategoria(categoriaLojaPendenteExclusao)}
           </p>
@@ -189,7 +235,7 @@ export function SecaoProdutosLoja({
         </>
       ) : (
         <p className="text-sm text-neutral-500">
-          As categorias vão aparecer aqui assim que houver produtos publicados.
+          As categorias vao aparecer aqui assim que houver produtos nesse filtro.
         </p>
       )}
     </div>

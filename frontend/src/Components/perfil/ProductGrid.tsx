@@ -16,6 +16,10 @@ export function ProductGrid({
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {itens.map((item) => {
+        const badgeClasses =
+          item.disponivel === false
+            ? "border-white/15 bg-white/10 text-neutral-200"
+            : "border-yellow-400/20 bg-yellow-400/10 text-yellow-300";
         const content = (
           <>
             <div className="flex h-40 items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(250,204,21,0.14),_transparent_60%),linear-gradient(180deg,_rgba(255,255,255,0.05),_rgba(255,255,255,0.02))]">
@@ -42,7 +46,9 @@ export function ProductGrid({
                 </div>
 
                 {item.badge ? (
-                  <span className="rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-yellow-300">
+                  <span
+                    className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.2em] ${badgeClasses}`.trim()}
+                  >
                     {item.badge}
                   </span>
                 ) : null}
@@ -77,7 +83,11 @@ export function ProductGrid({
             key={item.id}
             type="button"
             onClick={() => onItemClick(item)}
-            className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 text-left transition hover:border-yellow-400/40 hover:bg-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/60"
+            className={`overflow-hidden rounded-2xl border bg-black/45 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/60 ${
+              item.disponivel === false
+                ? "border-white/12 opacity-85 hover:border-white/25 hover:bg-black/55"
+                : "border-white/10 hover:border-yellow-400/40 hover:bg-black/60"
+            }`.trim()}
           >
             {content}
           </button>

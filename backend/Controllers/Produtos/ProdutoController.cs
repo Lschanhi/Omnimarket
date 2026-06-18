@@ -22,6 +22,12 @@ namespace Omnimarket.Api.Controllers
         public async Task<IActionResult> Get()
             => Ok(await _service.GetAllAsync());
 
+        // Lista os produtos da loja do usuario autenticado, incluindo os pausados.
+        [HttpGet("meus")]
+        [Authorize]
+        public async Task<IActionResult> GetMine()
+            => Ok(await _service.GetMineAsync(User.GetUserId()));
+
         [HttpGet("destaques")]
         public async Task<IActionResult> GetHighlights([FromQuery] int take = 10)
             => Ok(await _service.GetHighlightsAsync(take));
