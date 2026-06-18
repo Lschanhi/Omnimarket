@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RecuperarSenhaRouteImport } from './routes/recuperarSenha'
 import { Route as PerfilUsuarioRouteImport } from './routes/perfilUsuario'
 import { Route as PaginaSucessoRouteImport } from './routes/paginaSucesso'
+import { Route as PaginaPixApresentacaoRouteImport } from './routes/paginaPixApresentacao'
 import { Route as PaginaPagamentoRouteImport } from './routes/paginaPagamento'
 import { Route as PaginaConfirmacaoPixRouteImport } from './routes/paginaConfirmacaoPix'
 import { Route as LoginRouteImport } from './routes/login'
@@ -35,6 +36,11 @@ const PerfilUsuarioRoute = PerfilUsuarioRouteImport.update({
 const PaginaSucessoRoute = PaginaSucessoRouteImport.update({
   id: '/paginaSucesso',
   path: '/paginaSucesso',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaginaPixApresentacaoRoute = PaginaPixApresentacaoRouteImport.update({
+  id: '/paginaPixApresentacao',
+  path: '/paginaPixApresentacao',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaginaPagamentoRoute = PaginaPagamentoRouteImport.update({
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/paginaConfirmacaoPix': typeof PaginaConfirmacaoPixRoute
   '/paginaPagamento': typeof PaginaPagamentoRoute
+  '/paginaPixApresentacao': typeof PaginaPixApresentacaoRoute
   '/paginaSucesso': typeof PaginaSucessoRoute
   '/perfilUsuario': typeof PerfilUsuarioRoute
   '/recuperarSenha': typeof RecuperarSenhaRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/paginaConfirmacaoPix': typeof PaginaConfirmacaoPixRoute
   '/paginaPagamento': typeof PaginaPagamentoRoute
+  '/paginaPixApresentacao': typeof PaginaPixApresentacaoRoute
   '/paginaSucesso': typeof PaginaSucessoRoute
   '/perfilUsuario': typeof PerfilUsuarioRoute
   '/recuperarSenha': typeof RecuperarSenhaRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/paginaConfirmacaoPix': typeof PaginaConfirmacaoPixRoute
   '/paginaPagamento': typeof PaginaPagamentoRoute
+  '/paginaPixApresentacao': typeof PaginaPixApresentacaoRoute
   '/paginaSucesso': typeof PaginaSucessoRoute
   '/perfilUsuario': typeof PerfilUsuarioRoute
   '/recuperarSenha': typeof RecuperarSenhaRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/paginaConfirmacaoPix'
     | '/paginaPagamento'
+    | '/paginaPixApresentacao'
     | '/paginaSucesso'
     | '/perfilUsuario'
     | '/recuperarSenha'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/paginaConfirmacaoPix'
     | '/paginaPagamento'
+    | '/paginaPixApresentacao'
     | '/paginaSucesso'
     | '/perfilUsuario'
     | '/recuperarSenha'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/paginaConfirmacaoPix'
     | '/paginaPagamento'
+    | '/paginaPixApresentacao'
     | '/paginaSucesso'
     | '/perfilUsuario'
     | '/recuperarSenha'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PaginaConfirmacaoPixRoute: typeof PaginaConfirmacaoPixRoute
   PaginaPagamentoRoute: typeof PaginaPagamentoRoute
+  PaginaPixApresentacaoRoute: typeof PaginaPixApresentacaoRoute
   PaginaSucessoRoute: typeof PaginaSucessoRoute
   PerfilUsuarioRoute: typeof PerfilUsuarioRoute
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
@@ -207,6 +220,13 @@ declare module '@tanstack/react-router' {
       path: '/paginaSucesso'
       fullPath: '/paginaSucesso'
       preLoaderRoute: typeof PaginaSucessoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paginaPixApresentacao': {
+      id: '/paginaPixApresentacao'
+      path: '/paginaPixApresentacao'
+      fullPath: '/paginaPixApresentacao'
+      preLoaderRoute: typeof PaginaPixApresentacaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/paginaPagamento': {
@@ -283,6 +303,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PaginaConfirmacaoPixRoute: PaginaConfirmacaoPixRoute,
   PaginaPagamentoRoute: PaginaPagamentoRoute,
+  PaginaPixApresentacaoRoute: PaginaPixApresentacaoRoute,
   PaginaSucessoRoute: PaginaSucessoRoute,
   PerfilUsuarioRoute: PerfilUsuarioRoute,
   RecuperarSenhaRoute: RecuperarSenhaRoute,
