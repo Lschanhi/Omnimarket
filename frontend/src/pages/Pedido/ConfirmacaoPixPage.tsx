@@ -67,14 +67,31 @@ export function ConfirmacaoPixPage() {
     }
 
     const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyPosition = document.body.style.position;
+    const previousBodyTop = document.body.style.top;
+    const previousBodyWidth = document.body.style.width;
+    const previousBodyLeft = document.body.style.left;
+    const previousBodyRight = document.body.style.right;
     const previousHtmlOverflow = document.documentElement.style.overflow;
+    const scrollY = window.scrollY;
 
     document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    document.body.style.left = "0";
+    document.body.style.right = "0";
     document.documentElement.style.overflow = "hidden";
 
     return () => {
       document.body.style.overflow = previousBodyOverflow;
+      document.body.style.position = previousBodyPosition;
+      document.body.style.top = previousBodyTop;
+      document.body.style.width = previousBodyWidth;
+      document.body.style.left = previousBodyLeft;
+      document.body.style.right = previousBodyRight;
       document.documentElement.style.overflow = previousHtmlOverflow;
+      window.scrollTo({ top: scrollY, left: 0, behavior: "auto" });
     };
   }, [pixDemo]);
 
@@ -472,21 +489,21 @@ export function ConfirmacaoPixPage() {
       </div>
 
       {pixDemo ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/80 p-3 sm:p-4">
-          <div className="flex max-h-[calc(100vh-1.5rem)] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-zinc-950 p-5 text-white shadow-[0_0_60px_rgba(0,0,0,0.45)] sm:max-h-[calc(100vh-2rem)] sm:p-6 lg:p-7">
-            <div className="flex flex-col gap-4 border-b border-white/10 pb-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden bg-black/80 px-3 py-3 sm:px-4 sm:py-4">
+          <div className="max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl overflow-y-auto rounded-3xl border border-white/10 bg-zinc-950 p-4 text-white shadow-[0_0_60px_rgba(0,0,0,0.45)] [scrollbar-gutter:stable] sm:max-h-[calc(100dvh-2rem)] sm:p-5 lg:p-6">
+            <div className="flex flex-col gap-4 border-b border-white/10 pb-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <span className="text-xs font-semibold uppercase tracking-[0.24em] text-yellow-400/80">
                   PIX demonstrativo
                 </span>
-                <h2 className="mt-2 text-3xl font-bold">QR fake para a apresentacao</h2>
+                <h2 className="mt-2 text-2xl font-bold sm:text-3xl">QR fake para a apresentacao</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
                   Este modal e exclusivo do PIX. O QR abaixo e demonstrativo e pode ser usado para
                   abrir a OmniMarket durante a apresentacao.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/5 px-4 py-3 text-sm text-zinc-300">
+              <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/5 px-4 py-3 text-sm text-zinc-300 lg:shrink-0">
                 <p className="font-medium text-white">Valor total</p>
                 <p className="mt-1 text-xl font-semibold text-yellow-300">
                   {formatarMoedaCheckout(pixDemo.total)}
@@ -494,15 +511,15 @@ export function ConfirmacaoPixPage() {
               </div>
             </div>
 
-            <div className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 sm:pr-2">
-              <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr]">
+            <div className="mt-4">
+              <div className="grid gap-4 lg:grid-cols-[0.88fr_1.12fr]">
                 <div className="space-y-4">
                   <div className="rounded-3xl border border-white/10 bg-black/20 p-4 text-center sm:p-5">
                     <div className="mb-4 inline-flex rounded-full border border-yellow-400/20 bg-yellow-400/10 p-3 text-yellow-300">
-                      <QrCode className="h-6 w-6 sm:h-7 sm:w-7" />
+                      <QrCode className="h-6 w-6" />
                     </div>
 
-                    <div className="mx-auto flex h-[220px] w-[220px] items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-white p-3 sm:h-[240px] sm:w-[240px] lg:h-[250px] lg:w-[250px]">
+                    <div className="mx-auto flex h-[180px] w-[180px] items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-white p-3 sm:h-[210px] sm:w-[210px] lg:h-[230px] lg:w-[230px]">
                       <img
                         src={pixDemo.qrCodeUrl}
                         alt="QR demonstrativo da apresentacao"
@@ -532,7 +549,7 @@ export function ConfirmacaoPixPage() {
                     <p className="text-sm font-medium uppercase tracking-[0.18em] text-yellow-400/80">
                       Copia e cola fake
                     </p>
-                    <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-4">
+                    <div className="mt-3 max-h-36 overflow-y-auto rounded-2xl border border-white/10 bg-black/30 p-4">
                       <p className="break-all font-mono text-sm leading-7 text-zinc-200">
                         {pixDemo.codigoPixFake}
                       </p>
