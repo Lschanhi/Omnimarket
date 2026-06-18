@@ -29,46 +29,46 @@ namespace Omnimarket.Api.Services
         {
             var inicioSerieUtc = DateTime.UtcNow.Date.AddDays(-6);
 
-            var totalUsuariosTask = _context.TBL_USUARIO.AsNoTracking().CountAsync();
-            var totalAdminsTask = _context.TBL_USUARIO
+            var totalUsuarios = await _context.TBL_USUARIO.AsNoTracking().CountAsync();
+            var totalAdmins = await _context.TBL_USUARIO
                 .AsNoTracking()
                 .CountAsync(u => u.Role == RolesSistema.Admin);
-            var totalLojasTask = _context.TBL_LOJA.AsNoTracking().CountAsync();
-            var totalLojasAtivasTask = _context.TBL_LOJA.AsNoTracking().CountAsync(l => l.Ativa);
-            var totalProdutosTask = _context.TBL_PRODUTO.AsNoTracking().CountAsync();
-            var produtosPublicadosTask = _context.TBL_PRODUTO
+            var totalLojas = await _context.TBL_LOJA.AsNoTracking().CountAsync();
+            var totalLojasAtivas = await _context.TBL_LOJA.AsNoTracking().CountAsync(l => l.Ativa);
+            var totalProdutos = await _context.TBL_PRODUTO.AsNoTracking().CountAsync();
+            var produtosPublicados = await _context.TBL_PRODUTO
                 .AsNoTracking()
                 .CountAsync(p => p.StatusPublicacao == StatusProduto.Publicado);
-            var totalPedidosTask = _context.TBL_PEDIDO.AsNoTracking().CountAsync();
-            var pedidosPendentesTask = _context.TBL_PEDIDO
+            var totalPedidos = await _context.TBL_PEDIDO.AsNoTracking().CountAsync();
+            var pedidosPendentes = await _context.TBL_PEDIDO
                 .AsNoTracking()
                 .CountAsync(p => p.StatusPedidosId == StatusPedido.Pendente);
-            var pedidosPagosTask = _context.TBL_PEDIDO
+            var pedidosPagos = await _context.TBL_PEDIDO
                 .AsNoTracking()
                 .CountAsync(p =>
                     p.StatusPedidosId == StatusPedido.Pago ||
                     p.StatusPedidosId == StatusPedido.Enviado ||
                     p.StatusPedidosId == StatusPedido.Entregue);
-            var receitaTotalMarketplaceTask = _context.TBL_VENDA
+            var receitaTotalMarketplace = await _context.TBL_VENDA
                 .AsNoTracking()
                 .Where(v => StatusesComReceita.Contains(v.StatusVenda))
                 .SumAsync(v => (decimal?)v.ValorBruto);
-            var comissaoTotalMarketplaceTask = _context.TBL_VENDA
+            var comissaoTotalMarketplace = await _context.TBL_VENDA
                 .AsNoTracking()
                 .Where(v => StatusesComReceita.Contains(v.StatusVenda))
                 .SumAsync(v => (decimal?)(v.ValorBruto - v.ValorLiquido));
-            var ticketMedioPedidosTask = _context.TBL_PEDIDO
+            var ticketMedioPedidos = await _context.TBL_PEDIDO
                 .AsNoTracking()
                 .Where(p => p.StatusPedidosId != StatusPedido.Cancelado)
                 .AverageAsync(p => (decimal?)p.ValorTotalPedido);
-            var totalVisualizacoesLojasTask = _context.TBL_LOJA
+            var totalVisualizacoesLojas = await _context.TBL_LOJA
                 .AsNoTracking()
                 .SumAsync(l => (int?)l.TotalVisualizacoes);
-            var totalVisualizacoesProdutosTask = _context.TBL_PRODUTO
+            var totalVisualizacoesProdutos = await _context.TBL_PRODUTO
                 .AsNoTracking()
                 .SumAsync(p => (int?)p.TotalVisualizacoes);
 
-            var pedidosPorStatusTask = _context.TBL_PEDIDO
+            var pedidosPorStatus = await _context.TBL_PEDIDO
                 .AsNoTracking()
                 .GroupBy(p => p.StatusPedidosId)
                 .Select(g => new
@@ -79,7 +79,7 @@ namespace Omnimarket.Api.Services
                 })
                 .ToListAsync();
 
-            var vendasPorStatusTask = _context.TBL_VENDA
+            var vendasPorStatus = await _context.TBL_VENDA
                 .AsNoTracking()
                 .GroupBy(v => v.StatusVenda)
                 .Select(g => new
@@ -90,7 +90,7 @@ namespace Omnimarket.Api.Services
                 })
                 .ToListAsync();
 
-            var pedidosPorDiaTask = _context.TBL_PEDIDO
+            var pedidosPorDia = await _context.TBL_PEDIDO
                 .AsNoTracking()
                 .Where(p => p.DataPedido >= inicioSerieUtc)
                 .Select(p => new
@@ -100,7 +100,7 @@ namespace Omnimarket.Api.Services
                 })
                 .ToListAsync();
 
-            var vendasPorDiaTask = _context.TBL_VENDA
+            var vendasPorDia = await _context.TBL_VENDA
                 .AsNoTracking()
                 .Where(v => v.DataCriacao >= inicioSerieUtc && StatusesComReceita.Contains(v.StatusVenda))
                 .Select(v => new
@@ -110,7 +110,7 @@ namespace Omnimarket.Api.Services
                 })
                 .ToListAsync();
 
-            var produtosMaisVendidosTask = _context.TBL_ITENS_PEDIDO
+            var produtosMaisVendidos = await _context.TBL_ITENS_PEDIDO
                 .AsNoTracking()
                 .Where(i => i.Pedido.StatusPedidosId != StatusPedido.Cancelado)
                 .GroupBy(i => new
@@ -136,7 +136,7 @@ namespace Omnimarket.Api.Services
                 .Take(5)
                 .ToListAsync();
 
-            var produtosMaisVisualizadosTask = _context.TBL_PRODUTO
+            var produtosMaisVisualizados = await _context.TBL_PRODUTO
                 .AsNoTracking()
                 .OrderByDescending(p => p.TotalVisualizacoes)
                 .ThenByDescending(p => p.TotalAvaliacoes)
@@ -157,7 +157,7 @@ namespace Omnimarket.Api.Services
                 })
                 .ToListAsync();
 
-            var lojasMaisVisitadasTask = _context.TBL_LOJA
+            var lojasMaisVisitadas = await _context.TBL_LOJA
                 .AsNoTracking()
                 .OrderByDescending(l => l.TotalVisualizacoes)
                 .ThenByDescending(l => l.TotalAvaliacoes)
@@ -176,7 +176,7 @@ namespace Omnimarket.Api.Services
                 })
                 .ToListAsync();
 
-            var lojasComMaiorReceitaTask = _context.TBL_LOJA
+            var lojasComMaiorReceita = await _context.TBL_LOJA
                 .AsNoTracking()
                 .Select(l => new AdminRankingLojaDto
                 {
@@ -194,51 +194,27 @@ namespace Omnimarket.Api.Services
                 .Take(5)
                 .ToListAsync();
 
-            await Task.WhenAll(
-                totalUsuariosTask,
-                totalAdminsTask,
-                totalLojasTask,
-                totalLojasAtivasTask,
-                totalProdutosTask,
-                produtosPublicadosTask,
-                totalPedidosTask,
-                pedidosPendentesTask,
-                pedidosPagosTask,
-                receitaTotalMarketplaceTask,
-                comissaoTotalMarketplaceTask,
-                ticketMedioPedidosTask,
-                totalVisualizacoesLojasTask,
-                totalVisualizacoesProdutosTask,
-                pedidosPorStatusTask,
-                vendasPorStatusTask,
-                pedidosPorDiaTask,
-                vendasPorDiaTask,
-                produtosMaisVendidosTask,
-                produtosMaisVisualizadosTask,
-                lojasMaisVisitadasTask,
-                lojasComMaiorReceitaTask);
-
-            var totalVisualizacoesLojas = totalVisualizacoesLojasTask.Result ?? 0;
-            var totalVisualizacoesProdutos = totalVisualizacoesProdutosTask.Result ?? 0;
+            var totalVisualizacoesLojasNormalizado = totalVisualizacoesLojas ?? 0;
+            var totalVisualizacoesProdutosNormalizado = totalVisualizacoesProdutos ?? 0;
 
             return new AdminDashboardDto
             {
-                TotalUsuarios = totalUsuariosTask.Result,
-                TotalAdmins = totalAdminsTask.Result,
-                TotalLojas = totalLojasTask.Result,
-                TotalLojasAtivas = totalLojasAtivasTask.Result,
-                TotalProdutos = totalProdutosTask.Result,
-                ProdutosPublicados = produtosPublicadosTask.Result,
-                TotalPedidos = totalPedidosTask.Result,
-                PedidosPendentes = pedidosPendentesTask.Result,
-                PedidosPagos = pedidosPagosTask.Result,
-                ReceitaTotalMarketplace = receitaTotalMarketplaceTask.Result ?? 0m,
-                ComissaoTotalMarketplace = comissaoTotalMarketplaceTask.Result ?? 0m,
-                TicketMedioPedidos = ticketMedioPedidosTask.Result ?? 0m,
-                TotalVisualizacoesLojas = totalVisualizacoesLojas,
-                TotalVisualizacoesProdutos = totalVisualizacoesProdutos,
-                TotalAcessosCatalogo = totalVisualizacoesLojas + totalVisualizacoesProdutos,
-                PedidosPorStatus = pedidosPorStatusTask.Result
+                TotalUsuarios = totalUsuarios,
+                TotalAdmins = totalAdmins,
+                TotalLojas = totalLojas,
+                TotalLojasAtivas = totalLojasAtivas,
+                TotalProdutos = totalProdutos,
+                ProdutosPublicados = produtosPublicados,
+                TotalPedidos = totalPedidos,
+                PedidosPendentes = pedidosPendentes,
+                PedidosPagos = pedidosPagos,
+                ReceitaTotalMarketplace = receitaTotalMarketplace ?? 0m,
+                ComissaoTotalMarketplace = comissaoTotalMarketplace ?? 0m,
+                TicketMedioPedidos = ticketMedioPedidos ?? 0m,
+                TotalVisualizacoesLojas = totalVisualizacoesLojasNormalizado,
+                TotalVisualizacoesProdutos = totalVisualizacoesProdutosNormalizado,
+                TotalAcessosCatalogo = totalVisualizacoesLojasNormalizado + totalVisualizacoesProdutosNormalizado,
+                PedidosPorStatus = pedidosPorStatus
                     .Select(item => new AdminStatusResumoDto
                     {
                         Chave = item.Status.ToString(),
@@ -248,7 +224,7 @@ namespace Omnimarket.Api.Services
                     })
                     .OrderByDescending(item => item.Total)
                     .ToList(),
-                VendasPorStatus = vendasPorStatusTask.Result
+                VendasPorStatus = vendasPorStatus
                     .Select(item => new AdminStatusResumoDto
                     {
                         Chave = item.Status.ToString(),
@@ -260,16 +236,16 @@ namespace Omnimarket.Api.Services
                     .ToList(),
                 ReceitaPorDia = CriarSerieDiaria(
                     inicioSerieUtc,
-                    pedidosPorDiaTask.Result.Select(p => p.DataPedido),
-                    vendasPorDiaTask.Result.Select(v => (v.DataCriacao, v.ValorBruto))),
+                    pedidosPorDia.Select(p => p.DataPedido),
+                    vendasPorDia.Select(v => (v.DataCriacao, v.ValorBruto))),
                 PedidosPorDia = CriarSerieDiaria(
                     inicioSerieUtc,
-                    pedidosPorDiaTask.Result.Select(p => p.DataPedido),
+                    pedidosPorDia.Select(p => p.DataPedido),
                     Enumerable.Empty<(DateTime Data, decimal Valor)>()),
-                ProdutosMaisVendidos = produtosMaisVendidosTask.Result,
-                ProdutosMaisVisualizados = produtosMaisVisualizadosTask.Result,
-                LojasMaisVisitadas = lojasMaisVisitadasTask.Result,
-                LojasComMaiorReceita = lojasComMaiorReceitaTask.Result
+                ProdutosMaisVendidos = produtosMaisVendidos,
+                ProdutosMaisVisualizados = produtosMaisVisualizados,
+                LojasMaisVisitadas = lojasMaisVisitadas,
+                LojasComMaiorReceita = lojasComMaiorReceita
             };
         }
 
