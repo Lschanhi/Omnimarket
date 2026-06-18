@@ -19,12 +19,7 @@ namespace Omnimarket.Api.Services
 
         public async Task<CalculoComissaoMarketplaceDto> CalcularComissaoAsync(decimal valorProdutos)
         {
-            var configuracao = await _context.TBL_CONFIGURACAO_MARKETPLACE
-                .AsNoTracking()
-                .Where(c => c.Ativo)
-                .OrderByDescending(c => c.DataCriacao)
-                .ThenByDescending(c => c.Id)
-                .FirstOrDefaultAsync();
+            var configuracao = await ObterConfiguracaoAtivaEntityAsync();
 
             return CalcularComissao(
                 valorProdutos,
@@ -34,12 +29,7 @@ namespace Omnimarket.Api.Services
 
         public async Task<ConfiguracaoMarketplaceLeituraDto> ObterConfiguracaoAtivaAsync()
         {
-            var configuracao = await _context.TBL_CONFIGURACAO_MARKETPLACE
-                .AsNoTracking()
-                .Where(c => c.Ativo)
-                .OrderByDescending(c => c.DataCriacao)
-                .ThenByDescending(c => c.Id)
-                .FirstOrDefaultAsync();
+            var configuracao = await ObterConfiguracaoAtivaEntityAsync();
 
             if (configuracao == null)
             {
@@ -84,8 +74,13 @@ namespace Omnimarket.Api.Services
             if (!sobrescrever && PedidoJaPossuiSnapshotDeComissao(pedido))
                 return;
 
-            var calculo = await CalcularComissaoAsync(pedido.ValorTotalProdutos);
+            var configuracao = await ObterConfiguracaoAtivaEntityAsync();
+            var calculo = CalcularComissao(
+                pedido.ValorTotalProdutos,
+                configuracao?.TaxaFixaComissao ?? TaxaFixaPadrao,
+                configuracao?.PercentualComissao ?? PercentualPadrao);
 
+            pedido.ConfiguracaoMarketplaceId = configuracao?.Id;
             pedido.TaxaFixaComissao = calculo.TaxaFixaComissao;
             pedido.PercentualComissao = calculo.PercentualComissao;
             pedido.ValorComissao = calculo.ValorComissao;
@@ -210,6 +205,16 @@ namespace Omnimarket.Api.Services
 
         public static decimal ArredondarMoeda(decimal valor)
             => Math.Round(valor, 2, MidpointRounding.AwayFromZero);
+
+        private async Task<ConfiguracaoMarketplace?> ObterConfiguracaoAtivaEntityAsync()
+        {
+            return await _context.TBL_CONFIGURACAO_MARKETPLACE
+                .AsNoTracking()
+                .Where(c => c.Ativo)
+                .OrderByDescending(c => c.DataCriacao)
+                .ThenByDescending(c => c.Id)
+                .FirstOrDefaultAsync();
+        }
 
         private static ConfiguracaoMarketplaceLeituraDto MapearConfiguracao(
             ConfiguracaoMarketplace configuracao)

@@ -9,6 +9,9 @@ namespace Omnimarket.Api.Services
 {
     public class AuthService
     {
+        private static readonly DateTime InicioConfirmacaoObrigatoriaUtc =
+            new(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc);
+
         private readonly DataContext _context;
         private readonly TokenService _tokenService;
         private readonly EmailConfirmationService _emailConfirmationService;
@@ -142,8 +145,19 @@ namespace Omnimarket.Api.Services
 
             if (!usuario.EmailConfirmado)
             {
-                throw new InvalidOperationException(
-                    "Confirme seu email antes de entrar. Use o link enviado para o endereco cadastrado.");
+                if (ContaLegadaPodeSerConfirmadaAutomaticamente(usuario))
+                {
+                    usuario.EmailConfirmado = true;
+                    usuario.DataConfirmacaoEmail ??= DateTime.UtcNow;
+                    usuario.EmailConfirmacaoTokenHash = null;
+                    usuario.EmailConfirmacaoTokenExpiraEm = null;
+                    usuario.EmailConfirmacaoEnviadoEm = null;
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        "Confirme seu email antes de entrar. Use o link enviado para o endereco cadastrado.");
+                }
             }
 
             var (token, tokenExpiraEm) = _tokenService.GerarToken(usuario);
@@ -159,6 +173,14 @@ namespace Omnimarket.Api.Services
                 Role = usuario.Role,
                 TokenExpiraEm = tokenExpiraEm
             };
+        }
+
+        private static bool ContaLegadaPodeSerConfirmadaAutomaticamente(Usuario usuario)
+        {
+            return usuario.DataCadastro < InicioConfirmacaoObrigatoriaUtc &&
+                   string.IsNullOrWhiteSpace(usuario.EmailConfirmacaoTokenHash) &&
+                   usuario.EmailConfirmacaoTokenExpiraEm == null &&
+                   usuario.EmailConfirmacaoEnviadoEm == null;
         }
 
         public async Task LogoutAsync(int usuarioId)

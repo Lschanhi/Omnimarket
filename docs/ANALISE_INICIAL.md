@@ -57,13 +57,13 @@ npm --prefix frontend run dev
 
 ## D. Problemas ou riscos encontrados
 
-1. O `backend/appsettings.json` original continha credenciais embutidas. Isso foi sanitizado no monorepo, mas indica risco de vazamento nos repositorios antigos.
+1. O `backend/appsettings.json` original continha credenciais embutidas. Isso foi sanitizado no repositorio principal, mas indica risco de vazamento nos repositorios antigos.
 2. O backend ativa `app.UseDeveloperExceptionPage()` sem checar ambiente, o que nao e adequado para producao.
-3. Nao existe health check mapeado na API.
+3. A API ja expoe health checks basicos, mas ainda pode evoluir em monitoramento e observabilidade.
 4. O frontend ainda nao possui testes automatizados nem script `npm test`.
 5. A protecao de rotas do frontend nao esta centralizada no router. Hoje a autenticacao existe no client, mas o acesso por rota ainda depende de componentes/fluxos.
 6. Existe sobreposicao de superficies administrativas: um admin estatico no backend e a aplicacao web React, o que pede uma decisao arquitetural futura.
-7. Os workflows CI/CD dos repositorios originais ainda nao foram migrados para o monorepo.
+7. Os workflows CI/CD dos repositorios originais ainda nao foram migrados para o repositorio principal.
 
 ## E. Arquivos sensiveis ou ausentes
 
@@ -98,7 +98,7 @@ npm --prefix frontend run dev
 
 ## G. Plano de migracao ou evolucao
 
-1. Consolidar codigo e documentacao no monorepo sem reaproveitar artefatos locais.
+1. Consolidar codigo e documentacao no repositorio principal sem reaproveitar artefatos locais.
 2. Sanitizar configuracoes e criar exemplos seguros de ambiente.
 3. Validar build/testes atuais para garantir que a migracao estrutural nao quebrou o setup.
 4. Consolidar CI/CD do GitHub para caminhos `backend/**` e `frontend/**`.
@@ -110,7 +110,7 @@ npm --prefix frontend run dev
 
 ## H. Primeira entrega recomendada
 
-Base de monorepo com:
+Base do repositorio principal com:
 
 - `backend/` e `frontend/` organizados
 - README raiz
@@ -131,4 +131,3 @@ Base de monorepo com:
 - Listagem de produtos consulta a API configurada
 - Carrinho, pedido e pagamento fake mantem fluxo basico
 - Rotas administrativas seguem bloqueadas no backend por role `Admin`
-

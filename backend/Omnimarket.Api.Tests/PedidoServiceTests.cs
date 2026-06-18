@@ -24,6 +24,7 @@ public class PedidoServiceTests
         Assert.Equal(70m, pedido.ValorTotalProdutos);
         Assert.Equal(0m, pedido.ValorFrete);
         Assert.Equal(70m, pedido.ValorTotalPedido);
+        Assert.Null(pedido.ConfiguracaoMarketplaceId);
         Assert.Equal(1.50m, pedido.TaxaFixaComissao);
         Assert.Equal(0.05m, pedido.PercentualComissao);
         Assert.Equal(5.00m, pedido.ValorComissao);
@@ -35,6 +36,35 @@ public class PedidoServiceTests
         Assert.Equal(produto.Loja.NomeFantasia, pedido.Itens[0].NomeLojaSnapshot);
         Assert.Equal(produto.Loja.DocumentoFiscal, pedido.Itens[0].DocumentoLojaSnapshot);
         Assert.Equal(produto.Loja.TipoDocumentoFiscal.ToString(), pedido.Itens[0].TipoDocumentoLojaSnapshot);
+    }
+
+    [Fact]
+    public async Task CriarPedido_DeveSalvarFkDaConfiguracaoMarketplaceQuandoExistirConfiguracaoAtiva()
+    {
+        using var fixture = new ServiceTestFixture();
+        var configuracao = new ConfiguracaoMarketplace
+        {
+            TaxaFixaComissao = 2.25m,
+            PercentualComissao = 0.075m,
+            Ativo = true,
+            DataCriacao = DateTime.UtcNow
+        };
+
+        fixture.Context.TBL_CONFIGURACAO_MARKETPLACE.Add(configuracao);
+        await fixture.Context.SaveChangesAsync();
+
+        var scenario = await fixture.CriarPedidoPendenteAsync(quantidade: 2, preco: 40m, estoque: 10);
+
+        fixture.Context.ChangeTracker.Clear();
+
+        var pedido = await fixture.Context.TBL_PEDIDO
+            .SingleAsync(p => p.Id == scenario.PedidoId);
+
+        Assert.Equal(configuracao.Id, pedido.ConfiguracaoMarketplaceId);
+        Assert.Equal(2.25m, pedido.TaxaFixaComissao);
+        Assert.Equal(0.075m, pedido.PercentualComissao);
+        Assert.Equal(8.25m, pedido.ValorComissao);
+        Assert.Equal(71.75m, pedido.ValorLiquidoVendedor);
     }
 
     [Fact]

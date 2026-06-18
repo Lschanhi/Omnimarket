@@ -1,12 +1,12 @@
-# Plano de Testes Narrativo do Frontend - OmniMarket
+# Plano de Teste do Frontend - OmniMarket
 
 ## 1. Introducao
 
-Este documento descreve os testes manuais do frontend do OmniMarket pela perspectiva de quem entra no site, navega pelas telas, faz login, compra e vende. A base considerada para este roteiro e a publicacao em `https://omnimarket-web-prod.azurewebsites.net`, inspecionada em **15/06/2026**.
+Este documento descreve os testes manuais do frontend do OmniMarket pela perspectiva de quem entra no site, navega pelas telas, faz login, compra e vende. A base considerada para este roteiro e a publicacao em `https://omnimarket-web-prod.azurewebsites.net`, validada em **15/06/2026** contra o frontend atual do projeto e contra a publicacao acessivel pela URL oficial.
 
 O foco aqui e a jornada visual do usuario: o que aparece na tela, o que ele clica, que mensagem recebe e para onde o fluxo o leva.
 
-Por isso, os cenarios abaixo foram escritos pela navegacao do proprio frontend, sem depender de digitar enderecos internos na barra do navegador. Sempre que possivel, o roteiro parte da home, do botao `Entrar`, do link `Criar conta`, da vitrine, do carrinho, do perfil e das acoes visiveis no painel.
+Por isso, os cenarios abaixo foram escritos pela navegacao do proprio frontend, sem depender de digitar enderecos internos na barra do navegador. Sempre que possivel, o roteiro parte da home, do botao `Entrar`, do link `Criar conta`, da vitrine, do carrinho, do perfil e das acoes visiveis no painel, exatamente como um usuario comum faria ao usar o site.
 
 Observacao importante:
 - Os textos citados abaixo foram alinhados com a interface publicada e com os componentes atuais do frontend.

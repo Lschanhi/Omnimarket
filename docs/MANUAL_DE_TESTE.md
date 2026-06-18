@@ -2,222 +2,168 @@
 
 ## Objetivo
 
-Este manual apresenta roteiros manuais para validar os fluxos mais importantes do OmniMarket.
+Este manual apresenta os roteiros manuais para validar o fluxo atual de cadastro com confirmacao obrigatoria de e-mail no OmniMarket.
 
 ## Ambiente recomendado
 
-- Backend em execucao
-- Frontend em execucao
-- Base de dados configurada
-- Navegador atualizado
+- backend em execucao
+- frontend em execucao
+- base de dados configurada
+- SMTP habilitado para envio real
+- navegador atualizado
+- acesso real a pelo menos uma caixa de e-mail
+
+## Preparacao do e-mail de teste
+
+- para os casos validos, use um e-mail real controlado pelo testador
+- se o provedor aceitar alias, prefira algo como `SEUEMAIL+omni-comprador@gmail.com`
+- se o provedor nao aceitar alias, use outra caixa real do time
+- nao use dominios temporarios ou rotulados como teste, porque o backend bloqueia esse cadastro
 
 ## Dados sugeridos para teste
 
-| Identificador | Perfil | Uso sugerido |
-| --- | --- | --- |
-| `comprador-01` | Comprador sem endereco inicial | Validar cadastro simples e endereco no checkout |
-| `comprador-02` | Comprador com endereco | Validar compra direta |
-| `vendedor-01` | Vendedor com loja | Validar loja, produto e venda |
-| `comprador-vendedor-01` | Comprador que depois abre loja | Validar evolucao de perfil |
+| Identificador | Perfil | E-mail sugerido | Observacao |
+| --- | --- | --- | --- |
+| `cad-comprador-valido` | Usuario/comprador | `SEUEMAIL+omni-comprador@gmail.com` | Deve receber o link de confirmacao |
+| `cad-comprador-invalido` | Usuario/comprador | `comprador@mailinator.com` | Dominio temporario bloqueado |
+| `cad-vendedor-valido` | Usuario/vendedor | `SEUEMAIL+omni-vendedor@gmail.com` | Deve receber o link de confirmacao |
+| `cad-vendedor-invalido` | Usuario/vendedor | `vendedor@test.com.br` | Rotulo `test` bloqueado |
 
-## CT-01 Cadastro de comprador sem endereco inicial
+## CT-CAD-01 Cadastro de usuario como comprador valido
 
-**Objetivo:** validar a criacao de conta de comprador sem expandir a secao de endereco.
+**Objetivo:** validar o cadastro de comprador com e-mail real, bloqueio de login antes da confirmacao e liberacao apos o clique no link.
 
-**Pre-condicoes:** usuario ainda nao cadastrado.
+**Pre-condicoes:** e-mail real disponivel para leitura e usuario ainda nao cadastrado.
+
+**Massa sugerida:** `cad-comprador-valido`
 
 **Passos:**
 
-1. Acessar a tela de cadastro.
+1. Acessar a tela `/cadastro`.
 2. Selecionar `Comprador`.
-3. Preencher todos os campos obrigatorios.
-4. Manter a secao `Endereco` recolhida.
-5. Marcar o checkbox do termo de uso.
+3. Preencher `Nome completo`.
+4. Preencher `Email` com um e-mail real acessivel pelo testador.
+5. Preencher `Telefone`.
+6. Preencher `CPF`.
+7. Preencher `Data de nascimento`.
+8. Preencher `Senha` e `Confirmacao de senha` com o mesmo valor.
+9. Manter a secao `Endereco` recolhida ou preencher um endereco valido opcional.
+10. Marcar o aceite do termo de uso.
+11. Clicar em `Criar conta`.
+12. Confirmar que a aplicacao redireciona para `/login`.
+13. Tentar entrar com o e-mail e a senha antes de abrir o link recebido.
+14. Validar que o login foi bloqueado.
+15. Abrir a caixa de e-mail usada no cadastro.
+16. Abrir a mensagem de confirmacao enviada pela plataforma.
+17. Clicar no link de confirmacao.
+18. Validar a abertura da tela `/confirmar-email`.
+19. Voltar para `/login`.
+20. Entrar novamente com o mesmo e-mail e senha.
+
+**Resultado esperado:**
+
+- o cadastro deve ser concluido com sucesso
+- o sistema deve informar que o e-mail precisa ser confirmado antes do primeiro acesso
+- antes da confirmacao, o login deve falhar com a mensagem `Confirme seu email antes de entrar. Use o link enviado para o endereco cadastrado.`
+- a tela de confirmacao deve exibir sucesso
+- apos a confirmacao, o login deve funcionar normalmente
+
+## CT-CAD-02 Cadastro de usuario como comprador invalido
+
+**Objetivo:** validar a rejeicao de cadastro com dominio de e-mail temporario.
+
+**Pre-condicoes:** usuario ainda nao cadastrado.
+
+**Massa sugerida:** `cad-comprador-invalido`
+
+**Passos:**
+
+1. Acessar a tela `/cadastro`.
+2. Selecionar `Comprador`.
+3. Preencher os campos obrigatorios com dados validos.
+4. Informar `comprador@mailinator.com` no campo `Email`.
+5. Marcar o aceite do termo de uso.
 6. Clicar em `Criar conta`.
 
 **Resultado esperado:**
 
-- O cadastro deve ser concluido com sucesso.
-- Nenhum erro de endereco deve ser exibido.
+- o cadastro nao deve ser concluido
+- o frontend deve permanecer na tela de cadastro
+- o sistema deve exibir a mensagem `Informe um email pessoal ou corporativo valido. Dominios de teste ou temporarios nao sao aceitos.`
+- nenhum e-mail de confirmacao deve ser enviado
 
-## CT-02 Cadastro de comprador com endereco inicial
+## CT-CAD-03 Cadastro de usuario como vendedor valido
 
-**Objetivo:** validar a criacao de comprador com endereco informado ja no cadastro.
+**Objetivo:** validar o cadastro de vendedor com e-mail real e confirmar o comportamento atual da plataforma, em que a loja e criada apenas depois do primeiro login confirmado.
 
-**Pre-condicoes:** usuario ainda nao cadastrado.
+**Pre-condicoes:** e-mail real disponivel para leitura e usuario ainda nao cadastrado.
 
-**Passos:**
-
-1. Acessar a tela de cadastro.
-2. Selecionar `Comprador`.
-3. Clicar no botao `+` da secao `Endereco`.
-4. Preencher os campos de endereco.
-5. Marcar o checkbox do termo de uso.
-6. Clicar em `Criar conta`.
-
-**Resultado esperado:**
-
-- O cadastro deve ser concluido com sucesso.
-- O endereco deve ficar vinculado ao perfil do comprador.
-
-## CT-03 Cadastro de vendedor direto
-
-**Objetivo:** validar a criacao de conta de vendedor desde a tela de cadastro.
-
-**Pre-condicoes:** usuario ainda nao cadastrado.
+**Massa sugerida:** `cad-vendedor-valido`
 
 **Passos:**
 
-1. Acessar a tela de cadastro.
+1. Acessar a tela `/cadastro`.
 2. Selecionar `Vendedor`.
-3. Preencher os dados pessoais.
-4. Preencher `Nome fantasia`, `Tipo de documento fiscal` e `Documento fiscal da loja`.
-5. Marcar o checkbox do termo de uso.
-6. Marcar o checkbox do termo fiscal para vendedores.
-7. Clicar em `Criar conta`.
+3. Preencher `Nome completo`.
+4. Preencher `Email` com um e-mail real acessivel pelo testador.
+5. Preencher `Telefone`.
+6. Preencher `CPF do responsavel`.
+7. Preencher `Data de nascimento`.
+8. Preencher `Senha` e `Confirmacao de senha` com o mesmo valor.
+9. Manter a secao `Endereco` recolhida ou preencher um endereco valido opcional.
+10. Marcar o aceite do termo de uso.
+11. Clicar em `Criar conta`.
+12. Validar a mensagem final do cadastro.
+13. Tentar entrar em `/login` antes de confirmar o e-mail.
+14. Validar que o acesso ainda esta bloqueado.
+15. Abrir a mensagem recebida na caixa de e-mail.
+16. Clicar no link de confirmacao.
+17. Validar a tela de sucesso em `/confirmar-email`.
+18. Entrar novamente em `/login` com o mesmo e-mail e senha.
 
 **Resultado esperado:**
 
-- A conta deve ser criada com loja vinculada.
-- O usuario deve conseguir acessar as opcoes da loja no perfil.
+- o cadastro deve ser concluido com sucesso
+- o sistema deve orientar que, depois da confirmacao, a loja sera aberta pelo perfil
+- antes da confirmacao, o login deve falhar com a mensagem `Confirme seu email antes de entrar. Use o link enviado para o endereco cadastrado.`
+- apos a confirmacao, o login deve funcionar normalmente
+- nenhuma loja deve ser criada automaticamente durante o cadastro
 
-## CT-04 Comprador abrindo loja depois
+## CT-CAD-04 Cadastro de usuario como vendedor invalido
 
-**Objetivo:** validar a transformacao operacional de comprador em vendedor.
+**Objetivo:** validar a rejeicao de cadastro de vendedor com dominio rotulado como teste.
 
-**Pre-condicoes:** conta criada como comprador e autenticada.
+**Pre-condicoes:** usuario ainda nao cadastrado.
+
+**Massa sugerida:** `cad-vendedor-invalido`
 
 **Passos:**
 
-1. Abrir `Perfil do usuario`.
-2. Clicar em `Criar loja`.
-3. Preencher os campos do modal da loja.
-4. Selecionar `CPF` em `Tipo do documento`.
-5. Confirmar se o campo fiscal vem preenchido com o CPF da conta, quando aplicavel.
-6. Marcar o termo fiscal.
-7. Clicar em `Criar loja`.
+1. Acessar a tela `/cadastro`.
+2. Selecionar `Vendedor`.
+3. Preencher os campos obrigatorios com dados validos.
+4. Informar `vendedor@test.com.br` no campo `Email`.
+5. Marcar o aceite do termo de uso.
+6. Clicar em `Criar conta`.
 
 **Resultado esperado:**
 
-- A loja deve ser criada com sucesso.
-- O perfil deve passar a exibir as funcionalidades de vendedor.
-
-## CT-05 Cadastro de produto
-
-**Objetivo:** validar o cadastro de um produto por uma conta com loja.
-
-**Pre-condicoes:** conta autenticada com loja ativa.
-
-**Passos:**
-
-1. Abrir o perfil da loja.
-2. Clicar no botao de adicionar produto.
-3. Preencher nome, categoria, preco, estoque e descricao.
-4. Manter o produto como disponivel para venda.
-5. Clicar em `Criar produto`.
-
-**Resultado esperado:**
-
-- O produto deve aparecer na listagem da loja.
-
-## CT-06 Adicao de um item ao carrinho
-
-**Objetivo:** validar a inclusao simples de um produto no carrinho.
-
-**Pre-condicoes:** produto disponivel para venda e comprador autenticado.
-
-**Passos:**
-
-1. Abrir a pagina do produto.
-2. Clicar em `Adicionar ao carrinho`.
-3. Abrir o carrinho.
-
-**Resultado esperado:**
-
-- O carrinho deve exibir o produto adicionado.
-- O subtotal deve ser calculado corretamente.
-
-## CT-07 Adicao de mais de um produto
-
-**Objetivo:** validar carrinho com multiplos itens.
-
-**Pre-condicoes:** pelo menos dois produtos disponiveis.
-
-**Passos:**
-
-1. Adicionar o primeiro produto ao carrinho.
-2. Adicionar o segundo produto ao carrinho.
-3. Abrir o carrinho.
-4. Ajustar a quantidade de um dos itens, se necessario.
-
-**Resultado esperado:**
-
-- O carrinho deve listar todos os itens.
-- O total deve ser recalculado conforme produtos e quantidades.
-
-## CT-08 Compra com comprador sem endereco salvo
-
-**Objetivo:** validar o cadastro do primeiro endereco durante o checkout.
-
-**Pre-condicoes:** comprador autenticado, com carrinho preenchido e sem endereco ativo no perfil.
-
-**Passos:**
-
-1. Abrir o carrinho.
-2. Clicar em `Finalizar compra`.
-3. Na etapa de endereco, preencher o primeiro endereco.
-4. Prosseguir para entrega e pagamento.
-
-**Resultado esperado:**
-
-- O endereco deve ser aceito pelo checkout.
-- O fluxo deve permitir continuar sem travar na etapa de endereco.
-
-## CT-09 Revisao do checkout
-
-**Objetivo:** validar a tela de confirmacao antes da conclusao do pedido.
-
-**Pre-condicoes:** checkout preenchido com endereco, entrega e pagamento.
-
-**Passos:**
-
-1. Selecionar uma forma de pagamento.
-2. Clicar em `Finalizar compra`.
-3. Revisar a tela `Confirmacao do pedido`.
-
-**Resultado esperado:**
-
-- A tela deve mostrar comprador, endereco, pagamento, totais e itens.
-- O botao `Confirmar compra` deve estar disponivel.
-
-## CT-10 Pagamento com PIX demonstrativo
-
-**Objetivo:** validar a conclusao do pedido com PIX fake.
-
-**Pre-condicoes:** checkout revisado e metodo `PIX` selecionado.
-
-**Passos:**
-
-1. Na tela de confirmacao, clicar em `Confirmar compra`.
-2. Validar a abertura do modal de PIX demonstrativo.
-3. Clicar em `Simular pagamento PIX`.
-
-**Resultado esperado:**
-
-- O modal de PIX deve exibir QR fake e codigo demonstrativo.
-- O sistema deve concluir o pedido e abrir a tela de sucesso.
+- o cadastro nao deve ser concluido
+- o frontend deve permanecer na tela de cadastro
+- o sistema deve exibir a mensagem `Informe um email pessoal ou corporativo valido. Dominios de teste ou temporarios nao sao aceitos.`
+- nenhum e-mail de confirmacao deve ser enviado
 
 ## Evidencias recomendadas
 
-- Captura da tela de cadastro concluido
-- Captura da loja criada
-- Captura do produto cadastrado
-- Captura do carrinho com um item
-- Captura do carrinho com multiplos itens
-- Captura da revisao do checkout
-- Captura do modal de PIX
-- Captura da tela de compra concluida
+- captura da tela de cadastro preenchido como comprador
+- captura da mensagem de bloqueio de login antes da confirmacao
+- captura do e-mail recebido com o link de confirmacao
+- captura da tela `Email confirmado`
+- captura do login bem-sucedido apos a confirmacao
+- captura da rejeicao de cadastro invalido
 
-## Complemento
+## Observacoes
 
-Este manual pode ser executado em conjunto com o checklist de regressao em `docs/QA_CHECKLIST.md`.
+- o formulario atual de cadastro exige `Data de nascimento`, mesmo que esse dado nao seja enviado na requisicao de registro
+- o perfil `Vendedor` usa o mesmo formulario base do `Comprador`
+- no comportamento atual, selecionar `Vendedor` nao cria loja diretamente no cadastro; a abertura da loja fica para o perfil apos o login confirmado

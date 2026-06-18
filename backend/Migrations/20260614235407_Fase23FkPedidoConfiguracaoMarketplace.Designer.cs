@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Omnimarket.Api.Data;
 
@@ -11,9 +12,11 @@ using Omnimarket.Api.Data;
 namespace OmniMarket.API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20260614235407_Fase23FkPedidoConfiguracaoMarketplace")]
+    partial class Fase23FkPedidoConfiguracaoMarketplace
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -956,26 +959,10 @@ namespace OmniMarket.API.Migrations
                     b.Property<DateTime>("DataCadastro")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("DataConfirmacaoEmail")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar");
-
-                    b.Property<DateTime?>("EmailConfirmacaoEnviadoEm")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("EmailConfirmacaoTokenExpiraEm")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("EmailConfirmacaoTokenHash")
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar");
-
-                    b.Property<bool>("EmailConfirmado")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Nome")
                         .IsRequired()

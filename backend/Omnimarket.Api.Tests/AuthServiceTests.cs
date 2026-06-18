@@ -86,6 +86,46 @@ public class AuthServiceTests
     }
 
     [Fact]
+    public async Task Login_DeveLiberarContaLegadaCriadaAntesDaConfirmacaoObrigatoria()
+    {
+        using var fixture = new ServiceTestFixture();
+        Criptografia.CriarPasswordHash(ServiceTestFixture.SenhaPadrao, out var hash, out var salt);
+
+        var usuarioLegado = new Usuario
+        {
+            Cpf = "52998224725",
+            Nome = "Conta",
+            Sobrenome = "Legada",
+            Email = "lschanhi@outlook.com",
+            PasswordHash = hash,
+            PasswordSalt = salt,
+            EmailConfirmado = false,
+            DataCadastro = new DateTime(2026, 6, 14, 12, 0, 0, DateTimeKind.Utc),
+            AceitouTermos = true,
+            DataAceiteTermos = new DateTime(2026, 6, 14, 12, 0, 0, DateTimeKind.Utc),
+            Role = "User"
+        };
+
+        fixture.Context.TBL_USUARIO.Add(usuarioLegado);
+        await fixture.Context.SaveChangesAsync();
+
+        var resposta = await fixture.AuthService.Login(new LoginDto
+        {
+            Email = "LSCHANHI@OUTLOOK.COM",
+            Password = ServiceTestFixture.SenhaPadrao
+        });
+
+        Assert.NotNull(resposta);
+
+        fixture.Context.ChangeTracker.Clear();
+
+        var usuarioSalvo = await fixture.Context.TBL_USUARIO.SingleAsync(u => u.Id == usuarioLegado.Id);
+        Assert.True(usuarioSalvo.EmailConfirmado);
+        Assert.NotNull(usuarioSalvo.DataConfirmacaoEmail);
+        Assert.Equal("lschanhi@outlook.com", usuarioSalvo.Email);
+    }
+
+    [Fact]
     public async Task Login_DeveRetornarTokenComClaimsBasicasDoUsuarioAposConfirmarEmail()
     {
         using var fixture = new ServiceTestFixture();

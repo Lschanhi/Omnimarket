@@ -36,6 +36,8 @@ namespace Omnimarket.Api.Services
                     Nome = configuration["AdminSeed:Nome"]?.Trim() ?? "Admin",
                     Sobrenome = configuration["AdminSeed:Sobrenome"]?.Trim() ?? "OmniMarket",
                     Email = email,
+                    EmailConfirmado = true,
+                    DataConfirmacaoEmail = DateTime.UtcNow,
                     PasswordHash = hash,
                     PasswordSalt = salt,
                     DataCadastro = DateTime.UtcNow,
@@ -49,6 +51,11 @@ namespace Omnimarket.Api.Services
             else
             {
                 usuario.Role = RolesSistema.Admin;
+                usuario.EmailConfirmado = true;
+                usuario.DataConfirmacaoEmail ??= DateTime.UtcNow;
+                usuario.EmailConfirmacaoTokenHash = null;
+                usuario.EmailConfirmacaoTokenExpiraEm = null;
+                usuario.EmailConfirmacaoEnviadoEm = null;
 
                 if (configuration.GetValue("AdminSeed:AtualizarSenha", true))
                 {

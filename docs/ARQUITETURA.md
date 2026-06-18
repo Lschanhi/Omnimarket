@@ -2,7 +2,7 @@
 
 ## Visao geral
 
-O OmniMarket esta organizado como monorepo com duas aplicacoes principais:
+O OmniMarket esta organizado como uma plataforma com duas aplicacoes principais:
 
 - `backend/`: API principal, regras de negocio, autenticacao, persistencia, uploads e rotas administrativas.
 - `frontend/`: interface web publica e autenticada, consumindo a API via HTTP.
@@ -53,5 +53,4 @@ Principais areas:
    - manter admin estatico separado
    - migrar admin integralmente para o frontend React
 2. O frontend tem autenticacao armazenada em `localStorage`, mas a autorizacao de navegacao ainda nao esta centralizada no router.
-3. O backend esta relativamente organizado por dominio, mas ainda mistura concerns de aplicacao em `Program.cs` e nao expoe health check.
-
+3. O backend esta relativamente organizado por dominio, mas ainda mistura concerns de aplicacao em `Program.cs`; a observabilidade tambem pode evoluir alem dos health checks ja expostos.
