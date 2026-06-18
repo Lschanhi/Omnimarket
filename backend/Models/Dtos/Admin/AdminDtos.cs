@@ -15,6 +15,55 @@ namespace Omnimarket.Api.Models.Dtos.Admin
         public int PedidosPendentes { get; set; }
         public int PedidosPagos { get; set; }
         public decimal ReceitaTotalMarketplace { get; set; }
+        public decimal ComissaoTotalMarketplace { get; set; }
+        public decimal TicketMedioPedidos { get; set; }
+        public int TotalVisualizacoesLojas { get; set; }
+        public int TotalVisualizacoesProdutos { get; set; }
+        public int TotalAcessosCatalogo { get; set; }
+        public List<AdminSerieDiariaDto> ReceitaPorDia { get; set; } = new();
+        public List<AdminSerieDiariaDto> PedidosPorDia { get; set; } = new();
+        public List<AdminStatusResumoDto> PedidosPorStatus { get; set; } = new();
+        public List<AdminStatusResumoDto> VendasPorStatus { get; set; } = new();
+        public List<AdminRankingProdutoDto> ProdutosMaisVendidos { get; set; } = new();
+        public List<AdminRankingProdutoDto> ProdutosMaisVisualizados { get; set; } = new();
+        public List<AdminRankingLojaDto> LojasMaisVisitadas { get; set; } = new();
+        public List<AdminRankingLojaDto> LojasComMaiorReceita { get; set; } = new();
+    }
+
+    public class AdminSerieDiariaDto
+    {
+        public string Data { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
+        public int Total { get; set; }
+        public decimal Valor { get; set; }
+    }
+
+    public class AdminStatusResumoDto
+    {
+        public string Chave { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
+        public int Total { get; set; }
+        public decimal ValorTotal { get; set; }
+    }
+
+    public class AdminRankingProdutoDto
+    {
+        public int ProdutoId { get; set; }
+        public string Nome { get; set; } = string.Empty;
+        public string NomeLoja { get; set; } = string.Empty;
+        public int TotalQuantidade { get; set; }
+        public decimal ValorTotal { get; set; }
+        public int TotalVisualizacoes { get; set; }
+    }
+
+    public class AdminRankingLojaDto
+    {
+        public int LojaId { get; set; }
+        public string NomeFantasia { get; set; } = string.Empty;
+        public bool Ativa { get; set; }
+        public int TotalVisualizacoes { get; set; }
+        public int TotalProdutosPublicados { get; set; }
+        public decimal ValorBruto { get; set; }
     }
 
     public class AdminUsuarioDto
