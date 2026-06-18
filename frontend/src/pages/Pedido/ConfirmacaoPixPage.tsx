@@ -1,16 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   CheckCircle2,
-  Copy,
   CreditCard,
-  ExternalLink,
   MapPin,
-  QrCode,
   User,
 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import omnimarketQrCodeAvaliacao from "../../assets/OMNIMARKET-QRCode.png";
 import { Botao } from "../../Components/Botao";
 import { PageLayout } from "../../Components/PageLayout";
 import { useCart } from "../../context/CartContext";
@@ -21,10 +18,11 @@ import {
 import { criarPedido } from "../../Services/pedidos/pedidoService";
 import { criarEndereco } from "../../Services/user/enderecoService";
 import {
+  criarCheckoutResultState,
   criarCodigoPixFake,
-  criarQrCodeApresentacaoUrl,
   formatarCpfCheckout,
   formatarEnderecoCompleto,
+  type CheckoutPedidoProcessadoResumo,
   formatarMoedaCheckout,
   type PixCheckoutPendingState,
   type PixCheckoutReviewState,
@@ -34,22 +32,6 @@ type ConfirmacaoPixLocationState = {
   pixCheckoutReview?: PixCheckoutReviewState;
 };
 
-type PedidoProcessadoResumo = {
-  pedidoId: number;
-  lojaNome: string;
-  total: number;
-  statusPagamento: string;
-  itens: PixCheckoutPendingState["pedidos"][number]["itens"];
-};
-
-function calcularStatusPagamentoFinal(pedidos: PedidoProcessadoResumo[]) {
-  return pedidos.every(
-    (pedidoAtual) => pedidoAtual.statusPagamento === pedidos[0]?.statusPagamento,
-  )
-    ? pedidos[0]?.statusPagamento ?? "Confirmado"
-    : "Confirmado parcialmente";
-}
-
 export function ConfirmacaoPixPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -57,65 +39,21 @@ export function ConfirmacaoPixPage() {
   const state = location.state as ConfirmacaoPixLocationState;
   const review = state.pixCheckoutReview;
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isConfirmingPix, setIsConfirmingPix] = useState(false);
   const [erro, setErro] = useState("");
-  const [pixDemo, setPixDemo] = useState<PixCheckoutPendingState | null>(null);
 
-  useEffect(() => {
-    if (!pixDemo) {
-      return;
-    }
-
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousBodyPosition = document.body.style.position;
-    const previousBodyTop = document.body.style.top;
-    const previousBodyWidth = document.body.style.width;
-    const previousBodyLeft = document.body.style.left;
-    const previousBodyRight = document.body.style.right;
-    const previousHtmlOverflow = document.documentElement.style.overflow;
-    const scrollY = window.scrollY;
-
-    document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
-    document.body.style.left = "0";
-    document.body.style.right = "0";
-    document.documentElement.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousBodyOverflow;
-      document.body.style.position = previousBodyPosition;
-      document.body.style.top = previousBodyTop;
-      document.body.style.width = previousBodyWidth;
-      document.body.style.left = previousBodyLeft;
-      document.body.style.right = previousBodyRight;
-      document.documentElement.style.overflow = previousHtmlOverflow;
-      window.scrollTo({ top: scrollY, left: 0, behavior: "auto" });
-    };
-  }, [pixDemo]);
-
-  function navegarParaSucesso(pedidosProcessados: PedidoProcessadoResumo[], totalCheckout: number) {
-    const todosItens = pedidosProcessados.flatMap((pedidoAtual) => pedidoAtual.itens);
-
+  function navegarParaSucesso(
+    pedidosProcessados: CheckoutPedidoProcessadoResumo[],
+    totalCheckout: number,
+  ) {
     navigate({
       to: "/paginaSucesso",
       state: (currentState) => ({
         ...currentState,
-        checkoutResult: {
-          pedidoId: pedidosProcessados[0]?.pedidoId ?? 0,
-          pedidoIds: pedidosProcessados.map((pedidoAtual) => pedidoAtual.pedidoId),
-          pedidos: pedidosProcessados,
-          total: totalCheckout,
+        checkoutResult: criarCheckoutResultState({
+          pedidosProcessados,
+          totalCheckout,
           metodoPagamento: review?.metodoPagamentoTitulo ?? "Pagamento",
-          statusPagamento: calcularStatusPagamentoFinal(pedidosProcessados),
-          itens: todosItens.map((item) => ({
-            produtoId: item.produtoId,
-            nome: item.nome,
-            quantidade: item.quantidade,
-            subtotal: item.subtotal,
-          })),
-        },
+        }),
       }),
     });
   }
@@ -143,19 +81,6 @@ export function ConfirmacaoPixPage() {
     ).id;
   }
 
-  async function handleCopiarCodigoPix() {
-    if (!pixDemo) {
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(pixDemo.codigoPixFake);
-      toast.success("Codigo PIX fake copiado.");
-    } catch {
-      toast.error("Nao foi possivel copiar o codigo.");
-    }
-  }
-
   async function handleConfirmarCheckout() {
     if (!review || isSubmitting) {
       return;
@@ -165,7 +90,7 @@ export function ConfirmacaoPixPage() {
     setErro("");
 
     const pagamentosPendentes: PixCheckoutPendingState["pedidos"] = [];
-    const pedidosProcessados: PedidoProcessadoResumo[] = [];
+    const pedidosProcessados: CheckoutPedidoProcessadoResumo[] = [];
 
     try {
       const enderecoId = await resolverEnderecoIdReview();
@@ -225,21 +150,27 @@ export function ConfirmacaoPixPage() {
           0,
         );
 
-        setPixDemo({
-          comprador: review.comprador,
-          endereco: review.endereco.resumo,
-          pedidos: pagamentosPendentes,
-          subtotal: review.subtotal,
-          freteTotal: review.freteTotal,
-          total: totalFinalCheckout,
-          metodoPagamentoTitulo: review.metodoPagamentoTitulo,
-          redirecionamentoQrUrl: review.redirecionamentoQrUrl,
-          codigoPixFake: criarCodigoPixFake({
-            pedidoPrincipalId: pagamentosPendentes[0]?.pedidoId ?? 0,
-            total: totalFinalCheckout,
-            nomeComprador: review.comprador.nome,
+        navigate({
+          to: "/paginaPixApresentacao",
+          state: (currentState) => ({
+            ...currentState,
+            pixCheckoutPending: {
+              comprador: review.comprador,
+              endereco: review.endereco.resumo,
+              pedidos: pagamentosPendentes,
+              subtotal: review.subtotal,
+              freteTotal: review.freteTotal,
+              total: totalFinalCheckout,
+              metodoPagamentoTitulo: review.metodoPagamentoTitulo,
+              redirecionamentoQrUrl: review.redirecionamentoQrUrl,
+              codigoPixFake: criarCodigoPixFake({
+                pedidoPrincipalId: pagamentosPendentes[0]?.pedidoId ?? 0,
+                total: totalFinalCheckout,
+                nomeComprador: review.comprador.nome,
+              }),
+              qrCodeUrl: omnimarketQrCodeAvaliacao,
+            },
           }),
-          qrCodeUrl: criarQrCodeApresentacaoUrl(review.redirecionamentoQrUrl),
         });
         return;
       }
@@ -262,37 +193,6 @@ export function ConfirmacaoPixPage() {
       );
     } finally {
       setIsSubmitting(false);
-    }
-  }
-
-  async function handleSimularPagamentoPix() {
-    if (!pixDemo || isConfirmingPix) {
-      return;
-    }
-
-    setIsConfirmingPix(true);
-    setErro("");
-
-    try {
-      const confirmacoes = await Promise.all(
-        pixDemo.pedidos.map((pedidoAtual) => confirmarPagamentoFake(pedidoAtual.planoPagamentoId)),
-      );
-
-      const pedidosProcessados = pixDemo.pedidos.map((pedidoAtual, index) => ({
-        pedidoId: pedidoAtual.pedidoId,
-        lojaNome: pedidoAtual.lojaNome,
-        total: pedidoAtual.total,
-        statusPagamento: confirmacoes[index]?.statusPagamento ?? pedidoAtual.statusPagamento,
-        itens: pedidoAtual.itens,
-      }));
-
-      navegarParaSucesso(pedidosProcessados, pixDemo.total);
-    } catch (error) {
-      setErro(
-        error instanceof Error ? error.message : "Nao foi possivel simular o pagamento PIX.",
-      );
-    } finally {
-      setIsConfirmingPix(false);
     }
   }
 
@@ -469,7 +369,7 @@ export function ConfirmacaoPixPage() {
               <Botao
                 variant="secondary"
                 onClick={() => navigate({ to: "/paginaPagamento" })}
-                disabled={isSubmitting || isConfirmingPix}
+                disabled={isSubmitting}
               >
                 Ajustar checkout
               </Botao>
@@ -478,7 +378,7 @@ export function ConfirmacaoPixPage() {
                 onClick={() => {
                   void handleConfirmarCheckout();
                 }}
-                disabled={isSubmitting || isConfirmingPix}
+                disabled={isSubmitting}
                 icon={<CheckCircle2 className="h-5 w-5" />}
               >
                 {isSubmitting ? "Confirmando..." : "Confirmar compra"}
@@ -487,169 +387,6 @@ export function ConfirmacaoPixPage() {
           </section>
         </div>
       </div>
-
-      {pixDemo ? (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden bg-black/80 px-3 py-3 sm:px-4 sm:py-4">
-          <div className="max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl overflow-y-auto rounded-3xl border border-white/10 bg-zinc-950 p-4 text-white shadow-[0_0_60px_rgba(0,0,0,0.45)] [scrollbar-gutter:stable] sm:max-h-[calc(100dvh-2rem)] sm:p-5 lg:p-6">
-            <div className="flex flex-col gap-4 border-b border-white/10 pb-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-yellow-400/80">
-                  PIX demonstrativo
-                </span>
-                <h2 className="mt-2 text-2xl font-bold sm:text-3xl">QR fake para a apresentacao</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
-                  Este modal e exclusivo do PIX. O QR abaixo e demonstrativo e pode ser usado para
-                  abrir a OmniMarket durante a apresentacao.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/5 px-4 py-3 text-sm text-zinc-300 lg:shrink-0">
-                <p className="font-medium text-white">Valor total</p>
-                <p className="mt-1 text-xl font-semibold text-yellow-300">
-                  {formatarMoedaCheckout(pixDemo.total)}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <div className="grid gap-4 lg:grid-cols-[0.88fr_1.12fr]">
-                <div className="space-y-4">
-                  <div className="rounded-3xl border border-white/10 bg-black/20 p-4 text-center sm:p-5">
-                    <div className="mb-4 inline-flex rounded-full border border-yellow-400/20 bg-yellow-400/10 p-3 text-yellow-300">
-                      <QrCode className="h-6 w-6" />
-                    </div>
-
-                    <div className="mx-auto flex h-[180px] w-[180px] items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-white p-3 sm:h-[210px] sm:w-[210px] lg:h-[230px] lg:w-[230px]">
-                      <img
-                        src={pixDemo.qrCodeUrl}
-                        alt="QR demonstrativo da apresentacao"
-                        className="h-full w-full rounded-2xl object-contain"
-                      />
-                    </div>
-
-                    <p className="mt-4 text-sm text-zinc-400">
-                      QR demonstrativo da apresentacao. Ao escanear, ele abre a OmniMarket para quem
-                      estiver assistindo.
-                    </p>
-
-                    <div className="mt-4">
-                      <a
-                        href={pixDemo.redirecionamentoQrUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm text-zinc-200 transition hover:border-yellow-400/40 hover:text-yellow-300"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Abrir link da demonstracao
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="rounded-3xl border border-white/10 bg-black/20 p-4 sm:p-5">
-                    <p className="text-sm font-medium uppercase tracking-[0.18em] text-yellow-400/80">
-                      Copia e cola fake
-                    </p>
-                    <div className="mt-3 max-h-36 overflow-y-auto rounded-2xl border border-white/10 bg-black/30 p-4">
-                      <p className="break-all font-mono text-sm leading-7 text-zinc-200">
-                        {pixDemo.codigoPixFake}
-                      </p>
-                    </div>
-
-                    <div className="mt-4">
-                      <Botao
-                        onClick={() => {
-                          void handleCopiarCodigoPix();
-                        }}
-                        icon={<Copy className="h-5 w-5" />}
-                        disabled={isConfirmingPix}
-                      >
-                        Copiar codigo PIX fake
-                      </Botao>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="rounded-3xl border border-white/10 bg-black/20 p-4 sm:p-5">
-                    <h3 className="text-xl font-semibold text-white">Resumo da demonstracao</h3>
-
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                        <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-                          Comprador
-                        </p>
-                        <p className="mt-2 font-semibold text-white">{pixDemo.comprador.nome}</p>
-                        <p className="mt-1 text-sm text-zinc-400">{pixDemo.comprador.email}</p>
-                        <p className="mt-1 text-sm text-zinc-500">
-                          {formatarCpfCheckout(pixDemo.comprador.cpf)}
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                        <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">Endereco</p>
-                        <p className="mt-2 text-sm leading-6 text-zinc-300">
-                          {formatarEnderecoCompleto(pixDemo.endereco)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-                        Pedidos pendentes
-                      </p>
-                      <div className="mt-3 space-y-3">
-                        {pixDemo.pedidos.map((pedidoAtual) => (
-                          <div
-                            key={pedidoAtual.pedidoId}
-                            className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3"
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <p className="font-medium text-white">
-                                  #{pedidoAtual.pedidoId} - {pedidoAtual.lojaNome}
-                                </p>
-                                <p className="mt-1 text-xs text-zinc-500">
-                                  Status atual: {pedidoAtual.statusPagamento}
-                                </p>
-                              </div>
-                              <span className="text-sm font-semibold text-yellow-300">
-                                {formatarMoedaCheckout(pedidoAtual.total)}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">
-                      Depois de mostrar o QR na apresentacao, clique em "Simular pagamento PIX" para
-                      concluir o checkout fake e seguir para a tela de sucesso.
-                    </div>
-
-                    {erro ? (
-                      <div className="mt-4 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                        {erro}
-                      </div>
-                    ) : null}
-
-                    <div className="mt-5">
-                      <Botao
-                        onClick={() => {
-                          void handleSimularPagamentoPix();
-                        }}
-                        icon={<CheckCircle2 className="h-5 w-5" />}
-                        disabled={isConfirmingPix}
-                      >
-                        {isConfirmingPix ? "Confirmando PIX fake..." : "Simular pagamento PIX"}
-                      </Botao>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </PageLayout>
   );
 }

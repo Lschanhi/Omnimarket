@@ -84,6 +84,14 @@ export type PixCheckoutPendingState = {
   qrCodeUrl: string;
 };
 
+export type CheckoutPedidoProcessadoResumo = {
+  pedidoId: number;
+  lojaNome: string;
+  total: number;
+  statusPagamento: string;
+  itens: PixCheckoutItem[];
+};
+
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
@@ -123,6 +131,41 @@ export function formatarEnderecoCompleto(endereco: PixCheckoutEnderecoResumo) {
   return partes.join(" - ");
 }
 
+export function calcularStatusPagamentoFinal(pedidos: CheckoutPedidoProcessadoResumo[]) {
+  return pedidos.every(
+    (pedidoAtual) => pedidoAtual.statusPagamento === pedidos[0]?.statusPagamento,
+  )
+    ? pedidos[0]?.statusPagamento ?? "Confirmado"
+    : "Confirmado parcialmente";
+}
+
+export function criarCheckoutResultState({
+  pedidosProcessados,
+  totalCheckout,
+  metodoPagamento,
+}: {
+  pedidosProcessados: CheckoutPedidoProcessadoResumo[];
+  totalCheckout: number;
+  metodoPagamento: string;
+}) {
+  const todosItens = pedidosProcessados.flatMap((pedidoAtual) => pedidoAtual.itens);
+
+  return {
+    pedidoId: pedidosProcessados[0]?.pedidoId ?? 0,
+    pedidoIds: pedidosProcessados.map((pedidoAtual) => pedidoAtual.pedidoId),
+    pedidos: pedidosProcessados,
+    total: totalCheckout,
+    metodoPagamento,
+    statusPagamento: calcularStatusPagamentoFinal(pedidosProcessados),
+    itens: todosItens.map((item) => ({
+      produtoId: item.produtoId,
+      nome: item.nome,
+      quantidade: item.quantidade,
+      subtotal: item.subtotal,
+    })),
+  };
+}
+
 export function criarCodigoPixFake({
   pedidoPrincipalId,
   total,
@@ -151,8 +194,4 @@ export function criarCodigoPixFake({
     `6304${token.slice(0, 4)}`,
     token,
   ].join("");
-}
-
-export function criarQrCodeApresentacaoUrl(targetUrl: string) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(targetUrl)}`;
 }
