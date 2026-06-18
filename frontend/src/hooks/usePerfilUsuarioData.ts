@@ -24,6 +24,7 @@ import {
 import { ApiError } from "../Services/http/apiClient";
 import {
   criarImagemPlaceholder,
+  listarMeusProdutos,
   listarProdutos,
   obterProdutoPorId,
 } from "../Services/produtos/produtoService";
@@ -891,7 +892,15 @@ export function usePerfilUsuarioData() {
           return;
         }
 
-        const [pedidos, lojaAtual, metricas, resumoFinanceiro, produtos, enderecosDetalhados] =
+        const [
+          pedidos,
+          lojaAtual,
+          metricas,
+          resumoFinanceiro,
+          produtosPublicos,
+          meusProdutos,
+          enderecosDetalhados,
+        ] =
           await Promise.all([
             carregarComFallback(listarPedidosUsuario(perfil.id), [], "os pedidos do usuario"),
             carregarComFallback(obterMinhaLoja(), null, "a loja do usuario"),
@@ -902,6 +911,7 @@ export function usePerfilUsuarioData() {
               "o resumo financeiro da loja",
             ),
             carregarComFallback(listarProdutos(), [], "o catalogo publico"),
+            carregarComFallback(listarMeusProdutos(), [], "os produtos da sua loja"),
             carregarComFallback(
               listarEnderecos(perfil.id),
               [],
@@ -932,6 +942,7 @@ export function usePerfilUsuarioData() {
           return;
         }
 
+        const produtosBase = combinarProdutos(produtosPublicos, meusProdutos);
         const idsProdutosPedidos = Array.from(
           new Set(
             pedidos.flatMap((pedido) => pedido.itens.map((item) => item.produtoId)).filter(Boolean),
@@ -952,7 +963,7 @@ export function usePerfilUsuarioData() {
         const idsProdutosRelacionados = Array.from(
           new Set([...idsProdutosPedidos, ...idsProdutosPedidosLoja, ...idsProdutosMetricas]),
         );
-        const produtosPedidosPorId = new Map(produtos.map((produto) => [produto.id, produto]));
+        const produtosPedidosPorId = new Map(produtosBase.map((produto) => [produto.id, produto]));
         const produtosDetalhadosPedidos = await Promise.all(
           idsProdutosRelacionados
             .filter((produtoId) => !produtoTemImagemUtil(produtosPedidosPorId.get(produtoId)))
@@ -963,20 +974,20 @@ export function usePerfilUsuarioData() {
           return;
         }
 
-        const produtosEnriquecidosPedidos = combinarProdutos(produtos, produtosDetalhadosPedidos);
+        const produtosEnriquecidosPedidos = combinarProdutos(produtosBase, produtosDetalhadosPedidos);
         setProdutosCatalogo(produtosEnriquecidosPedidos);
 
         const lojaId = lojaAtual?.id ?? metricas?.lojaId;
         const produtosDaLoja = lojaId
           ? produtosEnriquecidosPedidos
-              .filter((produto) => produto.lojaId === lojaId && produto.disponivel !== false)
+              .filter((produto) => produto.lojaId === lojaId)
               .map((produto) => ({
                 id: `produto-${produto.id}`,
                 titulo: produto.nome,
                 subtitulo: produto.categoriaNome,
                 valor: currencyFormatter.format(produto.preco),
                 imagemUrl: produto.imagem,
-                badge: "Publicado",
+                badge: produto.disponivel === false ? "Pausado" : "Publicado",
                 produtoId: produto.id,
                 categoriaId: produto.categoriaId,
                 categoriaNome: produto.categoriaNome,
@@ -1051,19 +1062,6 @@ export function usePerfilUsuarioData() {
       const indiceProdutoAtual = currentItems.produtos.findIndex(
         (item) => item.produtoId === produto.produtoId,
       );
-
-      if (produto.disponivel === false) {
-        if (indiceProdutoAtual < 0) {
-          proximoTotalProdutos = currentItems.produtos.length;
-          return currentItems;
-        }
-
-        proximoTotalProdutos = currentItems.produtos.length - 1;
-        return {
-          ...currentItems,
-          produtos: currentItems.produtos.filter((item) => item.produtoId !== produto.produtoId),
-        };
-      }
 
       if (indiceProdutoAtual < 0) {
         proximoTotalProdutos = currentItems.produtos.length + 1;

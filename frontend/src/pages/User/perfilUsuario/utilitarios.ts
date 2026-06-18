@@ -108,8 +108,8 @@ export const ABAS_DE_CONTEUDO_POR_VISAO: Record<PerfilVisaoId, UserTabOption[]> 
 
 export const METADADOS_ABAS: Record<PerfilTabId, Omit<PerfilTabContent, "itens">> = {
   produtos: {
-    titulo: "Produtos publicados",
-    descricao: "Itens atualmente disponiveis na vitrine da sua loja.",
+    titulo: "Produtos da loja",
+    descricao: "Gerencie os itens publicados e pausados da vitrine em um so lugar.",
     vazioTitulo: "Nenhum produto encontrado",
     vazioDescricao: "Quando houver produtos cadastrados na loja, eles aparecerao aqui.",
   },

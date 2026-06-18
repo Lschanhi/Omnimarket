@@ -510,6 +510,13 @@ export async function listarProdutos() {
   return normalizarProdutosDaApi(produtos);
 }
 
+export async function listarMeusProdutos() {
+  const produtos = await apiRequest<ProdutoApiResponse[]>("/api/produto/meus", {
+    authenticated: true,
+  });
+  return normalizarProdutosDaApi(produtos);
+}
+
 export async function listarProdutosEmDestaque(take = 10) {
   const produtos = await apiRequest<ProdutoApiResponse[]>(`/api/produto/destaques?take=${take}`);
   return normalizarProdutosDaApi(produtos);

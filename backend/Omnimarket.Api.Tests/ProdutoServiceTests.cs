@@ -159,6 +159,39 @@ public class ProdutoServiceTests
     }
 
     [Fact]
+    public async Task GetMineAsync_DeveRetornarProdutosPublicadosEPausadosDaMinhaLoja()
+    {
+        using var fixture = new ServiceTestFixture();
+        var vendedor = await fixture.CriarUsuarioAsync("seller-my-products");
+        var outroVendedor = await fixture.CriarUsuarioAsync("seller-other-products");
+
+        var produtoPublicado = await fixture.CriarProdutoAsync(vendedor.Id, estoque: 5);
+        var produtoPausado = await fixture.CriarProdutoAsync(vendedor.Id, estoque: 4);
+        var produtoSemEstoque = await fixture.CriarProdutoAsync(vendedor.Id, estoque: 0);
+        var produtoDesativado = await fixture.CriarProdutoAsync(vendedor.Id, estoque: 2);
+        var produtoOutroVendedor = await fixture.CriarProdutoAsync(outroVendedor.Id, estoque: 6);
+
+        produtoPublicado.Nome = "Produto ativo";
+        produtoPausado.Nome = "Produto pausado";
+        produtoSemEstoque.Nome = "Produto sem estoque";
+        produtoDesativado.Nome = "Produto removido";
+        produtoOutroVendedor.Nome = "Produto externo";
+        produtoPausado.StatusPublicacao = StatusProduto.Pausado;
+        produtoDesativado.StatusPublicacao = StatusProduto.Desativado;
+
+        await fixture.Context.SaveChangesAsync();
+        fixture.Context.ChangeTracker.Clear();
+
+        var produtosDaMinhaLoja = (await fixture.ProdutoService.GetMineAsync(vendedor.Id)).ToList();
+
+        Assert.Contains(produtosDaMinhaLoja, item => item.Id == produtoPublicado.Id);
+        Assert.Contains(produtosDaMinhaLoja, item => item.Id == produtoPausado.Id);
+        Assert.Contains(produtosDaMinhaLoja, item => item.Id == produtoSemEstoque.Id);
+        Assert.DoesNotContain(produtosDaMinhaLoja, item => item.Id == produtoDesativado.Id);
+        Assert.DoesNotContain(produtosDaMinhaLoja, item => item.Id == produtoOutroVendedor.Id);
+    }
+
+    [Fact]
     public async Task GetPagedAsync_DeveFiltrarPorNomeCategoriaEPreco()
     {
         using var fixture = new ServiceTestFixture();

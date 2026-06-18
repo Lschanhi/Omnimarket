@@ -162,6 +162,8 @@ const ROTULO_STATUS_COMPRA: Record<PerfilFiltroStatusCompraId, string> = {
   finalizado: "Finalizado",
 };
 
+type FiltroDisponibilidadeProdutoLoja = "todos" | "disponiveis" | "indisponiveis";
+
 function formatarStatusSolicitacaoResumo(status: string) {
   switch (status) {
     case "EmAnalise":
@@ -576,7 +578,6 @@ export function PerfilUsuarioPage() {
 
   const podeGerenciarLoja = Boolean(usuario?.enderecoPrincipalId && usuario?.telefonePrincipalId);
   const produtosDaLoja = tabItems.produtos;
-  const categoriasDaLoja = criarCategoriasDaLoja(produtosDaLoja);
   const visoesDisponiveis = temLoja
     ? ABAS_DE_VISAO
     : ABAS_DE_VISAO.filter((visao) => visao.id !== "loja");
@@ -605,6 +606,8 @@ export function PerfilUsuarioPage() {
     useState<PerfilFiltroStatusCompraId>("compras");
   const [filtroStatusVendaAtivo, setFiltroStatusVendaAtivo] =
     useState<PerfilFiltroStatusVendaId>("todos");
+  const [filtroDisponibilidadeProdutoLojaAtivo, setFiltroDisponibilidadeProdutoLojaAtivo] =
+    useState<FiltroDisponibilidadeProdutoLoja>("todos");
   const [isCarregandoResumoCompras, setIsCarregandoResumoCompras] = useState(false);
   const [isCarregandoPedidoCompra, setIsCarregandoPedidoCompra] = useState(false);
   const [isCarregandoSolicitacoesPedidoCompra, setIsCarregandoSolicitacoesPedidoCompra] =
@@ -621,6 +624,15 @@ export function PerfilUsuarioPage() {
   const [isAtualizandoPedidoVenda, setIsAtualizandoPedidoVenda] = useState(false);
   const [isDialogoCancelamentoVendaAberto, setIsDialogoCancelamentoVendaAberto] = useState(false);
   const isBuyerOrdersTab = visaoAtiva === "comprador" && abaAtivaResolvida === "compras";
+  const totalProdutosDisponiveis = produtosDaLoja.filter((item) => item.disponivel !== false).length;
+  const totalProdutosIndisponiveis = produtosDaLoja.filter((item) => item.disponivel === false).length;
+  const produtosDaLojaFiltradosPorStatus =
+    filtroDisponibilidadeProdutoLojaAtivo === "disponiveis"
+      ? produtosDaLoja.filter((item) => item.disponivel !== false)
+      : filtroDisponibilidadeProdutoLojaAtivo === "indisponiveis"
+        ? produtosDaLoja.filter((item) => item.disponivel === false)
+        : produtosDaLoja;
+  const categoriasDaLoja = criarCategoriasDaLoja(produtosDaLojaFiltradosPorStatus);
   const tabContent: PerfilTabContent = {
     ...METADADOS_ABAS[abaAtivaResolvida],
     itens: tabItems[abaAtivaResolvida],
@@ -635,7 +647,9 @@ export function PerfilUsuarioPage() {
   const filtrosStatusVenda = criarFiltrosStatusVenda(pedidosVendaEnriquecidos);
   const itensExibidos =
     isStoreProductsTab && categoriaLojaAtiva !== "todas"
-      ? tabContent.itens.filter((item) => item.categoriaId === categoriaLojaAtiva)
+      ? produtosDaLojaFiltradosPorStatus.filter((item) => item.categoriaId === categoriaLojaAtiva)
+      : isStoreProductsTab
+        ? produtosDaLojaFiltradosPorStatus
       : isStoreSalesTab
         ? pedidosVendaEnriquecidos.filter((item) => {
             if (filtroStatusVendaAtivo === "todos") {
@@ -650,6 +664,8 @@ export function PerfilUsuarioPage() {
             )
           : tabContent.itens;
   const estaFiltrandoCategoria = isStoreProductsTab && categoriaLojaAtiva !== "todas";
+  const estaFiltrandoDisponibilidadeLoja =
+    isStoreProductsTab && filtroDisponibilidadeProdutoLojaAtivo !== "todos";
   const estaFiltrandoStatusCompra = isBuyerOrdersTab;
   const estaFiltrandoStatusVenda = isStoreSalesTab && filtroStatusVendaAtivo !== "todos";
   const cardAtivo =
@@ -811,6 +827,7 @@ export function PerfilUsuarioPage() {
       setCategoriaLojaAtiva("todas");
       setCategoriaLojaModoExclusao(false);
       setCategoriaLojaPendenteExclusao(null);
+      setFiltroDisponibilidadeProdutoLojaAtivo("todos");
       return;
     }
 
@@ -823,6 +840,7 @@ export function PerfilUsuarioPage() {
   }, [
     categoriaLojaAtiva,
     categoriasDaLoja,
+    filtroDisponibilidadeProdutoLojaAtivo,
     isStoreProductsTab,
     setCategoriaLojaAtiva,
     setCategoriaLojaModoExclusao,
@@ -2490,6 +2508,10 @@ export function PerfilUsuarioPage() {
                         categoriaLojaRemovendoId={categoriaLojaRemovendoId}
                         categoriasDaLoja={categoriasDaLoja}
                         lojaFeedback={lojaFeedback}
+                        statusProdutoAtivo={filtroDisponibilidadeProdutoLojaAtivo}
+                        totalProdutosDisponiveis={totalProdutosDisponiveis}
+                        totalProdutosIndisponiveis={totalProdutosIndisponiveis}
+                        totalProdutosLoja={produtosDaLoja.length}
                         onAlternarModoExclusaoCategorias={handleAlternarModoExclusaoCategorias}
                         onCancelarModoExclusaoCategorias={handleCancelarModoExclusaoCategorias}
                         onConfirmarRemocaoCategoria={() => void handleRemoverCategoriaLoja()}
@@ -2497,6 +2519,7 @@ export function PerfilUsuarioPage() {
                           setCategoriaLojaPendenteExclusao(null)
                         }
                         onSelecionarCategoria={setCategoriaLojaAtiva}
+                        onSelecionarStatusProduto={setFiltroDisponibilidadeProdutoLojaAtivo}
                         onSolicitarRemocaoCategoriaLoja={handleSolicitarRemocaoCategoriaLoja}
                       />
                     ) : null}
@@ -2533,6 +2556,10 @@ export function PerfilUsuarioPage() {
                       title={
                         estaFiltrandoCategoria
                           ? "Nenhum produto nessa categoria"
+                          : estaFiltrandoDisponibilidadeLoja
+                            ? filtroDisponibilidadeProdutoLojaAtivo === "disponiveis"
+                              ? "Nenhum produto disponivel"
+                              : "Nenhum produto pausado"
                           : estaFiltrandoStatusCompra
                             ? filtroStatusCompraAtivo === "cancelado"
                               ? "Nenhum pedido cancelado"
@@ -2548,6 +2575,10 @@ export function PerfilUsuarioPage() {
                       description={
                         estaFiltrandoCategoria
                           ? "Selecione outra categoria ou adicione um novo produto para preencher essa seção."
+                          : estaFiltrandoDisponibilidadeLoja
+                            ? filtroDisponibilidadeProdutoLojaAtivo === "disponiveis"
+                              ? "Quando houver itens publicados neste filtro, eles aparecerao aqui."
+                              : "Quando voce pausar produtos da vitrine, eles continuarao listados aqui para reativacao."
                           : estaFiltrandoStatusCompra
                             ? filtroStatusCompraAtivo === "cancelado"
                               ? "Quando um pedido for cancelado ou entrar em tratativa de cancelamento, ele aparecera aqui."

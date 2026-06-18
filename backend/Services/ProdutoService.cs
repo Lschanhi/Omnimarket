@@ -50,6 +50,20 @@ namespace Omnimarket.Api.Services
             return produtos.Select(MapToDto).ToList();
         }
 
+        public async Task<IEnumerable<ProdutoLeituraDto>> GetMineAsync(int usuarioId)
+        {
+            var produtos = await BaseQuery()
+                .AsNoTracking()
+                .Where(p =>
+                    p.Loja.UsuarioId == usuarioId &&
+                    p.StatusPublicacao != StatusProduto.Desativado)
+                .OrderByDescending(p => p.DtCriacao)
+                .ThenBy(p => p.Nome)
+                .ToListAsync();
+
+            return produtos.Select(MapToDto).ToList();
+        }
+
         public async Task<IEnumerable<ProdutoLeituraDto>> GetHighlightsAsync(int take = 10)
         {
             var limite = NormalizarLimite(take);
