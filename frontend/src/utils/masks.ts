@@ -63,7 +63,14 @@ export function formatarCpfOuCnpj(valor: string) {
 }
 
 export function formatarDocumentoFiscal(valor: string, tipoDocumentoFiscal?: number | string) {
-  return String(tipoDocumentoFiscal) === "2" ? formatarCnpj(valor) : formatarCpf(valor);
+  const tipoNormalizado =
+    typeof tipoDocumentoFiscal === "string"
+      ? tipoDocumentoFiscal.trim().toUpperCase()
+      : String(tipoDocumentoFiscal);
+
+  return tipoNormalizado === "2" || tipoNormalizado === "CNPJ"
+    ? formatarCnpj(valor)
+    : formatarCpf(valor);
 }
 
 export function formatarTelefone(valor: string) {
