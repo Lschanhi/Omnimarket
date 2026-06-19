@@ -1,3 +1,5 @@
+import type { ProdutoAvaliacaoLeitura } from "./avaliacao";
+
 // Representa as abas disponiveis dentro da pagina de perfil.
 export type PerfilTabId = "produtos" | "vendas" | "compras";
 export type PerfilVisaoId = "comprador" | "loja";
@@ -128,6 +130,7 @@ export interface PerfilPedidoItem {
   descricao: string;
   imagemUrl?: string;
   imagens?: string[];
+  avaliacaoAtual?: ProdutoAvaliacaoLeitura | null;
 }
 
 export interface PerfilPedidoDetalhe {

@@ -12,6 +12,7 @@ import {
 import { Botao } from "../../../Components/Botao";
 import { ProfileModal } from "../../../Components/perfil/ProfileModal";
 import { ProdutoImagem } from "../../../Components/produto/ProdutoImagem";
+import type { ProdutoAvaliacaoAtualizacaoPayload } from "../../../types/avaliacao";
 import type {
   CriarSolicitacaoCancelamentoPayload,
   MotivoSolicitacaoCancelamentoApi,
@@ -19,7 +20,8 @@ import type {
   StatusSolicitacaoCancelamentoApi,
   TipoSolicitacaoPedidoApi,
 } from "../../../Services/pedidos/pedidoService";
-import type { PerfilPedidoDetalhe } from "../../../types/perfil";
+import type { PerfilPedidoDetalhe, PerfilPedidoItem } from "../../../types/perfil";
+import { SecaoAvaliacoesPedidoCompra } from "./SecaoAvaliacoesPedidoCompra";
 
 type ModalPedidoCompraProps = {
   descricao: string;
@@ -30,6 +32,8 @@ type ModalPedidoCompraProps = {
   isBaixandoRecibo?: boolean;
   isProcessandoSolicitacao?: boolean;
   isCancelandoPedido?: boolean;
+  isSalvandoAvaliacao?: boolean;
+  produtoIdAvaliacaoEmProcesso?: number | null;
   pedido: PerfilPedidoDetalhe | null;
   solicitacoesCancelamento: SolicitacaoCancelamentoLeituraApiResponse[];
   onClose: () => void;
@@ -45,6 +49,11 @@ type ModalPedidoCompraProps = {
   ) => void;
   onCancelarSolicitacaoCancelamento: (
     solicitacao: SolicitacaoCancelamentoLeituraApiResponse,
+  ) => void;
+  onSalvarAvaliacao: (
+    pedido: PerfilPedidoDetalhe,
+    item: PerfilPedidoItem,
+    dados: ProdutoAvaliacaoAtualizacaoPayload,
   ) => void;
 };
 
@@ -279,6 +288,8 @@ export function ModalPedidoCompra({
   isBaixandoRecibo = false,
   isProcessandoSolicitacao = false,
   isCancelandoPedido = false,
+  isSalvandoAvaliacao = false,
+  produtoIdAvaliacaoEmProcesso = null,
   pedido,
   solicitacoesCancelamento,
   onClose,
@@ -287,6 +298,7 @@ export function ModalPedidoCompra({
   onConfirmarRecebimento,
   onCriarSolicitacaoCancelamento,
   onCancelarSolicitacaoCancelamento,
+  onSalvarAvaliacao,
 }: ModalPedidoCompraProps) {
   const tipoSolicitacaoInicial = obterTipoSolicitacaoInicial(pedido);
   const motivoSolicitacaoInicial =
@@ -427,6 +439,26 @@ export function ModalPedidoCompra({
               ))}
             </div>
           </div>
+
+          {pedido.contexto === "compra" ? (
+            <SecaoAvaliacoesPedidoCompra
+              key={pedido.itens
+                .map(
+                  (item) =>
+                    `${item.id}-${item.avaliacaoAtual?.id ?? "novo"}-${
+                      item.avaliacaoAtual?.dtAtualizacao ??
+                      item.avaliacaoAtual?.dtCriacao ??
+                      "sem-data"
+                    }`,
+                )
+                .join("|")}
+              pedido={pedido}
+              isCarregandoPedido={isCarregandoPedido}
+              isSalvandoAvaliacao={isSalvandoAvaliacao}
+              produtoIdAvaliacaoEmProcesso={produtoIdAvaliacaoEmProcesso}
+              onSalvarAvaliacao={onSalvarAvaliacao}
+            />
+          ) : null}
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">

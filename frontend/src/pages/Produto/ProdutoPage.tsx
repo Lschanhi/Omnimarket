@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { useNavigate, useParams } from "@tanstack/react-router";
+import { AvaliacaoFeed } from "../../Components/AvaliacaoFeed";
 import { Botao } from "../../Components/Botao";
 import { PageLayout } from "../../Components/PageLayout";
 import { ProdutoImagem } from "../../Components/produto/ProdutoImagem";
 import { StoreIdentityBadge } from "../../Components/produto/StoreIdentityBadge";
 import { useCart } from "../../context/CartContext";
 import { registrarVisualizacaoProduto } from "../../Services/home/homeHistoryService";
+import { listarAvaliacoesProduto } from "../../Services/produtos/avaliacaoService";
 import { obterProdutoPorId } from "../../Services/produtos/produtoService";
+import type { ProdutoAvaliacaoLeitura } from "../../types/avaliacao";
 import type { HomeProduct } from "../../types/home";
 
 export function ProdutoPage() {
@@ -15,8 +18,11 @@ export function ProdutoPage() {
   const navigate = useNavigate();
   const { adicionarAoCarrinho } = useCart();
   const [produto, setProduto] = useState<HomeProduct | null>(null);
+  const [avaliacoes, setAvaliacoes] = useState<ProdutoAvaliacaoLeitura[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingAvaliacoes, setIsLoadingAvaliacoes] = useState(true);
   const [erro, setErro] = useState("");
+  const [erroAvaliacoes, setErroAvaliacoes] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -25,28 +31,53 @@ export function ProdutoPage() {
     if (!Number.isFinite(produtoId) || produtoId <= 0) {
       setErro("Produto invalido.");
       setIsLoading(false);
+      setIsLoadingAvaliacoes(false);
       return;
     }
 
     async function carregarProduto() {
       setIsLoading(true);
+      setIsLoadingAvaliacoes(true);
       setErro("");
+      setErroAvaliacoes("");
 
       try {
-        const response = await obterProdutoPorId(produtoId, {
-          registrarVisualizacao: true,
-        });
+        const [produtoResultado, avaliacoesResultado] = await Promise.allSettled([
+          obterProdutoPorId(produtoId, {
+            registrarVisualizacao: true,
+          }),
+          listarAvaliacoesProduto(produtoId, { pageSize: 12 }),
+        ]);
 
-        if (isMounted) {
-          if (response.disponivel === false) {
-            setProduto(null);
-            setErro("Este produto não esta mais disponivel na vitrine.");
-            return;
-          }
+        if (produtoResultado.status === "rejected") {
+          throw produtoResultado.reason;
+        }
 
-          setProduto(response);
-          registrarVisualizacaoProduto(response);
-          setErro("");
+        if (!isMounted) {
+          return;
+        }
+
+        const response = produtoResultado.value;
+
+        if (response.disponivel === false) {
+          setProduto(null);
+          setErro("Este produto nao esta mais disponivel na vitrine.");
+          return;
+        }
+
+        setProduto(response);
+        registrarVisualizacaoProduto(response);
+        setErro("");
+
+        if (avaliacoesResultado.status === "fulfilled") {
+          setAvaliacoes(avaliacoesResultado.value.items);
+        } else {
+          setAvaliacoes([]);
+          setErroAvaliacoes(
+            avaliacoesResultado.reason instanceof Error
+              ? avaliacoesResultado.reason.message
+              : "Nao foi possivel carregar as avaliacoes deste produto.",
+          );
         }
       } catch (error) {
         if (!isMounted) {
@@ -54,11 +85,12 @@ export function ProdutoPage() {
         }
 
         const message =
-          error instanceof Error ? error.message : "Não foi possivel carregar o produto.";
+          error instanceof Error ? error.message : "Nao foi possivel carregar o produto.";
         setErro(message);
       } finally {
         if (isMounted) {
           setIsLoading(false);
+          setIsLoadingAvaliacoes(false);
         }
       }
     }
@@ -86,7 +118,7 @@ export function ProdutoPage() {
       alert("Produto adicionado ao carrinho com sucesso!");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Não foi possível adicionar o produto.";
+        error instanceof Error ? error.message : "Nao foi possivel adicionar o produto.";
       alert(message);
 
       if (message.toLowerCase().includes("login")) {
@@ -117,7 +149,7 @@ export function ProdutoPage() {
             </span>
 
             <h1 className="mt-4 text-[clamp(1.75rem,4vw,2.5rem)] font-bold leading-tight text-white">
-              Produto não encontrado
+              Produto nao encontrado
             </h1>
 
             <p className="mt-3 text-sm leading-6 text-neutral-300 sm:text-base">
@@ -155,7 +187,7 @@ export function ProdutoPage() {
                         navigate({
                           to: "/loja/$id",
                           params: {
-                            id: String(produto.lojaId)
+                            id: String(produto.lojaId),
                           },
                         });
                       }}
@@ -172,7 +204,7 @@ export function ProdutoPage() {
                       </h1>
 
                       <p className="text-sm text-neutral-400 sm:text-base">
-                        Código do produto:{" "}
+                        Codigo do produto:{" "}
                         <span className="font-medium text-neutral-200">{produto.id}</span>
                       </p>
 
@@ -186,7 +218,7 @@ export function ProdutoPage() {
 
                   <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/5 p-5 sm:p-6">
                     <p className="text-sm uppercase tracking-[0.24em] text-yellow-200/80">
-                      Preço
+                      Preco
                     </p>
 
                     <p className="mt-2 text-[clamp(2rem,4vw,3.5rem)] font-bold leading-none text-yellow-400">
@@ -197,10 +229,14 @@ export function ProdutoPage() {
                     </p>
 
                     <p className="mt-4 text-sm text-neutral-300">
-                      Avaliação media:{" "}
+                      Avaliacao media:{" "}
                       <span className="font-semibold text-white">
                         {produto.avaliacao.toFixed(1)} / 5
                       </span>
+                    </p>
+
+                    <p className="mt-2 text-sm text-neutral-400">
+                      {produto.totalAvaliacoes ?? avaliacoes.length} avaliacao(oes) publicadas.
                     </p>
                   </div>
 
@@ -233,6 +269,20 @@ export function ProdutoPage() {
               </div>
             </div>
           </section>
+
+          <AvaliacaoFeed
+            titulo="Avaliacoes de compradores"
+            descricao={
+              produto.totalAvaliacoes && produto.totalAvaliacoes > avaliacoes.length
+                ? `Mostrando as avaliacoes mais recentes. O produto soma ${produto.totalAvaliacoes} registro(s) no total.`
+                : "Veja como outros compradores avaliaram o produto e a experiencia com a loja."
+            }
+            avaliacoes={avaliacoes}
+            contexto="produto"
+            isLoading={isLoadingAvaliacoes}
+            mensagemVazia="Este produto ainda nao recebeu avaliacoes publicas."
+            erro={erroAvaliacoes}
+          />
         </div>
       </div>
     </PageLayout>
