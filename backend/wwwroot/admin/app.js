@@ -167,10 +167,22 @@ async function renderUsuarios() {
                 ${roles.map((role) => `<option value="${role}">${role}</option>`).join("")}
             </select>
         </label>
+        <label>Excluir por ID ou email <input id="usuarios-exclusao-alvo" type="search" placeholder="42 ou pessoa@email.com"></label>
         <button class="primary-action" type="button" id="usuarios-filtrar">Filtrar</button>
+        <button class="table-action danger-action" type="button" id="usuarios-excluir-direto">Excluir usuario</button>
     `) + renderPanel("Usuarios", "usuarios-table");
 
     document.querySelector("#usuarios-filtrar").addEventListener("click", carregarUsuarios);
+    document.querySelector("#usuarios-excluir-direto").addEventListener("click", async () => {
+        const alvo = document.querySelector("#usuarios-exclusao-alvo").value.trim();
+        const ok = await excluirUsuario(alvo);
+
+        if (ok) {
+            document.querySelector("#usuarios-exclusao-alvo").value = "";
+            await carregarUsuarios();
+        }
+    });
+
     await carregarUsuarios();
 }
 
@@ -189,11 +201,17 @@ async function carregarUsuarios() {
             <td>${renderRoleSelect(usuario.id, usuario.role)}</td>
             <td>${usuario.possuiLoja ? renderBadge(usuario.lojaAtiva ? "Loja ativa" : "Loja inativa", usuario.lojaAtiva ? "ok" : "warn") : renderBadge("Sem loja")}</td>
             <td>${usuario.totalProdutos}</td>
-            <td><button class="table-action" type="button" data-user-role="${usuario.id}">Salvar</button></td>
+            <td>${usuario.totalPedidos}</td>
+            <td>
+                <div class="table-actions">
+                    <button class="table-action" type="button" data-user-role="${usuario.id}">Salvar</button>
+                    <button class="table-action danger-action" type="button" data-user-delete="${usuario.id}">Excluir</button>
+                </div>
+            </td>
         </tr>
     `).join("");
 
-    fillTable("usuarios-table", ["Id", "Nome", "Email", "CPF", "Role", "Loja", "Produtos", "Acao"], rows);
+    fillTable("usuarios-table", ["Id", "Nome", "Email", "CPF", "Role", "Loja", "Produtos", "Pedidos", "Acoes"], rows);
 
     document.querySelectorAll("[data-user-role]").forEach((button) => {
         button.addEventListener("click", async () => {
@@ -201,6 +219,14 @@ async function carregarUsuarios() {
             const role = document.querySelector(`[data-role-select="${id}"]`).value;
             const ok = await apiSend(`/api/admin/usuarios/${id}/role`, "PUT", { role });
             if (ok) showStatus("Role atualizada.");
+        });
+    });
+
+    document.querySelectorAll("[data-user-delete]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const id = button.dataset.userDelete;
+            const ok = await excluirUsuario(id);
+            if (ok) await carregarUsuarios();
         });
     });
 }
@@ -364,6 +390,32 @@ async function apiSend(path, method, body) {
     });
 
     return Boolean(data);
+}
+
+async function excluirUsuario(alvoBruto) {
+    const alvo = String(alvoBruto || "").trim();
+
+    if (!alvo) {
+        showStatus("Informe um ID ou email para excluir.", true);
+        return false;
+    }
+
+    const alvoPorId = /^\d+$/.test(alvo);
+    const descricao = alvoPorId ? `ID ${alvo}` : alvo;
+
+    if (!window.confirm(`Deseja excluir o usuario ${descricao}? Esta acao nao pode ser desfeita.`)) {
+        return false;
+    }
+
+    const path = alvoPorId
+        ? `/api/admin/usuarios/${alvo}`
+        : `/api/admin/usuarios?email=${encode(alvo)}`;
+
+    const data = await apiRequest(path, { method: "DELETE" });
+    if (!data) return false;
+
+    showStatus(data.mensagem || "Usuario excluido com sucesso.");
+    return true;
 }
 
 async function apiRequest(path, options) {

@@ -134,6 +134,15 @@ button:focus-visible {
     color: var(--accent-strong);
 }
 
+.danger-action {
+    color: var(--danger);
+}
+
+.danger-action:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
 .message {
     min-height: 20px;
     margin: 0;
@@ -336,6 +345,12 @@ th {
 
 td select {
     min-width: 136px;
+}
+
+.table-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .badge {

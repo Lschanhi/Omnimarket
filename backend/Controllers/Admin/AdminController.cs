@@ -77,6 +77,55 @@ namespace Omnimarket.Api.Controllers
             }
         }
 
+        [HttpDelete("usuarios/{usuarioId:int}")]
+        public async Task<IActionResult> ExcluirUsuarioPorId(int usuarioId)
+        {
+            try
+            {
+                var adminId = User.GetUserId();
+                var usuario = await _adminUsuarioService.ExcluirUsuarioPorIdAsync(usuarioId, adminId);
+
+                if (usuario == null)
+                    return NotFound(new { mensagem = "Usuario nao encontrado." });
+
+                return Ok(new
+                {
+                    mensagem = "Usuario excluido com sucesso.",
+                    usuario
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensagem = ex.Message });
+            }
+        }
+
+        [HttpDelete("usuarios")]
+        public async Task<IActionResult> ExcluirUsuarioPorEmail([FromQuery] string? email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return BadRequest(new { mensagem = "Informe um email valido." });
+
+            try
+            {
+                var adminId = User.GetUserId();
+                var usuario = await _adminUsuarioService.ExcluirUsuarioPorEmailAsync(email, adminId);
+
+                if (usuario == null)
+                    return NotFound(new { mensagem = "Usuario nao encontrado." });
+
+                return Ok(new
+                {
+                    mensagem = "Usuario excluido com sucesso.",
+                    usuario
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensagem = ex.Message });
+            }
+        }
+
         [HttpGet("lojas")]
         public async Task<IActionResult> ListarLojas(
             [FromQuery] string? busca,
