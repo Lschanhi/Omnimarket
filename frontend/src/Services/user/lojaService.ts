@@ -184,6 +184,22 @@ function lerBoolean(valor: unknown, fallback = false) {
   return typeof valor === "boolean" ? valor : fallback;
 }
 
+function normalizarTipoDocumentoFiscalLoja(valor: unknown): TipoDocumentoFiscalLoja {
+  if (valor === 2 || valor === "2") {
+    return 2;
+  }
+
+  if (typeof valor === "string") {
+    const valorNormalizado = valor.trim().toUpperCase();
+
+    if (valorNormalizado === "CNPJ") {
+      return 2;
+    }
+  }
+
+  return 1;
+}
+
 function normalizarStatusSolicitacaoCancelamento(
   valor: unknown,
 ): StatusSolicitacaoCancelamentoApi {
@@ -268,10 +284,9 @@ function normalizarLojaGestao(valor: unknown): LojaGestaoApiResponse {
     fotoPerfilUrl,
     avatarUrl,
     logoUrl,
-    tipoDocumentoFiscal: lerNumero(
+    tipoDocumentoFiscal: normalizarTipoDocumentoFiscalLoja(
       loja.tipoDocumentoFiscal ?? loja.TipoDocumentoFiscal,
-      1,
-    ) as TipoDocumentoFiscalLoja,
+    ),
     documentoFiscal,
     documentoFiscalFormatado:
       lerTexto(
