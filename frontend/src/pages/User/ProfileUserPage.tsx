@@ -37,6 +37,12 @@ import {
   type LojaEntregaOpcao,
 } from "../../Services/produtos/lojaEntregaService";
 import {
+  buscarAvaliacaoProdutoDoPedido,
+  criarAvaliacaoProduto,
+  atualizarAvaliacaoProduto,
+} from "../../Services/produtos/avaliacaoService";
+import type { ProdutoAvaliacaoAtualizacaoPayload } from "../../types/avaliacao";
+import {
   atualizarProduto,
   criarProduto,
   enviarMidiasProduto,
@@ -431,6 +437,56 @@ function atualizarCardPedido(item: PerfilGridItem, itemAtualizado: PerfilGridIte
   return itemAtualizado;
 }
 
+async function enriquecerPedidoCompraComAvaliacoes(item: PerfilGridItem | null) {
+  if (!item?.pedido) {
+    return item;
+  }
+
+  const pedido = item.pedido;
+
+  if (pedido.statusFluxoKey !== "finalizado" || pedido.itens.length === 0) {
+    return {
+      ...item,
+      pedido: {
+        ...pedido,
+        itens: pedido.itens.map((itemPedido) => ({
+          ...itemPedido,
+          avaliacaoAtual: itemPedido.avaliacaoAtual ?? null,
+        })),
+      },
+    };
+  }
+
+  const avaliacoesPorItem = await Promise.all(
+    pedido.itens.map(async (itemPedido) => {
+      try {
+        const avaliacaoAtual = await buscarAvaliacaoProdutoDoPedido(
+          itemPedido.produtoId,
+          pedido.pedidoId,
+        );
+
+        return [itemPedido.id, avaliacaoAtual] as const;
+      } catch (error) {
+        console.warn("[PerfilUsuario] Falha ao carregar a avaliacao do item.", error);
+        return [itemPedido.id, null] as const;
+      }
+    }),
+  );
+
+  const mapaAvaliacoes = new Map(avaliacoesPorItem);
+
+  return {
+    ...item,
+    pedido: {
+      ...pedido,
+      itens: pedido.itens.map((itemPedido) => ({
+        ...itemPedido,
+        avaliacaoAtual: mapaAvaliacoes.get(itemPedido.id) ?? null,
+      })),
+    },
+  };
+}
+
 function baixarBlobComoArquivo(blob: Blob, nomeArquivo: string) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -620,6 +676,9 @@ export function PerfilUsuarioPage() {
   const [isCancelandoPedidoCompra, setIsCancelandoPedidoCompra] = useState(false);
   const [isProcessandoSolicitacaoPedidoCompra, setIsProcessandoSolicitacaoPedidoCompra] =
     useState(false);
+  const [produtoIdAvaliacaoEmProcesso, setProdutoIdAvaliacaoEmProcesso] = useState<number | null>(
+    null,
+  );
   const [isCarregandoPedidoVenda, setIsCarregandoPedidoVenda] = useState(false);
   const [isAtualizandoPedidoVenda, setIsAtualizandoPedidoVenda] = useState(false);
   const [isDialogoCancelamentoVendaAberto, setIsDialogoCancelamentoVendaAberto] = useState(false);
@@ -1037,10 +1096,11 @@ export function PerfilUsuarioPage() {
   }
 
   async function carregarContextoPedidoCompra(pedidoId: number) {
-    const [itemAtualizado, solicitacoes] = await Promise.all([
+    const [itemBase, solicitacoes] = await Promise.all([
       buscarDetalhePedidoCompra(pedidoId),
       listarSolicitacoesCancelamentoPedido(pedidoId),
     ]);
+    const itemAtualizado = await enriquecerPedidoCompraComAvaliacoes(itemBase);
 
     if (itemAtualizado?.pedido) {
       sincronizarPedidoCompraLocal(itemAtualizado);
@@ -1216,6 +1276,42 @@ export function PerfilUsuarioPage() {
       );
     } finally {
       setIsProcessandoSolicitacaoPedidoCompra(false);
+    }
+  }
+
+  async function handleSalvarAvaliacaoPedido(
+    pedido: PerfilPedidoDetalhe,
+    item: PerfilPedidoDetalhe["itens"][number],
+    dados: ProdutoAvaliacaoAtualizacaoPayload,
+  ) {
+    if (
+      produtoIdAvaliacaoEmProcesso ||
+      (pedido.statusFluxoKey !== "finalizado" && !item.avaliacaoAtual?.id)
+    ) {
+      return;
+    }
+
+    try {
+      setProdutoIdAvaliacaoEmProcesso(item.produtoId);
+
+      if (item.avaliacaoAtual?.id) {
+        await atualizarAvaliacaoProduto(item.produtoId, item.avaliacaoAtual.id, dados);
+        toast.success("Avaliacao atualizada com sucesso.");
+      } else {
+        await criarAvaliacaoProduto(item.produtoId, {
+          pedidoId: pedido.pedidoId,
+          ...dados,
+        });
+        toast.success("Avaliacao enviada com sucesso.");
+      }
+
+      await recarregarContextoPedidoCompra(pedido.pedidoId);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Nao foi possivel salvar a avaliacao.",
+      );
+    } finally {
+      setProdutoIdAvaliacaoEmProcesso(null);
     }
   }
 
@@ -2702,6 +2798,8 @@ export function PerfilUsuarioPage() {
         isBaixandoRecibo={isBaixandoReciboPedidoCompra}
         isProcessandoSolicitacao={isProcessandoSolicitacaoPedidoCompra}
         isCancelandoPedido={isCancelandoPedidoCompra}
+        isSalvandoAvaliacao={produtoIdAvaliacaoEmProcesso !== null}
+        produtoIdAvaliacaoEmProcesso={produtoIdAvaliacaoEmProcesso}
         pedido={pedidoSelecionado?.contexto === "compra" ? pedidoSelecionado : null}
         solicitacoesCancelamento={solicitacoesPedidoCompra}
         onBaixarRecibo={handleBaixarReciboPedido}
@@ -2710,6 +2808,7 @@ export function PerfilUsuarioPage() {
         onConfirmarRecebimento={handleConfirmarRecebimentoPedido}
         onCriarSolicitacaoCancelamento={handleCriarSolicitacaoCancelamentoPedido}
         onCancelarSolicitacaoCancelamento={handleCancelarSolicitacaoCancelamentoPedido}
+        onSalvarAvaliacao={handleSalvarAvaliacaoPedido}
       />
 
       <ModalPedidoVenda

@@ -1,23 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "@tanstack/react-router";
 import { Star, Store } from "lucide-react";
+import { AvaliacaoFeed } from "../../Components/AvaliacaoFeed";
 import { ProductShelf } from "../../Components/home/ProductShelf";
 import { PageLayout } from "../../Components/PageLayout";
 import { StoreIdentityBadge } from "../../Components/produto/StoreIdentityBadge";
 import { registrarVisualizacaoLoja } from "../../Services/home/homeHistoryService";
+import { listarAvaliacoesLoja } from "../../Services/produtos/avaliacaoService";
 import { listarProdutos } from "../../Services/produtos/produtoService";
 import {
   obterLojaPublica,
   type LojaPublicaResumo,
 } from "../../Services/user/lojaPublicaService";
+import type { ProdutoAvaliacaoLeitura } from "../../types/avaliacao";
 import type { HomeProduct } from "../../types/home";
 
 export function LojaPublicaPage() {
   const { id } = useParams({ strict: false });
   const [loja, setLoja] = useState<LojaPublicaResumo | null>(null);
   const [produtos, setProdutos] = useState<HomeProduct[]>([]);
+  const [avaliacoes, setAvaliacoes] = useState<ProdutoAvaliacaoLeitura[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingAvaliacoes, setIsLoadingAvaliacoes] = useState(true);
   const [erro, setErro] = useState("");
+  const [erroAvaliacoes, setErroAvaliacoes] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -26,37 +32,48 @@ export function LojaPublicaPage() {
     if (!Number.isFinite(lojaId) || lojaId <= 0) {
       setErro("Loja invalida.");
       setIsLoading(false);
+      setIsLoadingAvaliacoes(false);
       return;
     }
 
     async function carregarLoja() {
       setIsLoading(true);
+      setIsLoadingAvaliacoes(true);
       setErro("");
+      setErroAvaliacoes("");
 
       try {
-        const [lojaPublica, produtosCatalogo] = await Promise.all([
+        const [lojaResultado, produtosResultado, avaliacoesResultado] = await Promise.all([
           obterLojaPublica(lojaId, { registrarVisualizacao: true }),
           listarProdutos(),
+          listarAvaliacoesLoja(lojaId, { pageSize: 10 }).catch((error) => error),
         ]);
 
         if (!isMounted) {
           return;
         }
 
-        if (!lojaPublica?.id) {
+        if (!lojaResultado?.id) {
           setLoja(null);
           setProdutos([]);
           setErro("Loja nao encontrada.");
           return;
         }
 
-        registrarVisualizacaoLoja(lojaPublica.id);
-        setLoja(lojaPublica);
+        registrarVisualizacaoLoja(lojaResultado.id);
+        setLoja(lojaResultado);
         setProdutos(
-          produtosCatalogo.filter(
-            (produto) => produto.lojaId === lojaPublica.id && produto.disponivel !== false,
+          produtosResultado.filter(
+            (produto) => produto.lojaId === lojaResultado.id && produto.disponivel !== false,
           ),
         );
+
+        if (avaliacoesResultado instanceof Error) {
+          setAvaliacoes([]);
+          setErroAvaliacoes(avaliacoesResultado.message);
+        } else {
+          setAvaliacoes(avaliacoesResultado.items);
+        }
       } catch (error) {
         if (!isMounted) {
           return;
@@ -68,6 +85,7 @@ export function LojaPublicaPage() {
       } finally {
         if (isMounted) {
           setIsLoading(false);
+          setIsLoadingAvaliacoes(false);
         }
       }
     }
@@ -192,6 +210,20 @@ export function LojaPublicaPage() {
               mensagemVazia="Esta loja ainda nao possui produtos ativos publicados na vitrine."
             />
           </section>
+
+          <AvaliacaoFeed
+            titulo="Avaliacoes desta loja"
+            descricao={
+              loja?.totalAvaliacoes && loja.totalAvaliacoes > avaliacoes.length
+                ? `Mostrando as avaliacoes mais recentes. A loja soma ${loja.totalAvaliacoes} registro(s) no total.`
+                : "Consulte o que os compradores comentaram sobre o atendimento, entrega e produtos desta vitrine."
+            }
+            avaliacoes={avaliacoes}
+            contexto="loja"
+            isLoading={isLoadingAvaliacoes}
+            mensagemVazia="Esta loja ainda nao recebeu avaliacoes publicas."
+            erro={erroAvaliacoes}
+          />
         </div>
       </div>
     </PageLayout>
