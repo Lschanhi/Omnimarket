@@ -102,5 +102,96 @@ namespace Omnimarket.Api.Services
 
             return usuario.ToAdminDto();
         }
+
+        public async Task<AdminUsuarioDto?> ExcluirUsuarioPorIdAsync(
+            int usuarioId,
+            int adminLogadoId)
+        {
+            var usuario = await CarregarUsuarioParaAdministracaoAsync(usuarioId);
+
+            if (usuario == null)
+                return null;
+
+            return await ExcluirUsuarioAsync(usuario, adminLogadoId);
+        }
+
+        public async Task<AdminUsuarioDto?> ExcluirUsuarioPorEmailAsync(
+            string email,
+            int adminLogadoId)
+        {
+            var emailNormalizado = ValidadorEmail.Normalizar(email);
+
+            if (!ValidadorEmail.TryValidarParaCadastro(emailNormalizado, out _))
+                throw new InvalidOperationException("Informe um email valido.");
+
+            var usuario = await _context.TBL_USUARIO
+                .Where(u => u.Email == emailNormalizado)
+                .Include(u => u.Loja)
+                .ThenInclude(l => l!.Produtos)
+                .Include(u => u.Pedidos)
+                .FirstOrDefaultAsync();
+
+            if (usuario == null)
+                return null;
+
+            return await ExcluirUsuarioAsync(usuario, adminLogadoId);
+        }
+
+        private async Task<Usuario?> CarregarUsuarioParaAdministracaoAsync(int usuarioId)
+        {
+            return await _context.TBL_USUARIO
+                .Include(u => u.Loja)
+                .ThenInclude(l => l!.Produtos)
+                .Include(u => u.Pedidos)
+                .FirstOrDefaultAsync(u => u.Id == usuarioId);
+        }
+
+        private async Task<AdminUsuarioDto> ExcluirUsuarioAsync(
+            Usuario usuario,
+            int adminLogadoId)
+        {
+            if (usuario.Id == adminLogadoId)
+                throw new InvalidOperationException("Voce nao pode excluir seu proprio usuario.");
+
+            if (usuario.Role == RolesSistema.Admin)
+            {
+                var totalAdmins = await _context.TBL_USUARIO.CountAsync(u => u.Role == RolesSistema.Admin);
+                if (totalAdmins <= 1)
+                    throw new InvalidOperationException("Mantenha pelo menos um administrador ativo.");
+            }
+
+            if (usuario.Loja != null)
+                throw new InvalidOperationException("Nao e possivel excluir usuarios com loja cadastrada.");
+
+            if (usuario.Pedidos.Count > 0)
+                throw new InvalidOperationException("Nao e possivel excluir usuarios com pedidos cadastrados.");
+
+            var possuiAvaliacoes = await _context.TBL_AVALIACAO_PRODUTO
+                .AnyAsync(a => a.UsuarioId == usuario.Id);
+
+            if (possuiAvaliacoes)
+                throw new InvalidOperationException("Nao e possivel excluir usuarios com avaliacoes publicadas.");
+
+            var possuiVendas = await _context.TBL_VENDA
+                .AnyAsync(v => v.VendedorId == usuario.Id);
+
+            if (possuiVendas)
+                throw new InvalidOperationException("Nao e possivel excluir usuarios vinculados a vendas.");
+
+            var possuiSolicitacoes = await _context.TBL_SOLICITACAO_CANCELAMENTO
+                .AnyAsync(s =>
+                    s.SolicitanteId == usuario.Id ||
+                    s.ResponsavelAnaliseId == usuario.Id);
+
+            if (possuiSolicitacoes)
+                throw new InvalidOperationException("Nao e possivel excluir usuarios com solicitacoes registradas.");
+
+            var usuarioRemovido = usuario.ToAdminDto();
+
+            _context.TBL_USUARIO.Remove(usuario);
+            await _context.SaveChangesAsync();
+
+            return usuarioRemovido;
+        }
     }
 }
