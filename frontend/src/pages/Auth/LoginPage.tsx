@@ -4,8 +4,6 @@ import { LockIcon, User } from "lucide-react";
 import { Botao } from "../../Components/Botao";
 import { Input } from "../../Components/Input";
 import { PageLayout } from "../../Components/PageLayout";
-import Apple from "../../assets/Icone_apple.png";
-import Google2 from "../../assets/Icone_google.webp";
 import {
   loginUsuario,
   reenviarConfirmacaoEmail,
@@ -231,30 +229,6 @@ export function LoginPage() {
                   ) : null}
                 </div>
               ) : null}
-
-              <p className="text-center text-sm uppercase tracking-[0.3em] text-neutral-500">
-                ------------- Ou -------------
-              </p>
-
-              <div className="flex flex-col gap-3">
-                <Botao
-                  type="button"
-                  variant="secondary"
-                  className="h-12 border-white/10 bg-white/5 hover:bg-white/10"
-                  icon={<img src={Google2} alt="Google" className="h-5 w-5" />}
-                >
-                  Continuar com Google
-                </Botao>
-
-                <Botao
-                  type="button"
-                  variant="secondary"
-                  className="h-12 border-white/10 bg-white/5 hover:bg-white/10"
-                  icon={<img src={Apple} alt="Apple" className="h-5 w-5" />}
-                >
-                  Continuar com Apple
-                </Botao>
-              </div>
 
               <p className="text-center text-sm text-neutral-400">
                 Ainda nao possui conta?
