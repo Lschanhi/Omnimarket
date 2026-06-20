@@ -1,10 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ForgetPasswordPage } from "../pages/Auth/ForgetPasswordPage";
 
-export const Route = createFileRoute('/recuperarSenha')({
-    component: RouteComponent,
-})
+type RecuperarSenhaSearch = {
+  token?: string;
+};
 
-function RouteComponent(){
-    return <ForgetPasswordPage/>
+export const Route = createFileRoute('/recuperarSenha')({
+  validateSearch: (search: Record<string, unknown>): RecuperarSenhaSearch => ({
+    token: typeof search.token === "string" ? search.token : "",
+  }),
+  component: RouteComponent,
+});
+
+function RouteComponent() {
+  const { token = "" } = Route.useSearch();
+
+  return <ForgetPasswordPage token={token} />;
 }

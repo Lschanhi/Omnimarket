@@ -32,6 +32,7 @@ const API_FIELD_LABELS: Record<string, string> = {
   email: "e-mail",
   password: "senha",
   confirmpassword: "confirmacao de senha",
+  token: "token de redefinicao",
   aceitoutermos: "aceite dos termos",
   telefones: "telefones",
   ddd: "DDD",

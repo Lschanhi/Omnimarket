@@ -40,6 +40,12 @@ namespace Omnimarket.Api.Models
         public DateTime? EmailConfirmacaoTokenExpiraEm { get; set; }
         public DateTime? EmailConfirmacaoEnviadoEm { get; set; }
 
+        [StringLength(64)]
+        public string? ResetSenhaTokenHash { get; set; }
+
+        public DateTime? ResetSenhaTokenExpiraEm { get; set; }
+        public DateTime? ResetSenhaSolicitadoEm { get; set; }
+
         public byte[] PasswordHash { get; set; } = Array.Empty<byte>();
         public byte[] PasswordSalt { get; set; } = Array.Empty<byte>();
 

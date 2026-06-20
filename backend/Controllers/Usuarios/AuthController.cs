@@ -12,13 +12,16 @@ namespace Omnimarket.Api.Controllers
     {
         private readonly AuthService _authService;
         private readonly EmailConfirmationService _emailConfirmationService;
+        private readonly PasswordResetService _passwordResetService;
 
         public AuthController(
             AuthService authService,
-            EmailConfirmationService emailConfirmationService)
+            EmailConfirmationService emailConfirmationService,
+            PasswordResetService passwordResetService)
         {
             _authService = authService;
             _emailConfirmationService = emailConfirmationService;
+            _passwordResetService = passwordResetService;
         }
 
         [HttpPost("login")]
@@ -107,6 +110,75 @@ namespace Omnimarket.Api.Controllers
             });
         }
 
+        [HttpPost("solicitar-redefinicao-senha")]
+        public async Task<IActionResult> SolicitarRedefinicaoSenha(
+            [FromBody] SolicitarRedefinicaoSenhaDto dto,
+            CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            await _passwordResetService.SolicitarRedefinicaoAsync(
+                dto.Email,
+                ObterFrontendBaseUrl(),
+                cancellationToken);
+
+            return Ok(new
+            {
+                mensagem =
+                    "Se existir uma conta com esse email, enviaremos um link para redefinicao de senha."
+            });
+        }
+
+        [HttpGet("validar-redefinicao-senha")]
+        public async Task<IActionResult> ValidarRedefinicaoSenha(
+            [FromQuery] string token,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _passwordResetService.ValidarTokenAsync(token, cancellationToken);
+
+                return Ok(new
+                {
+                    mensagem = "Link de redefinicao valido."
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    mensagem = ex.Message
+                });
+            }
+        }
+
+        [HttpPost("redefinir-senha")]
+        public async Task<IActionResult> RedefinirSenha(
+            [FromBody] RedefinirSenhaDto dto,
+            CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                await _passwordResetService.RedefinirSenhaAsync(dto, cancellationToken);
+
+                return Ok(new
+                {
+                    mensagem = "Senha redefinida com sucesso."
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    mensagem = ex.Message
+                });
+            }
+        }
+
         [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
@@ -135,6 +207,18 @@ namespace Omnimarket.Api.Controllers
                     mensagem = "Erro interno ao realizar logout"
                 });
             }
+        }
+
+        private string ObterFrontendBaseUrl()
+        {
+            var origin = Request.Headers.Origin.ToString();
+
+            if (Uri.TryCreate(origin, UriKind.Absolute, out var origemUri))
+            {
+                return $"{origemUri.Scheme}://{origemUri.Authority}";
+            }
+
+            return $"{Request.Scheme}://{Request.Host.ToUriComponent()}";
         }
     }
 }
