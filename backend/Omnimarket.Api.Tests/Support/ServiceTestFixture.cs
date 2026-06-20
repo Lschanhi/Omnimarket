@@ -10,6 +10,7 @@ internal sealed class ServiceTestFixture : IDisposable
     public FakeArquivoStorageService ArquivoStorageService { get; }
     public FakeEmailSender EmailSender { get; }
     public EmailConfirmationService EmailConfirmationService { get; }
+    public PasswordResetService PasswordResetService { get; }
     public ArquivoUploadService ArquivoUploadService { get; }
     public AuthService AuthService { get; }
     public AvaliacaoProdutoService AvaliacaoProdutoService { get; }
@@ -66,9 +67,16 @@ internal sealed class ServiceTestFixture : IDisposable
             TokenExpiraEmHoras = 24,
             NomeAplicacao = "OmniMarket Tests"
         });
+        var passwordResetOptions = Microsoft.Extensions.Options.Options.Create(new PasswordResetOptions
+        {
+            TokenExpiraEmHoras = 2,
+            NomeAplicacao = "OmniMarket Tests",
+            FrontendBaseUrl = "https://frontend.test"
+        });
 
         AvaliacaoProdutoService = new AvaliacaoProdutoService(Context);
         EmailConfirmationService = new EmailConfirmationService(Context, EmailSender, emailConfirmationOptions);
+        PasswordResetService = new PasswordResetService(Context, EmailSender, passwordResetOptions);
         AuthService = new AuthService(Context, tokenService, EmailConfirmationService);
         ArquivoUploadService = new ArquivoUploadService(ArquivoStorageService, blobStorageOptions);
         CarrinhoService = new CarrinhoService(Context);
@@ -167,13 +175,23 @@ internal sealed class ServiceTestFixture : IDisposable
 
     public string ObterUltimoTokenConfirmacao()
     {
+        return ObterUltimoTokenEmail();
+    }
+
+    public string ObterUltimoTokenRecuperacaoSenha()
+    {
+        return ObterUltimoTokenEmail();
+    }
+
+    private string ObterUltimoTokenEmail()
+    {
         var mensagem = EmailSender.MensagensEnviadas.LastOrDefault()
-            ?? throw new InvalidOperationException("Nenhum email de confirmacao foi enviado.");
+            ?? throw new InvalidOperationException("Nenhum email foi enviado.");
 
         var marcador = "token=";
         var indice = mensagem.CorpoTexto.IndexOf(marcador, StringComparison.OrdinalIgnoreCase);
         if (indice < 0)
-            throw new InvalidOperationException("Token de confirmacao nao encontrado no corpo do email.");
+            throw new InvalidOperationException("Token nao encontrado no corpo do email.");
 
         var trecho = mensagem.CorpoTexto[(indice + marcador.Length)..];
         var fimLinha = trecho.IndexOfAny(['\r', '\n']);

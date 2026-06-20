@@ -143,11 +143,14 @@ builder.Services.Configure<SmtpEmailOptions>(
     builder.Configuration.GetSection(SmtpEmailOptions.SectionName));
 builder.Services.Configure<EmailConfirmationOptions>(
     builder.Configuration.GetSection(EmailConfirmationOptions.SectionName));
+builder.Services.Configure<PasswordResetOptions>(
+    builder.Configuration.GetSection(PasswordResetOptions.SectionName));
 
 // Servicos de negocio que serao injetados nos controllers.
     
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<EmailConfirmationService>();
+builder.Services.AddScoped<PasswordResetService>();
 builder.Services.AddScoped<IArquivoStorageService, AzureBlobStorageService>();
 builder.Services.AddScoped<ArquivoUploadService>();
 builder.Services.AddScoped<AuthService>();

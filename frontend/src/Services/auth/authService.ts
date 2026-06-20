@@ -47,6 +47,10 @@ export type ConfirmacaoEmailResponse = {
   mensagem: string;
 };
 
+export type PasswordResetResponse = {
+  mensagem: string;
+};
+
 export async function loginUsuario(email: string, senha: string) {
   const data = await apiRequest<LoginResponse>("/api/auth/login", {
     method: "POST",
@@ -80,6 +84,38 @@ export async function reenviarConfirmacaoEmail(email: string) {
     method: "POST",
     body: {
       email,
+    },
+  });
+}
+
+export async function solicitarRedefinicaoSenha(email: string) {
+  return apiRequest<PasswordResetResponse>("/api/auth/solicitar-redefinicao-senha", {
+    method: "POST",
+    body: {
+      email,
+    },
+  });
+}
+
+export async function validarTokenRedefinicaoSenha(token: string) {
+  const query = new URLSearchParams({ token }).toString();
+
+  return apiRequest<PasswordResetResponse>(`/api/auth/validar-redefinicao-senha?${query}`, {
+    method: "GET",
+  });
+}
+
+export async function redefinirSenha(
+  token: string,
+  password: string,
+  confirmPassword: string,
+) {
+  return apiRequest<PasswordResetResponse>("/api/auth/redefinir-senha", {
+    method: "POST",
+    body: {
+      token,
+      password,
+      confirmPassword,
     },
   });
 }
