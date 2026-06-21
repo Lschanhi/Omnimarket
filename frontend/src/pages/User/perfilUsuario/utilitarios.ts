@@ -3,7 +3,6 @@ import {
   TIPOS_ENTREGA_OPTIONS,
   type LojaEntregaOpcao,
 } from "../../../Services/produtos/lojaEntregaService";
-import { getStoredLojaAvatar } from "../../../Services/user/lojaAvatarStorage";
 import type {
   PerfilGridItem,
   PerfilIdentityCardData,
@@ -485,14 +484,7 @@ export function resolverAvatarLoja(
     return "";
   }
 
-  const avatarDaApi =
-    loja.fotoPerfilUrl?.trim() || loja.logoUrl?.trim() || loja.avatarUrl?.trim() || "";
-
-  if (avatarDaApi) {
-    return avatarDaApi;
-  }
-
-  return getStoredLojaAvatar(loja.id) ?? "";
+  return loja.fotoPerfilUrl?.trim() || loja.logoUrl?.trim() || loja.avatarUrl?.trim() || "";
 }
 
 export function criarStatsLoja(

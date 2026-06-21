@@ -1,7 +1,5 @@
 import type { HomeProduct } from "../../types/home";
 import { API_BASE_URL, apiRequest } from "../http/apiClient";
-import { getStoredProdutoImage } from "./produtoImageStorage";
-import { getStoredLojaAvatar } from "../user/lojaAvatarStorage";
 import { obterLojaPublica } from "../user/lojaPublicaService";
 
 type ProdutoApiResponse = {
@@ -106,6 +104,11 @@ type ProdutoMidiaApiResponse =
     }
   | null
   | undefined;
+
+export type ProdutoMidiaLeitura = {
+  id: number;
+  url: string;
+};
 
 type ObterProdutoOptions = {
   registrarVisualizacao?: boolean;
@@ -314,6 +317,32 @@ function normalizarMidias(response: ProdutoMidiaApiResponse) {
   return itens.map(extrairUrlMidia).filter(Boolean);
 }
 
+function normalizarDetalhesMidias(response: ProdutoMidiaApiResponse) {
+  const itens = Array.isArray(response)
+    ? response
+    : response?.midias ?? response?.Midias ?? response?.data ?? response?.itens ?? [];
+
+  return itens
+    .map((midia) => {
+      if (!midia || typeof midia !== "object") {
+        return null;
+      }
+
+      const id = typeof midia.id === "number" ? midia.id : 0;
+      const url = extrairUrlMidia(midia);
+
+      if (!id || !url) {
+        return null;
+      }
+
+      return {
+        id,
+        url,
+      } satisfies ProdutoMidiaLeitura;
+    })
+    .filter((midia): midia is ProdutoMidiaLeitura => Boolean(midia));
+}
+
 function extrairImagemPrincipalProduto(
   produto: Pick<
     ProdutoApiResponse,
@@ -375,7 +404,6 @@ function extrairImagensProduto(
 }
 
 function extrairAvatarLoja(produto: ProdutoApiResponse) {
-  const avatarSalvoLocalmente = getStoredLojaAvatar(produto.lojaId);
   const candidatos = [
     produto.avatarLojaUrl,
     produto.lojaAvatarUrl,
@@ -386,7 +414,6 @@ function extrairAvatarLoja(produto: ProdutoApiResponse) {
     produto.loja?.fotoPerfilUrl,
     produto.loja?.avatarUrl,
     produto.loja?.logoUrl,
-    avatarSalvoLocalmente,
   ];
 
   const url =
@@ -424,7 +451,12 @@ export async function listarMidiasProduto(produtoId: number) {
   return normalizarMidias(response);
 }
 
-export async function enviarMidiasProduto(produtoId: number, arquivos: File[]) {
+export async function listarDetalhesMidiasProduto(produtoId: number) {
+  const response = await apiRequest<ProdutoMidiaApiResponse>(`/api/produtos/${produtoId}/midias`);
+  return normalizarDetalhesMidias(response);
+}
+
+export async function enviarDetalhesMidiasProduto(produtoId: number, arquivos: File[]) {
   const formData = new FormData();
 
   arquivos.forEach((arquivo) => {
@@ -437,14 +469,24 @@ export async function enviarMidiasProduto(produtoId: number, arquivos: File[]) {
     body: formData,
   });
 
-  return normalizarMidias(response);
+  return normalizarDetalhesMidias(response);
+}
+
+export async function enviarMidiasProduto(produtoId: number, arquivos: File[]) {
+  const response = await enviarDetalhesMidiasProduto(produtoId, arquivos);
+  return response.map((midia) => midia.url);
+}
+
+export async function removerMidiaProduto(produtoId: number, midiaId: number) {
+  await apiRequest<void>(`/api/produtos/${produtoId}/midias/${midiaId}`, {
+    method: "DELETE",
+    authenticated: true,
+  });
 }
 
 function mapearProduto(produto: ProdutoApiResponse): HomeProduct {
   const imagens = extrairImagensProduto(produto);
-  const imagemSalvaLocalmente = getStoredProdutoImage(produto.id);
-  const imagemPrincipal =
-    imagens[0] ?? imagemSalvaLocalmente ?? criarImagemPlaceholder(produto.nome);
+  const imagemPrincipal = imagens[0] ?? criarImagemPlaceholder(produto.nome);
   const lojaAvatarUrl = extrairAvatarLoja(produto);
 
   return {
