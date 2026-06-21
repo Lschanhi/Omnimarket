@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCatalogoAutoRefresh } from "./useCatalogoAutoRefresh";
 import type {
   PerfilPedidoStatusFluxo,
@@ -825,6 +825,7 @@ async function carregarComFallback<T>(
 }
 
 export function usePerfilUsuarioData() {
+  const jaCarregouPerfilRef = useRef(false);
   const [usuario, setUsuario] = useState<UsuarioPerfil | null>(null);
   const [loja, setLoja] = useState<LojaGestaoApiResponse | null>(null);
   const [produtosCatalogo, setProdutosCatalogo] = useState<HomeProduct[]>([]);
@@ -866,6 +867,7 @@ export function usePerfilUsuarioData() {
 
     async function carregarDados() {
       if (!isAuthenticated()) {
+        jaCarregouPerfilRef.current = false;
         setPageState({
           isUsuarioLoading: false,
           isConteudoLoading: false,
@@ -885,12 +887,24 @@ export function usePerfilUsuarioData() {
         return;
       }
 
-      setPageState({
-        isUsuarioLoading: true,
-        isConteudoLoading: true,
-        usuarioError: "",
-        conteudoError: "",
-      });
+      const refreshSilencioso = jaCarregouPerfilRef.current;
+
+      if (refreshSilencioso) {
+        setPageState((currentState) => ({
+          ...currentState,
+          isUsuarioLoading: false,
+          isConteudoLoading: false,
+          usuarioError: "",
+          conteudoError: "",
+        }));
+      } else {
+        setPageState({
+          isUsuarioLoading: true,
+          isConteudoLoading: true,
+          usuarioError: "",
+          conteudoError: "",
+        });
+      }
 
       try {
         const perfil = await obterPerfilUsuario();
@@ -1031,6 +1045,16 @@ export function usePerfilUsuarioData() {
           return;
         }
 
+        if (refreshSilencioso) {
+          console.warn("[PerfilUsuario] Falha ao atualizar o perfil em segundo plano.", error);
+          setPageState((currentState) => ({
+            ...currentState,
+            isUsuarioLoading: false,
+            isConteudoLoading: false,
+          }));
+          return;
+        }
+
         const message =
           error instanceof Error
             ? error.message
@@ -1046,6 +1070,7 @@ export function usePerfilUsuarioData() {
       }
 
       if (isMounted) {
+        jaCarregouPerfilRef.current = true;
         setPageState({
           isUsuarioLoading: false,
           isConteudoLoading: false,
