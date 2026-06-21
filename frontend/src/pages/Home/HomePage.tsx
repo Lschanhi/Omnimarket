@@ -8,6 +8,7 @@ import { Spotlight } from "../../Components/home/SpotLight";
 import { StoreGrid } from "../../Components/home/StoreGrid";
 import { PageLayout } from "../../Components/PageLayout";
 import { createMockImage } from "../../data/produtos";
+import { useCatalogoAutoRefresh } from "../../hooks/useCatalogoAutoRefresh";
 import {
   AUTH_CHANGED_EVENT,
   isAuthenticated,
@@ -85,6 +86,7 @@ export function HomePage() {
   const [usuarioAutenticado, setUsuarioAutenticado] = useState(() =>
     isAuthenticated(),
   );
+  const [reloadSeed, setReloadSeed] = useState(0);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -177,7 +179,12 @@ export function HomePage() {
     return () => {
       isMounted = false;
     };
-  }, [usuarioAutenticado]);
+  }, [reloadSeed, usuarioAutenticado]);
+
+  useCatalogoAutoRefresh({
+    intervalMs: 15000,
+    onRefresh: () => setReloadSeed((currentSeed) => currentSeed + 1),
+  });
 
   const categories = useMemo(() => criarCategoriasHome(products), [products]);
   const normalizedSearch = searchTerm.trim().toLowerCase();

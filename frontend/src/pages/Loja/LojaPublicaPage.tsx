@@ -5,6 +5,7 @@ import { AvaliacaoFeed } from "../../Components/AvaliacaoFeed";
 import { ProductShelf } from "../../Components/home/ProductShelf";
 import { PageLayout } from "../../Components/PageLayout";
 import { StoreIdentityBadge } from "../../Components/produto/StoreIdentityBadge";
+import { useCatalogoAutoRefresh } from "../../hooks/useCatalogoAutoRefresh";
 import { registrarVisualizacaoLoja } from "../../Services/home/homeHistoryService";
 import { listarAvaliacoesLoja } from "../../Services/produtos/avaliacaoService";
 import { listarProdutos } from "../../Services/produtos/produtoService";
@@ -17,6 +18,8 @@ import type { HomeProduct } from "../../types/home";
 
 export function LojaPublicaPage() {
   const { id } = useParams({ strict: false });
+  const lojaId = Number(id);
+  const lojaIdValido = Number.isFinite(lojaId) && lojaId > 0;
   const [loja, setLoja] = useState<LojaPublicaResumo | null>(null);
   const [produtos, setProdutos] = useState<HomeProduct[]>([]);
   const [avaliacoes, setAvaliacoes] = useState<ProdutoAvaliacaoLeitura[]>([]);
@@ -24,12 +27,12 @@ export function LojaPublicaPage() {
   const [isLoadingAvaliacoes, setIsLoadingAvaliacoes] = useState(true);
   const [erro, setErro] = useState("");
   const [erroAvaliacoes, setErroAvaliacoes] = useState("");
+  const [reloadSeed, setReloadSeed] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
-    const lojaId = Number(id);
 
-    if (!Number.isFinite(lojaId) || lojaId <= 0) {
+    if (!lojaIdValido) {
       setErro("Loja invalida.");
       setIsLoading(false);
       setIsLoadingAvaliacoes(false);
@@ -95,7 +98,13 @@ export function LojaPublicaPage() {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, lojaId, lojaIdValido, reloadSeed]);
+
+  useCatalogoAutoRefresh({
+    enabled: lojaIdValido,
+    intervalMs: 15000,
+    onRefresh: () => setReloadSeed((currentSeed) => currentSeed + 1),
+  });
 
   const categoriasLoja = useMemo(
     () =>

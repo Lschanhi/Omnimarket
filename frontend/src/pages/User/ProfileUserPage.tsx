@@ -151,6 +151,7 @@ import {
   resolverAvatarLoja,
   telefoneTemConteudo,
 } from "./perfilUsuario/utilitarios";
+import { notificarCatalogoAtualizado } from "../../Services/home/catalogSyncService";
 
 const ROTULO_STATUS_VENDA: Record<PerfilPedidoStatusFluxo, string> = {
   pendente: "Pendente",
@@ -1892,6 +1893,7 @@ export function PerfilUsuarioPage() {
           );
 
           setAvatarLojaUrl(resolverAvatarLoja(lojaAtualizada));
+          notificarCatalogoAtualizado();
           fecharModal();
           recarregarDados();
           alert("Foto da loja atualizada com sucesso!");
@@ -2134,6 +2136,7 @@ export function PerfilUsuarioPage() {
       await removerProduto(produtoForm.id);
       removeStoredProdutoImage(produtoForm.id);
 
+      notificarCatalogoAtualizado();
       fecharModal();
       setAbaAtiva("produtos");
       recarregarDados();
@@ -2242,6 +2245,7 @@ export function PerfilUsuarioPage() {
         );
       }
 
+      notificarCatalogoAtualizado();
       fecharModal();
       setAbaAtiva("produtos");
       recarregarDados();
@@ -2393,6 +2397,8 @@ export function PerfilUsuarioPage() {
           telefoneUsuarioId: telefoneSubstitutoId,
           ativa: loja.ativa,
         });
+
+        notificarCatalogoAtualizado();
       }
 
       await Promise.all(telefonesRemovidos.map((telefoneId) => removerTelefone(telefoneId)));
@@ -2464,6 +2470,7 @@ export function PerfilUsuarioPage() {
         await criarMinhaLoja(payload);
       }
 
+      notificarCatalogoAtualizado();
       fecharModal();
       recarregarDados();
       alert(loja ? "Loja atualizada com sucesso!" : "Loja criada com sucesso!");

@@ -22,6 +22,15 @@ type ObterLojaPublicaOptions = {
   registrarVisualizacao?: boolean;
 };
 
+export function limparCacheLojaPublica(lojaId?: number | null) {
+  if (!lojaId || !Number.isFinite(lojaId) || lojaId <= 0) {
+    lojaPublicaCache.clear();
+    return;
+  }
+
+  lojaPublicaCache.delete(lojaId);
+}
+
 function normalizarLojaPublica(response: unknown): LojaPublicaResumo | null {
   if (!response || typeof response !== "object") {
     return null;

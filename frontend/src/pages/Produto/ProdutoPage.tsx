@@ -7,6 +7,7 @@ import { PageLayout } from "../../Components/PageLayout";
 import { ProdutoImagem } from "../../Components/produto/ProdutoImagem";
 import { StoreIdentityBadge } from "../../Components/produto/StoreIdentityBadge";
 import { useCart } from "../../context/CartContext";
+import { useCatalogoAutoRefresh } from "../../hooks/useCatalogoAutoRefresh";
 import { registrarVisualizacaoProduto } from "../../Services/home/homeHistoryService";
 import { listarAvaliacoesProduto } from "../../Services/produtos/avaliacaoService";
 import { obterProdutoPorId } from "../../Services/produtos/produtoService";
@@ -15,6 +16,8 @@ import type { HomeProduct } from "../../types/home";
 
 export function ProdutoPage() {
   const { id } = useParams({ strict: false });
+  const produtoId = Number(id);
+  const produtoIdValido = Number.isFinite(produtoId) && produtoId > 0;
   const navigate = useNavigate();
   const { adicionarAoCarrinho } = useCart();
   const [produto, setProduto] = useState<HomeProduct | null>(null);
@@ -23,12 +26,12 @@ export function ProdutoPage() {
   const [isLoadingAvaliacoes, setIsLoadingAvaliacoes] = useState(true);
   const [erro, setErro] = useState("");
   const [erroAvaliacoes, setErroAvaliacoes] = useState("");
+  const [reloadSeed, setReloadSeed] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
-    const produtoId = Number(id);
 
-    if (!Number.isFinite(produtoId) || produtoId <= 0) {
+    if (!produtoIdValido) {
       setErro("Produto invalido.");
       setIsLoading(false);
       setIsLoadingAvaliacoes(false);
@@ -100,7 +103,13 @@ export function ProdutoPage() {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, produtoId, produtoIdValido, reloadSeed]);
+
+  useCatalogoAutoRefresh({
+    enabled: produtoIdValido,
+    intervalMs: 15000,
+    onRefresh: () => setReloadSeed((currentSeed) => currentSeed + 1),
+  });
 
   async function handleAdicionarAoCarrinho(irParaCheckout: boolean) {
     if (!produto) {

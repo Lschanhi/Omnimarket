@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useCatalogoAutoRefresh } from "./useCatalogoAutoRefresh";
 import type {
   PerfilPedidoStatusFluxo,
   PerfilGridItem,
@@ -837,6 +838,12 @@ export function usePerfilUsuarioData() {
   });
   const [pageState, setPageState] = useState<PerfilPageState>(INITIAL_STATE);
   const [reloadSeed, setReloadSeed] = useState(0);
+
+  useCatalogoAutoRefresh({
+    enabled: isAuthenticated(),
+    intervalMs: 20000,
+    onRefresh: () => setReloadSeed((currentSeed) => currentSeed + 1),
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") {
