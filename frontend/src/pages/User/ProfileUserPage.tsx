@@ -45,17 +45,15 @@ import type { ProdutoAvaliacaoAtualizacaoPayload } from "../../types/avaliacao";
 import {
   atualizarProduto,
   criarProduto,
-  enviarMidiasProduto,
+  enviarDetalhesMidiasProduto,
+  listarDetalhesMidiasProduto,
   listarMidiasProduto,
+  removerMidiaProduto,
   removerCategoriaDaLoja,
   removerProduto,
   type ProdutoMutacaoPayload,
 } from "../../Services/produtos/produtoService";
 import { ApiError } from "../../Services/http/apiClient";
-import {
-  removeStoredProdutoImage,
-  saveStoredProdutoImage,
-} from "../../Services/produtos/produtoImageStorage";
 import { getStoredUser, updateStoredUser } from "../../Services/auth/session";
 import {
   criarEndereco,
@@ -151,6 +149,7 @@ import {
   resolverAvatarLoja,
   telefoneTemConteudo,
 } from "./perfilUsuario/utilitarios";
+import { notificarCatalogoAtualizado } from "../../Services/home/catalogSyncService";
 
 const ROTULO_STATUS_VENDA: Record<PerfilPedidoStatusFluxo, string> = {
   pendente: "Pendente",
@@ -504,6 +503,10 @@ function baixarBlobComoArquivo(blob: Blob, nomeArquivo: string) {
 
 function avatarEhDataUrl(avatar: string) {
   return /^data:image\//i.test(avatar.trim());
+}
+
+function produtoImagemEhDataUrl(imagem: string) {
+  return /^data:image\//i.test(imagem.trim());
 }
 
 function criarPayloadAtualizacaoFotoLoja(
@@ -1495,7 +1498,6 @@ export function PerfilUsuarioPage() {
           }
 
           await removerProduto(item.produtoId);
-          removeStoredProdutoImage(item.produtoId);
         }
 
         mensagemSucesso = criarMensagemSucessoExclusaoCategoria(
@@ -1892,6 +1894,7 @@ export function PerfilUsuarioPage() {
           );
 
           setAvatarLojaUrl(resolverAvatarLoja(lojaAtualizada));
+          notificarCatalogoAtualizado();
           fecharModal();
           recarregarDados();
           alert("Foto da loja atualizada com sucesso!");
@@ -2132,8 +2135,8 @@ export function PerfilUsuarioPage() {
       setLojaFeedback(null);
 
       await removerProduto(produtoForm.id);
-      removeStoredProdutoImage(produtoForm.id);
 
+      notificarCatalogoAtualizado();
       fecharModal();
       setAbaAtiva("produtos");
       recarregarDados();
@@ -2193,14 +2196,18 @@ export function PerfilUsuarioPage() {
       if (produtoIdPersistido) {
         let imagensSincronizadas = produtoSalvo?.imagens ?? [];
         let imagemPrincipalSincronizada = produtoSalvo?.imagem ?? "";
-        let imagemPersistidaPublicamente = false;
 
         if (produtoImagemArquivo) {
-          const midiasPublicas = await enviarMidiasProduto(produtoIdPersistido, [produtoImagemArquivo]);
+          const midiasAtuais = produtoForm.id
+            ? await listarDetalhesMidiasProduto(produtoIdPersistido)
+            : [];
+          const midiasNovas = await enviarDetalhesMidiasProduto(produtoIdPersistido, [
+            produtoImagemArquivo,
+          ]);
           const midiasConfirmadas =
-            midiasPublicas.length > 0
-              ? midiasPublicas
-              : await listarMidiasProduto(produtoIdPersistido);
+            midiasNovas.length > 0
+              ? midiasNovas
+              : await listarDetalhesMidiasProduto(produtoIdPersistido);
 
           if (midiasConfirmadas.length === 0) {
             throw new Error(
@@ -2208,23 +2215,38 @@ export function PerfilUsuarioPage() {
             );
           }
 
-          saveStoredProdutoImage(produtoIdPersistido, midiasConfirmadas[0]);
-          imagensSincronizadas = midiasConfirmadas;
-          imagemPrincipalSincronizada = midiasConfirmadas[0] ?? "";
-          imagemPersistidaPublicamente = true;
-        }
+          if (midiasAtuais.length > 0) {
+            await Promise.all(
+              midiasAtuais.map((midia) => removerMidiaProduto(produtoIdPersistido, midia.id)),
+            );
+          }
 
-        if (imagemPersistidaPublicamente) {
-          // Mantem a URL publica confirmada pela API.
-        } else if (produtoForm.imagemUrl.trim()) {
-          imagemPrincipalSincronizada = produtoForm.imagemUrl.trim();
-          imagensSincronizadas =
-            imagensSincronizadas.length > 0 ? imagensSincronizadas : [imagemPrincipalSincronizada];
-          saveStoredProdutoImage(produtoIdPersistido, imagemPrincipalSincronizada);
-        } else {
+          const midiasPublicasAtuais = await listarMidiasProduto(produtoIdPersistido);
+          imagensSincronizadas = midiasPublicasAtuais;
+          imagemPrincipalSincronizada = midiasPublicasAtuais[0] ?? midiasConfirmadas[0].url;
+        } else if (!produtoForm.imagemUrl.trim()) {
+          if (produtoForm.id) {
+            const midiasAtuais = await listarDetalhesMidiasProduto(produtoIdPersistido);
+
+            if (midiasAtuais.length > 0) {
+              await Promise.all(
+                midiasAtuais.map((midia) => removerMidiaProduto(produtoIdPersistido, midia.id)),
+              );
+            }
+          }
+
           imagensSincronizadas = [];
           imagemPrincipalSincronizada = "";
-          removeStoredProdutoImage(produtoIdPersistido);
+        } else if (!produtoImagemEhDataUrl(produtoForm.imagemUrl)) {
+          imagemPrincipalSincronizada = produtoSalvo?.imagem ?? produtoForm.imagemUrl.trim();
+          imagensSincronizadas =
+            produtoSalvo?.imagens && produtoSalvo.imagens.length > 0
+              ? produtoSalvo.imagens
+              : [imagemPrincipalSincronizada];
+        } else {
+          throw new Error(
+            "A imagem selecionada ainda não foi publicada pela API. Tente enviar novamente o arquivo do produto.",
+          );
         }
 
         sincronizarProdutoLojaLocal(
@@ -2242,6 +2264,7 @@ export function PerfilUsuarioPage() {
         );
       }
 
+      notificarCatalogoAtualizado();
       fecharModal();
       setAbaAtiva("produtos");
       recarregarDados();
@@ -2393,6 +2416,8 @@ export function PerfilUsuarioPage() {
           telefoneUsuarioId: telefoneSubstitutoId,
           ativa: loja.ativa,
         });
+
+        notificarCatalogoAtualizado();
       }
 
       await Promise.all(telefonesRemovidos.map((telefoneId) => removerTelefone(telefoneId)));
@@ -2464,6 +2489,7 @@ export function PerfilUsuarioPage() {
         await criarMinhaLoja(payload);
       }
 
+      notificarCatalogoAtualizado();
       fecharModal();
       recarregarDados();
       alert(loja ? "Loja atualizada com sucesso!" : "Loja criada com sucesso!");
