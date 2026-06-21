@@ -15,7 +15,7 @@ export function useCatalogoAutoRefresh({
   onRefresh,
 }: UseCatalogoAutoRefreshOptions) {
   const onRefreshRef = useRef(onRefresh);
-  const lastRefreshAtRef = useRef(Date.now());
+  const lastRefreshAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     onRefreshRef.current = onRefresh;
@@ -26,10 +26,15 @@ export function useCatalogoAutoRefresh({
       return undefined;
     }
 
+    if (lastRefreshAtRef.current === null) {
+      lastRefreshAtRef.current = Date.now();
+    }
+
     const executarRefresh = () => {
       const agora = Date.now();
+      const ultimoRefresh = lastRefreshAtRef.current;
 
-      if (agora - lastRefreshAtRef.current < minIntervalBetweenRefreshesMs) {
+      if (ultimoRefresh !== null && agora - ultimoRefresh < minIntervalBetweenRefreshesMs) {
         return;
       }
 
