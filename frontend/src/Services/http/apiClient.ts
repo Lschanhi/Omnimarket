@@ -305,7 +305,7 @@ async function executeRequest(path: string, options: ApiRequestOptions = {}) {
       error instanceof Error ? error.message : "Falha de rede ao acessar a API.";
 
     throw new ApiError(
-      `Nao foi possivel conectar a API em ${API_BASE_URL}. Verifique se a URL esta correta, se a aplicacao do Azure esta publicada e se o CORS permite a origem atual. Detalhe: ${message}`,
+      `Nao foi possivel conectar a API em ${API_BASE_URL}. Verifique se a URL esta correta, se a API publicada esta disponivel e se o CORS permite a origem atual. Detalhe: ${message}`,
       0,
       error,
     );
