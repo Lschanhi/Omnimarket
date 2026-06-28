@@ -78,3 +78,31 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
           package: ${{ env.BACKEND_PUBLISH_PATH }}
 
+      - name: Smoke test backend health endpoint
+        shell: pwsh
+        run: |
+          $healthUrl = "https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/health"
+          $maxAttempts = 6
+          $delaySeconds = 10
+
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            try {
+              $response = Invoke-WebRequest -Uri $healthUrl -UseBasicParsing -TimeoutSec 30
+
+              if ($response.StatusCode -eq 200) {
+                Write-Host "Health check aprovado em $healthUrl"
+                Write-Host $response.Content
+                exit 0
+              }
+
+              Write-Host "Tentativa $attempt/$maxAttempts retornou status $($response.StatusCode)."
+            } catch {
+              Write-Host "Tentativa $attempt/$maxAttempts falhou: $($_.Exception.Message)"
+            }
+
+            if ($attempt -lt $maxAttempts) {
+              Start-Sleep -Seconds $delaySeconds
+            }
+          }
+
+          throw "O backend foi publicado, mas nao respondeu 200 em $healthUrl."
